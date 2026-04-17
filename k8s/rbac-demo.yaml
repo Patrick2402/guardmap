@@ -1,0 +1,224 @@
+# ── ClusterRoles ──────────────────────────────────────────────────────────────
+
+# CRITICAL: wildcard on all resources (simulates over-privileged operator)
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: guardmap-cluster-admin-demo
+rules:
+  - apiGroups: ["*"]
+    resources: ["*"]
+    verbs: ["*"]
+---
+# HIGH: can read secrets cluster-wide (common misconfiguration)
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: guardmap-secret-reader
+rules:
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    verbs: ["get", "list"]
+---
+# MEDIUM: can exec into pods (useful for debug tools, risky in prod)
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: guardmap-pod-exec
+rules:
+  - apiGroups: [""]
+    resources: ["pods/exec", "pods/attach"]
+    verbs: ["create"]
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list"]
+---
+# LOW: read-only view of deployments and services
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: guardmap-readonly-viewer
+rules:
+  - apiGroups: ["apps"]
+    resources: ["deployments", "statefulsets", "daemonsets"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["services", "pods", "endpoints"]
+    verbs: ["get", "list", "watch"]
+
+---
+# ── Namespace Roles ───────────────────────────────────────────────────────────
+
+# production: api-gateway SA can read/write its own config
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: api-gateway-config-manager
+  namespace: production
+rules:
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    verbs: ["get", "list", "create", "update", "patch"]
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["get", "list"]
+---
+# production: frontend SA — read-only, minimal permissions
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: frontend-readonly
+  namespace: production
+rules:
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    verbs: ["get", "list"]
+---
+# staging: api SA gets deployment control (CI/CD scenario)
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: deployer
+  namespace: staging
+rules:
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["get", "list", "update", "patch"]
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "delete"]
+---
+# monitoring: prometheus needs to scrape metrics across resources
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: metrics-reader
+  namespace: monitoring
+rules:
+  - apiGroups: [""]
+    resources: ["pods", "services", "endpoints"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["nodes"]
+    verbs: ["get", "list"]
+
+---
+# ── RoleBindings ─────────────────────────────────────────────────────────────
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: api-gateway-config-binding
+  namespace: production
+subjects:
+  - kind: ServiceAccount
+    name: api-gateway-sa
+    namespace: production
+roleRef:
+  kind: Role
+  name: api-gateway-config-manager
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: frontend-readonly-binding
+  namespace: production
+subjects:
+  - kind: ServiceAccount
+    name: frontend-sa
+    namespace: production
+roleRef:
+  kind: Role
+  name: frontend-readonly
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: staging-deployer-binding
+  namespace: staging
+subjects:
+  - kind: ServiceAccount
+    name: api-sa
+    namespace: staging
+roleRef:
+  kind: Role
+  name: deployer
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: prometheus-metrics-binding
+  namespace: monitoring
+subjects:
+  - kind: ServiceAccount
+    name: prometheus-sa
+    namespace: monitoring
+roleRef:
+  kind: Role
+  name: metrics-reader
+  apiGroup: rbac.authorization.k8s.io
+
+---
+# ── ClusterRoleBindings ───────────────────────────────────────────────────────
+
+# CRITICAL: api-gateway-sa gets cluster-admin (bad practice demo)
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: api-gateway-cluster-admin-DEMO
+subjects:
+  - kind: ServiceAccount
+    name: api-gateway-sa
+    namespace: production
+roleRef:
+  kind: ClusterRole
+  name: guardmap-cluster-admin-demo
+  apiGroup: rbac.authorization.k8s.io
+---
+# HIGH: grafana can read secrets to pull datasource credentials
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: grafana-secret-reader-binding
+subjects:
+  - kind: ServiceAccount
+    name: grafana-sa
+    namespace: monitoring
+roleRef:
+  kind: ClusterRole
+  name: guardmap-secret-reader
+  apiGroup: rbac.authorization.k8s.io
+---
+# MEDIUM: postgres-sa can exec into pods (for backup scripts)
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: postgres-exec-binding
+subjects:
+  - kind: ServiceAccount
+    name: postgres-sa
+    namespace: production
+roleRef:
+  kind: ClusterRole
+  name: guardmap-pod-exec
+  apiGroup: rbac.authorization.k8s.io
+---
+# LOW: node-exporter needs cluster-wide read to scrape node metrics
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: node-exporter-viewer-binding
+subjects:
+  - kind: ServiceAccount
+    name: node-exporter-sa
+    namespace: monitoring
+roleRef:
+  kind: ClusterRole
+  name: guardmap-readonly-viewer
+  apiGroup: rbac.authorization.k8s.io

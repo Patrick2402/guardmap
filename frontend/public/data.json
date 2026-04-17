@@ -1,0 +1,3505 @@
+{
+  "nodes": [
+    {
+      "id": "pod:production/payments-api-7d4f9c8b6-xk2p9",
+      "type": "pod",
+      "label": "payments-api",
+      "namespace": "production",
+      "metadata": {
+        "uid": "a1b2c3d4-0001",
+        "nodeName": "ip-10-0-1-45.eu-west-1.compute.internal",
+        "image": "company/payments-api:v2.4.1",
+        "phase": "Running",
+        "condition": "Ready",
+        "restarts": "0",
+        "cpuRequest": "100m",
+        "cpuLimit": "500m",
+        "memRequest": "1Gi",
+        "memLimit": "2Gi",
+        "labels": "app=payments-api,env=production"
+      }
+    },
+    {
+      "id": "pod:production/payments-worker-6c5b4d3e2-mn7q1",
+      "type": "pod",
+      "label": "payments-worker",
+      "namespace": "production",
+      "metadata": {
+        "uid": "a1b2c3d4-0002",
+        "nodeName": "ip-10-0-1-46.eu-west-1.compute.internal",
+        "image": "company/payments-worker:v2.4.0",
+        "phase": "Running",
+        "condition": "Ready",
+        "restarts": "5",
+        "cpuRequest": "250m",
+        "cpuLimit": "1000m",
+        "memRequest": "64Mi",
+        "memLimit": "128Mi",
+        "labels": "app=payments-worker,env=production"
+      }
+    },
+    {
+      "id": "pod:production/user-service-5b8c9d4f3-pq8r2",
+      "type": "pod",
+      "label": "user-service (r1)",
+      "namespace": "production",
+      "metadata": {
+        "uid": "a1b2c3d4-0003",
+        "nodeName": "ip-10-0-1-47.eu-west-1.compute.internal",
+        "image": "company/user-service:v1.9.3",
+        "phase": "Running",
+        "condition": "Ready",
+        "restarts": "4",
+        "cpuRequest": "250m",
+        "cpuLimit": "1000m",
+        "memRequest": "64Mi",
+        "memLimit": "128Mi",
+        "labels": "app=user-service,env=production"
+      }
+    },
+    {
+      "id": "pod:production/user-service-5b8c9d4f3-ab3c4",
+      "type": "pod",
+      "label": "user-service (r2)",
+      "namespace": "production",
+      "metadata": {
+        "uid": "a1b2c3d4-0004",
+        "nodeName": "ip-10-0-1-48.eu-west-1.compute.internal",
+        "image": "company/user-service:v1.9.3",
+        "phase": "Running",
+        "condition": "Ready",
+        "restarts": "4",
+        "cpuRequest": "250m",
+        "cpuLimit": "1000m",
+        "memRequest": "64Mi",
+        "memLimit": "128Mi",
+        "labels": "app=user-service,env=production"
+      }
+    },
+    {
+      "id": "pod:production/order-service-3d6e7f8a1-st5u6",
+      "type": "pod",
+      "label": "order-service",
+      "namespace": "production",
+      "metadata": {
+        "uid": "a1b2c3d4-0005",
+        "nodeName": "ip-10-0-1-49.eu-west-1.compute.internal",
+        "image": "company/order-service:v3.1.2",
+        "phase": "Pending",
+        "condition": "NotReady",
+        "restarts": "6",
+        "cpuRequest": "250m",
+        "cpuLimit": "1000m",
+        "memRequest": "64Mi",
+        "memLimit": "128Mi",
+        "labels": "app=order-service,env=production"
+      }
+    },
+    {
+      "id": "pod:production/notification-service-9a2b3c4d5-vw9x0",
+      "type": "pod",
+      "label": "notification-service",
+      "namespace": "production",
+      "metadata": {
+        "uid": "a1b2c3d4-0006",
+        "nodeName": "ip-10-0-2-10.eu-west-1.compute.internal",
+        "image": "company/notification-service:v1.2.0",
+        "phase": "Pending",
+        "condition": "NotReady",
+        "restarts": "7",
+        "cpuRequest": "250m",
+        "cpuLimit": "1000m",
+        "memRequest": "64Mi",
+        "memLimit": "128Mi",
+        "labels": "app=notification-service,env=production"
+      }
+    },
+    {
+      "id": "pod:production/auth-service-1c4d5e6f7-yz1a2",
+      "type": "pod",
+      "label": "auth-service",
+      "namespace": "production",
+      "metadata": {
+        "uid": "a1b2c3d4-0007",
+        "nodeName": "ip-10-0-2-11.eu-west-1.compute.internal",
+        "image": "company/auth-service:v4.0.1",
+        "phase": "Running",
+        "condition": "Ready",
+        "restarts": "12",
+        "cpuRequest": "1000m",
+        "cpuLimit": "4000m",
+        "memRequest": "512Mi",
+        "memLimit": "1Gi",
+        "labels": "app=auth-service,env=production"
+      }
+    },
+    {
+      "id": "pod:production/inventory-service-7f8a9b0c1-bc3d4",
+      "type": "pod",
+      "label": "inventory-service",
+      "namespace": "production",
+      "metadata": {
+        "uid": "a1b2c3d4-0008",
+        "nodeName": "ip-10-0-2-12.eu-west-1.compute.internal",
+        "image": "company/inventory-service:v2.2.5",
+        "phase": "Running",
+        "condition": "Ready",
+        "restarts": "3",
+        "cpuRequest": "200m",
+        "cpuLimit": "800m",
+        "memRequest": "256Mi",
+        "memLimit": "512Mi",
+        "labels": "app=inventory-service,env=production"
+      }
+    },
+    {
+      "id": "pod:production/checkout-service-2e3f4a5b6-ef5g6",
+      "type": "pod",
+      "label": "checkout-service",
+      "namespace": "production",
+      "metadata": {
+        "uid": "a1b2c3d4-0009",
+        "nodeName": "ip-10-0-2-13.eu-west-1.compute.internal",
+        "image": "company/checkout-service:v1.0.0",
+        "phase": "Running",
+        "condition": "Ready",
+        "restarts": "11",
+        "cpuRequest": "500m",
+        "cpuLimit": "2000m",
+        "memRequest": "2Gi",
+        "memLimit": "4Gi",
+        "labels": "app=checkout-service,env=production"
+      }
+    },
+    {
+      "id": "pod:production/product-service-8b9c0d1e2-gh7h8",
+      "type": "pod",
+      "label": "product-service",
+      "namespace": "production",
+      "metadata": {
+        "uid": "a1b2c3d4-0010",
+        "nodeName": "ip-10-0-2-14.eu-west-1.compute.internal",
+        "image": "company/product-service:v1.0.0",
+        "phase": "Pending",
+        "condition": "NotReady",
+        "restarts": "3",
+        "cpuRequest": "500m",
+        "cpuLimit": "2000m",
+        "memRequest": "2Gi",
+        "memLimit": "4Gi",
+        "labels": "app=product-service,env=production"
+      }
+    },
+    {
+      "id": "pod:staging/payments-api-staging-4f5g6h7i8-ij9j0",
+      "type": "pod",
+      "label": "payments-api-staging",
+      "namespace": "staging",
+      "metadata": {
+        "uid": "b2c3d4e5-0001",
+        "nodeName": "ip-10-0-3-10.eu-west-1.compute.internal",
+        "image": "company/payments-api:v2.4.1",
+        "phase": "Running",
+        "condition": "Ready",
+        "restarts": "1",
+        "cpuRequest": "50m",
+        "cpuLimit": "200m",
+        "memRequest": "128Mi",
+        "memLimit": "256Mi",
+        "labels": "app=payments-api-staging,env=staging"
+      }
+    },
+    {
+      "id": "pod:staging/user-service-staging-0a1b2c3d4-kl1l2",
+      "type": "pod",
+      "label": "user-service-staging",
+      "namespace": "staging",
+      "metadata": {
+        "uid": "b2c3d4e5-0002",
+        "nodeName": "ip-10-0-3-11.eu-west-1.compute.internal",
+        "image": "company/user-service:v1.9.3",
+        "phase": "Running",
+        "condition": "Ready",
+        "restarts": "7",
+        "cpuRequest": "500m",
+        "cpuLimit": "2000m",
+        "memRequest": "2Gi",
+        "memLimit": "4Gi",
+        "labels": "app=user-service-staging,env=staging"
+      }
+    },
+    {
+      "id": "pod:staging/order-service-staging-6g7h8i9j0-mn3n4",
+      "type": "pod",
+      "label": "order-service-staging",
+      "namespace": "staging",
+      "metadata": {
+        "uid": "b2c3d4e5-0003",
+        "nodeName": "ip-10-0-3-12.eu-west-1.compute.internal",
+        "image": "company/order-service:v3.1.2",
+        "phase": "Running",
+        "condition": "Ready",
+        "restarts": "5",
+        "cpuRequest": "50m",
+        "cpuLimit": "200m",
+        "memRequest": "128Mi",
+        "memLimit": "256Mi",
+        "labels": "app=order-service-staging,env=staging"
+      }
+    },
+    {
+      "id": "pod:data-platform/spark-driver-abc123",
+      "type": "pod",
+      "label": "spark-driver",
+      "namespace": "data-platform",
+      "metadata": {
+        "uid": "c3d4e5f6-0001",
+        "nodeName": "ip-10-0-4-10.eu-west-1.compute.internal",
+        "image": "company/spark-driver:v1.0.0",
+        "phase": "Running",
+        "condition": "Ready",
+        "restarts": "9",
+        "cpuRequest": "250m",
+        "cpuLimit": "1000m",
+        "memRequest": "64Mi",
+        "memLimit": "128Mi",
+        "labels": "app=spark-driver,env=data-platform"
+      }
+    },
+    {
+      "id": "pod:data-platform/spark-executor-def456",
+      "type": "pod",
+      "label": "spark-executor-1",
+      "namespace": "data-platform",
+      "metadata": {
+        "uid": "c3d4e5f6-0002",
+        "nodeName": "ip-10-0-4-11.eu-west-1.compute.internal",
+        "image": "company/spark-executor:v1.0.0",
+        "phase": "Running",
+        "condition": "Ready",
+        "restarts": "3",
+        "cpuRequest": "500m",
+        "cpuLimit": "2000m",
+        "memRequest": "2Gi",
+        "memLimit": "4Gi",
+        "labels": "app=spark-executor-1,env=data-platform"
+      }
+    },
+    {
+      "id": "pod:data-platform/spark-executor-ghi789",
+      "type": "pod",
+      "label": "spark-executor-2",
+      "namespace": "data-platform",
+      "metadata": {
+        "uid": "c3d4e5f6-0003",
+        "nodeName": "ip-10-0-4-12.eu-west-1.compute.internal",
+        "image": "company/spark-executor:v1.0.0",
+        "phase": "Running",
+        "condition": "Ready",
+        "restarts": "9",
+        "cpuRequest": "500m",
+        "cpuLimit": "2000m",
+        "memRequest": "2Gi",
+        "memLimit": "4Gi",
+        "labels": "app=spark-executor-2,env=data-platform"
+      }
+    },
+    {
+      "id": "pod:data-platform/airflow-scheduler-5c6d7e8f9-qr7r8",
+      "type": "pod",
+      "label": "airflow-scheduler",
+      "namespace": "data-platform",
+      "metadata": {
+        "uid": "c3d4e5f6-0004",
+        "nodeName": "ip-10-0-4-13.eu-west-1.compute.internal",
+        "image": "company/airflow-scheduler:v1.0.0",
+        "phase": "Running",
+        "condition": "Ready",
+        "restarts": "4",
+        "cpuRequest": "50m",
+        "cpuLimit": "200m",
+        "memRequest": "128Mi",
+        "memLimit": "256Mi",
+        "labels": "app=airflow-scheduler,env=data-platform"
+      }
+    },
+    {
+      "id": "pod:data-platform/airflow-worker-3a4b5c6d7-st9t0",
+      "type": "pod",
+      "label": "airflow-worker",
+      "namespace": "data-platform",
+      "metadata": {
+        "uid": "c3d4e5f6-0005",
+        "nodeName": "ip-10-0-4-14.eu-west-1.compute.internal",
+        "image": "company/airflow-worker:v1.0.0",
+        "phase": "Pending",
+        "condition": "NotReady",
+        "restarts": "1",
+        "cpuRequest": "100m",
+        "cpuLimit": "500m",
+        "memRequest": "1Gi",
+        "memLimit": "2Gi",
+        "labels": "app=airflow-worker,env=data-platform"
+      }
+    },
+    {
+      "id": "pod:data-platform/kafka-connect-1e2f3g4h5-uv1u2",
+      "type": "pod",
+      "label": "kafka-connect",
+      "namespace": "data-platform",
+      "metadata": {
+        "uid": "c3d4e5f6-0006",
+        "nodeName": "ip-10-0-4-15.eu-west-1.compute.internal",
+        "image": "company/kafka-connect:v1.0.0",
+        "phase": "Running",
+        "condition": "Ready",
+        "restarts": "3",
+        "cpuRequest": "250m",
+        "cpuLimit": "1000m",
+        "memRequest": "64Mi",
+        "memLimit": "128Mi",
+        "labels": "app=kafka-connect,env=data-platform"
+      }
+    },
+    {
+      "id": "pod:data-platform/dbt-runner-7i8j9k0l1-wx3w4",
+      "type": "pod",
+      "label": "dbt-runner",
+      "namespace": "data-platform",
+      "metadata": {
+        "uid": "c3d4e5f6-0007",
+        "nodeName": "ip-10-0-4-16.eu-west-1.compute.internal",
+        "image": "company/dbt-runner:v1.0.0",
+        "phase": "Running",
+        "condition": "Ready",
+        "restarts": "5",
+        "cpuRequest": "50m",
+        "cpuLimit": "200m",
+        "memRequest": "128Mi",
+        "memLimit": "256Mi",
+        "labels": "app=dbt-runner,env=data-platform"
+      }
+    },
+    {
+      "id": "pod:monitoring/prometheus-0",
+      "type": "pod",
+      "label": "prometheus",
+      "namespace": "monitoring",
+      "metadata": {
+        "uid": "d4e5f6a7-0001",
+        "nodeName": "ip-10-0-1-50.eu-west-1.compute.internal",
+        "image": "prom/prometheus:v2.48.0",
+        "phase": "Running",
+        "condition": "Ready",
+        "restarts": "12",
+        "cpuRequest": "1000m",
+        "cpuLimit": "4000m",
+        "memRequest": "512Mi",
+        "memLimit": "1Gi",
+        "labels": "app=prometheus,env=monitoring"
+      }
+    },
+    {
+      "id": "pod:monitoring/grafana-6d7e8f9a0-yz5y6",
+      "type": "pod",
+      "label": "grafana",
+      "namespace": "monitoring",
+      "metadata": {
+        "uid": "d4e5f6a7-0002",
+        "nodeName": "ip-10-0-1-51.eu-west-1.compute.internal",
+        "image": "grafana/grafana:10.2.0",
+        "phase": "Running",
+        "condition": "Ready",
+        "restarts": "5",
+        "cpuRequest": "250m",
+        "cpuLimit": "1000m",
+        "memRequest": "64Mi",
+        "memLimit": "128Mi",
+        "labels": "app=grafana,env=monitoring"
+      }
+    },
+    {
+      "id": "pod:monitoring/alertmanager-0",
+      "type": "pod",
+      "label": "alertmanager",
+      "namespace": "monitoring",
+      "metadata": {
+        "uid": "d4e5f6a7-0003",
+        "nodeName": "ip-10-0-1-52.eu-west-1.compute.internal",
+        "image": "prom/alertmanager:v0.26.0",
+        "phase": "Running",
+        "condition": "Ready",
+        "restarts": "7",
+        "cpuRequest": "100m",
+        "cpuLimit": "500m",
+        "memRequest": "1Gi",
+        "memLimit": "2Gi",
+        "labels": "app=alertmanager,env=monitoring"
+      }
+    },
+    {
+      "id": "pod:monitoring/loki-0",
+      "type": "pod",
+      "label": "loki",
+      "namespace": "monitoring",
+      "metadata": {
+        "uid": "d4e5f6a7-0004",
+        "nodeName": "ip-10-0-1-53.eu-west-1.compute.internal",
+        "image": "company/loki:v1.0.0",
+        "phase": "Running",
+        "condition": "Ready",
+        "restarts": "8",
+        "cpuRequest": "200m",
+        "cpuLimit": "800m",
+        "memRequest": "256Mi",
+        "memLimit": "512Mi",
+        "labels": "app=loki,env=monitoring"
+      }
+    },
+    {
+      "id": "pod:security/vault-agent-4f5g6h7i8-cd9c0",
+      "type": "pod",
+      "label": "vault-agent",
+      "namespace": "security",
+      "metadata": {
+        "uid": "e5f6a7b8-0001",
+        "nodeName": "ip-10-0-1-54.eu-west-1.compute.internal",
+        "image": "company/vault-agent:v1.0.0",
+        "phase": "Running",
+        "condition": "Ready",
+        "restarts": "8",
+        "cpuRequest": "50m",
+        "cpuLimit": "200m",
+        "memRequest": "128Mi",
+        "memLimit": "256Mi",
+        "labels": "app=vault-agent,env=security"
+      }
+    },
+    {
+      "id": "pod:security/external-secrets-operator-0k1l2m3n4-ef1e2",
+      "type": "pod",
+      "label": "external-secrets-op",
+      "namespace": "security",
+      "metadata": {
+        "uid": "e5f6a7b8-0002",
+        "nodeName": "ip-10-0-1-55.eu-west-1.compute.internal",
+        "image": "company/external-secrets-op:v1.0.0",
+        "phase": "Pending",
+        "condition": "NotReady",
+        "restarts": "9",
+        "cpuRequest": "250m",
+        "cpuLimit": "1000m",
+        "memRequest": "64Mi",
+        "memLimit": "128Mi",
+        "labels": "app=external-secrets-op,env=security"
+      }
+    },
+    {
+      "id": "pod:security/cert-manager-6p7q8r9s0-gh3g4",
+      "type": "pod",
+      "label": "cert-manager",
+      "namespace": "security",
+      "metadata": {
+        "uid": "e5f6a7b8-0003",
+        "nodeName": "ip-10-0-1-56.eu-west-1.compute.internal",
+        "image": "company/cert-manager:v1.0.0",
+        "phase": "Pending",
+        "condition": "NotReady",
+        "restarts": "1",
+        "cpuRequest": "1000m",
+        "cpuLimit": "4000m",
+        "memRequest": "512Mi",
+        "memLimit": "1Gi",
+        "labels": "app=cert-manager,env=security"
+      }
+    },
+    {
+      "id": "pod:ingress/nginx-ingress-controller-x1y2z3-kl7k8",
+      "type": "pod",
+      "label": "nginx-ingress",
+      "namespace": "ingress",
+      "metadata": {
+        "uid": "f6a7b8c9-0001",
+        "nodeName": "ip-10-0-1-57.eu-west-1.compute.internal",
+        "image": "company/nginx-ingress:v1.0.0",
+        "phase": "Running",
+        "condition": "Ready",
+        "restarts": "10",
+        "cpuRequest": "200m",
+        "cpuLimit": "800m",
+        "memRequest": "256Mi",
+        "memLimit": "512Mi",
+        "labels": "app=nginx-ingress,env=ingress"
+      }
+    },
+    {
+      "id": "pod:ingress/aws-load-balancer-controller-6b7c8d9e0-mn9",
+      "type": "pod",
+      "label": "aws-load-balancer-ctrl",
+      "namespace": "ingress",
+      "metadata": {
+        "uid": "f6a7b8c9-0002",
+        "nodeName": "ip-10-0-1-58.eu-west-1.compute.internal",
+        "image": "company/aws-load-balancer-ctrl:v1.0.0",
+        "phase": "Running",
+        "condition": "Ready",
+        "restarts": "3",
+        "cpuRequest": "250m",
+        "cpuLimit": "1000m",
+        "memRequest": "64Mi",
+        "memLimit": "128Mi",
+        "labels": "app=aws-load-balancer-ctrl,env=ingress"
+      }
+    },
+    {
+      "id": "pod:ml-platform/training-job-runner-8j9k0l1m2-qr3q4",
+      "type": "pod",
+      "label": "training-job-runner",
+      "namespace": "ml-platform",
+      "metadata": {
+        "uid": "a7b8c9d0-0001",
+        "nodeName": "ip-10-0-5-10.eu-west-1.compute.internal",
+        "image": "company/training-job-runner:v1.0.0",
+        "phase": "Running",
+        "condition": "Ready",
+        "restarts": "3",
+        "cpuRequest": "50m",
+        "cpuLimit": "200m",
+        "memRequest": "128Mi",
+        "memLimit": "256Mi",
+        "labels": "app=training-job-runner,env=ml-platform"
+      }
+    },
+    {
+      "id": "pod:ml-platform/model-serving-api-4n5o6p7q8-st5s6",
+      "type": "pod",
+      "label": "model-serving-api",
+      "namespace": "ml-platform",
+      "metadata": {
+        "uid": "a7b8c9d0-0002",
+        "nodeName": "ip-10-0-5-11.eu-west-1.compute.internal",
+        "image": "company/model-serving-api:v1.0.0",
+        "phase": "Running",
+        "condition": "Ready",
+        "restarts": "3",
+        "cpuRequest": "1000m",
+        "cpuLimit": "4000m",
+        "memRequest": "512Mi",
+        "memLimit": "1Gi",
+        "labels": "app=model-serving-api,env=ml-platform"
+      }
+    },
+    {
+      "id": "sa:production/payments-api-sa",
+      "type": "serviceaccount",
+      "label": "payments-api-sa",
+      "namespace": "production",
+      "metadata": {
+        "labels": "app=payments-api",
+        "eks.amazonaws.com/role-arn": "arn:aws:iam::123456789012:role/payments-api-role",
+        "automountToken": "true"
+      }
+    },
+    {
+      "id": "sa:production/payments-worker-sa",
+      "type": "serviceaccount",
+      "label": "payments-worker-sa",
+      "namespace": "production",
+      "metadata": {
+        "labels": "app=payments-worker",
+        "eks.amazonaws.com/role-arn": "arn:aws:iam::123456789012:role/payments-worker-role",
+        "automountToken": "false"
+      }
+    },
+    {
+      "id": "sa:production/user-service-sa",
+      "type": "serviceaccount",
+      "label": "user-service-sa",
+      "namespace": "production",
+      "metadata": {
+        "labels": "app=user-service",
+        "eks.amazonaws.com/role-arn": "arn:aws:iam::123456789012:role/user-service-role",
+        "automountToken": "false"
+      }
+    },
+    {
+      "id": "sa:production/order-service-sa",
+      "type": "serviceaccount",
+      "label": "order-service-sa",
+      "namespace": "production",
+      "metadata": {
+        "labels": "app=order-service",
+        "eks.amazonaws.com/role-arn": "arn:aws:iam::123456789012:role/order-service-role",
+        "automountToken": "true"
+      }
+    },
+    {
+      "id": "sa:production/notification-service-sa",
+      "type": "serviceaccount",
+      "label": "notification-service-sa",
+      "namespace": "production",
+      "metadata": {
+        "labels": "app=notification-service",
+        "eks.amazonaws.com/role-arn": "arn:aws:iam::123456789012:role/notification-service-role",
+        "automountToken": "true"
+      }
+    },
+    {
+      "id": "sa:production/auth-service-sa",
+      "type": "serviceaccount",
+      "label": "auth-service-sa",
+      "namespace": "production",
+      "metadata": {
+        "labels": "app=auth-service",
+        "eks.amazonaws.com/role-arn": "arn:aws:iam::123456789012:role/auth-service-role",
+        "automountToken": "true"
+      }
+    },
+    {
+      "id": "sa:production/inventory-service-sa",
+      "type": "serviceaccount",
+      "label": "inventory-service-sa",
+      "namespace": "production",
+      "metadata": {
+        "labels": "app=inventory-service",
+        "eks.amazonaws.com/role-arn": "arn:aws:iam::123456789012:role/inventory-service-role",
+        "automountToken": "true"
+      }
+    },
+    {
+      "id": "sa:production/checkout-service-sa",
+      "type": "serviceaccount",
+      "label": "checkout-service-sa",
+      "namespace": "production",
+      "metadata": {
+        "labels": "app=checkout-service",
+        "eks.amazonaws.com/role-arn": "arn:aws:iam::123456789012:role/checkout-service-role",
+        "automountToken": "true"
+      }
+    },
+    {
+      "id": "sa:production/product-service-sa",
+      "type": "serviceaccount",
+      "label": "product-service-sa",
+      "namespace": "production",
+      "metadata": {
+        "labels": "app=product-service",
+        "eks.amazonaws.com/role-arn": "arn:aws:iam::123456789012:role/product-service-role",
+        "automountToken": "true"
+      }
+    },
+    {
+      "id": "sa:staging/payments-staging-sa",
+      "type": "serviceaccount",
+      "label": "payments-staging-sa",
+      "namespace": "staging",
+      "metadata": {
+        "labels": "app=payments-staging",
+        "eks.amazonaws.com/role-arn": "arn:aws:iam::123456789012:role/payments-staging-role",
+        "automountToken": "false"
+      }
+    },
+    {
+      "id": "sa:staging/user-staging-sa",
+      "type": "serviceaccount",
+      "label": "user-staging-sa",
+      "namespace": "staging",
+      "metadata": {
+        "labels": "app=user-staging",
+        "eks.amazonaws.com/role-arn": "arn:aws:iam::123456789012:role/user-staging-role",
+        "automountToken": "true"
+      }
+    },
+    {
+      "id": "sa:staging/order-staging-sa",
+      "type": "serviceaccount",
+      "label": "order-staging-sa",
+      "namespace": "staging",
+      "metadata": {
+        "labels": "app=order-staging",
+        "eks.amazonaws.com/role-arn": "arn:aws:iam::123456789012:role/order-staging-role",
+        "automountToken": "true"
+      }
+    },
+    {
+      "id": "sa:data-platform/spark-sa",
+      "type": "serviceaccount",
+      "label": "spark-sa",
+      "namespace": "data-platform",
+      "metadata": {
+        "labels": "app=spark",
+        "eks.amazonaws.com/role-arn": "arn:aws:iam::123456789012:role/spark-role",
+        "automountToken": "true"
+      }
+    },
+    {
+      "id": "sa:data-platform/airflow-scheduler-sa",
+      "type": "serviceaccount",
+      "label": "airflow-scheduler-sa",
+      "namespace": "data-platform",
+      "metadata": {
+        "labels": "app=airflow-scheduler",
+        "eks.amazonaws.com/role-arn": "arn:aws:iam::123456789012:role/airflow-scheduler-role",
+        "automountToken": "false"
+      }
+    },
+    {
+      "id": "sa:data-platform/airflow-worker-sa",
+      "type": "serviceaccount",
+      "label": "airflow-worker-sa",
+      "namespace": "data-platform",
+      "metadata": {
+        "labels": "app=airflow-worker",
+        "eks.amazonaws.com/role-arn": "arn:aws:iam::123456789012:role/airflow-worker-role",
+        "automountToken": "true"
+      }
+    },
+    {
+      "id": "sa:data-platform/kafka-connect-sa",
+      "type": "serviceaccount",
+      "label": "kafka-connect-sa",
+      "namespace": "data-platform",
+      "metadata": {
+        "labels": "app=kafka-connect",
+        "eks.amazonaws.com/role-arn": "arn:aws:iam::123456789012:role/kafka-connect-role",
+        "automountToken": "true"
+      }
+    },
+    {
+      "id": "sa:data-platform/dbt-sa",
+      "type": "serviceaccount",
+      "label": "dbt-sa",
+      "namespace": "data-platform",
+      "metadata": {
+        "labels": "app=dbt",
+        "eks.amazonaws.com/role-arn": "arn:aws:iam::123456789012:role/dbt-role",
+        "automountToken": "false"
+      }
+    },
+    {
+      "id": "sa:monitoring/prometheus-sa",
+      "type": "serviceaccount",
+      "label": "prometheus-sa",
+      "namespace": "monitoring",
+      "metadata": {
+        "labels": "app=prometheus",
+        "eks.amazonaws.com/role-arn": "arn:aws:iam::123456789012:role/prometheus-role",
+        "automountToken": "false"
+      }
+    },
+    {
+      "id": "sa:monitoring/grafana-sa",
+      "type": "serviceaccount",
+      "label": "grafana-sa",
+      "namespace": "monitoring",
+      "metadata": {
+        "labels": "app=grafana",
+        "eks.amazonaws.com/role-arn": "arn:aws:iam::123456789012:role/grafana-role",
+        "automountToken": "true"
+      }
+    },
+    {
+      "id": "sa:monitoring/alertmanager-sa",
+      "type": "serviceaccount",
+      "label": "alertmanager-sa",
+      "namespace": "monitoring",
+      "metadata": {
+        "labels": "app=alertmanager",
+        "eks.amazonaws.com/role-arn": "arn:aws:iam::123456789012:role/alertmanager-role",
+        "automountToken": "true"
+      }
+    },
+    {
+      "id": "sa:monitoring/loki-sa",
+      "type": "serviceaccount",
+      "label": "loki-sa",
+      "namespace": "monitoring",
+      "metadata": {
+        "labels": "app=loki",
+        "eks.amazonaws.com/role-arn": "arn:aws:iam::123456789012:role/loki-role",
+        "automountToken": "true"
+      }
+    },
+    {
+      "id": "sa:security/vault-sa",
+      "type": "serviceaccount",
+      "label": "vault-sa",
+      "namespace": "security",
+      "metadata": {
+        "labels": "app=vault",
+        "eks.amazonaws.com/role-arn": "arn:aws:iam::123456789012:role/vault-role",
+        "automountToken": "false"
+      }
+    },
+    {
+      "id": "sa:security/external-secrets-sa",
+      "type": "serviceaccount",
+      "label": "external-secrets-sa",
+      "namespace": "security",
+      "metadata": {
+        "labels": "app=external-secrets",
+        "eks.amazonaws.com/role-arn": "arn:aws:iam::123456789012:role/external-secrets-role",
+        "automountToken": "true"
+      }
+    },
+    {
+      "id": "sa:security/cert-manager-sa",
+      "type": "serviceaccount",
+      "label": "cert-manager-sa",
+      "namespace": "security",
+      "metadata": {
+        "labels": "app=cert-manager",
+        "eks.amazonaws.com/role-arn": "arn:aws:iam::123456789012:role/cert-manager-role",
+        "automountToken": "true"
+      }
+    },
+    {
+      "id": "sa:ingress/nginx-sa",
+      "type": "serviceaccount",
+      "label": "nginx-sa",
+      "namespace": "ingress",
+      "metadata": {
+        "labels": "app=nginx",
+        "eks.amazonaws.com/role-arn": "arn:aws:iam::123456789012:role/nginx-role",
+        "automountToken": "true"
+      }
+    },
+    {
+      "id": "sa:ingress/alb-sa",
+      "type": "serviceaccount",
+      "label": "alb-controller-sa",
+      "namespace": "ingress",
+      "metadata": {
+        "labels": "app=alb-controller",
+        "eks.amazonaws.com/role-arn": "arn:aws:iam::123456789012:role/alb-controller-role",
+        "automountToken": "true"
+      }
+    },
+    {
+      "id": "sa:ml-platform/training-sa",
+      "type": "serviceaccount",
+      "label": "training-sa",
+      "namespace": "ml-platform",
+      "metadata": {
+        "labels": "app=training",
+        "eks.amazonaws.com/role-arn": "arn:aws:iam::123456789012:role/training-role",
+        "automountToken": "false"
+      }
+    },
+    {
+      "id": "sa:ml-platform/serving-sa",
+      "type": "serviceaccount",
+      "label": "serving-sa",
+      "namespace": "ml-platform",
+      "metadata": {
+        "labels": "app=serving",
+        "eks.amazonaws.com/role-arn": "arn:aws:iam::123456789012:role/serving-role",
+        "automountToken": "true"
+      }
+    },
+    {
+      "id": "role:arn:aws:iam::123456789012:role/payments-api-role",
+      "type": "iam_role",
+      "label": "payments-api-role",
+      "metadata": {
+        "arn": "arn:aws:iam::123456789012:role/payments-api-role",
+        "path": "/",
+        "maxSessionDuration": "3600",
+        "policies": "2",
+        "created": "2023-03-22"
+      }
+    },
+    {
+      "id": "role:arn:aws:iam::123456789012:role/payments-worker-role",
+      "type": "iam_role",
+      "label": "payments-worker-role",
+      "metadata": {
+        "arn": "arn:aws:iam::123456789012:role/payments-worker-role",
+        "path": "/",
+        "maxSessionDuration": "3600",
+        "policies": "4",
+        "created": "2023-04-12"
+      }
+    },
+    {
+      "id": "role:arn:aws:iam::123456789012:role/user-service-role",
+      "type": "iam_role",
+      "label": "user-service-role",
+      "metadata": {
+        "arn": "arn:aws:iam::123456789012:role/user-service-role",
+        "path": "/",
+        "maxSessionDuration": "3600",
+        "policies": "3",
+        "created": "2023-07-03"
+      }
+    },
+    {
+      "id": "role:arn:aws:iam::123456789012:role/order-service-role",
+      "type": "iam_role",
+      "label": "order-service-role",
+      "metadata": {
+        "arn": "arn:aws:iam::123456789012:role/order-service-role",
+        "path": "/",
+        "maxSessionDuration": "3600",
+        "policies": "2",
+        "created": "2023-06-02"
+      }
+    },
+    {
+      "id": "role:arn:aws:iam::123456789012:role/notification-service-role",
+      "type": "iam_role",
+      "label": "notification-service-role",
+      "metadata": {
+        "arn": "arn:aws:iam::123456789012:role/notification-service-role",
+        "path": "/",
+        "maxSessionDuration": "3600",
+        "policies": "3",
+        "created": "2023-03-19"
+      }
+    },
+    {
+      "id": "role:arn:aws:iam::123456789012:role/auth-service-role",
+      "type": "iam_role",
+      "label": "auth-service-role",
+      "metadata": {
+        "arn": "arn:aws:iam::123456789012:role/auth-service-role",
+        "path": "/",
+        "maxSessionDuration": "3600",
+        "policies": "2",
+        "created": "2023-02-26"
+      }
+    },
+    {
+      "id": "role:arn:aws:iam::123456789012:role/inventory-service-role",
+      "type": "iam_role",
+      "label": "inventory-service-role",
+      "metadata": {
+        "arn": "arn:aws:iam::123456789012:role/inventory-service-role",
+        "path": "/",
+        "maxSessionDuration": "3600",
+        "policies": "2",
+        "created": "2023-01-02"
+      }
+    },
+    {
+      "id": "role:arn:aws:iam::123456789012:role/product-service-role",
+      "type": "iam_role",
+      "label": "product-service-role",
+      "metadata": {
+        "arn": "arn:aws:iam::123456789012:role/product-service-role",
+        "path": "/",
+        "maxSessionDuration": "3600",
+        "policies": "3",
+        "created": "2023-06-19"
+      }
+    },
+    {
+      "id": "role:arn:aws:iam::123456789012:role/payments-staging-role",
+      "type": "iam_role",
+      "label": "payments-staging-role",
+      "metadata": {
+        "arn": "arn:aws:iam::123456789012:role/payments-staging-role",
+        "path": "/",
+        "maxSessionDuration": "3600",
+        "policies": "3",
+        "created": "2023-08-11"
+      }
+    },
+    {
+      "id": "role:arn:aws:iam::123456789012:role/order-staging-role",
+      "type": "iam_role",
+      "label": "order-staging-role",
+      "metadata": {
+        "arn": "arn:aws:iam::123456789012:role/order-staging-role",
+        "path": "/",
+        "maxSessionDuration": "3600",
+        "policies": "2",
+        "created": "2023-04-02"
+      }
+    },
+    {
+      "id": "role:arn:aws:iam::123456789012:role/spark-data-lake-role",
+      "type": "iam_role",
+      "label": "spark-data-lake-role",
+      "metadata": {
+        "arn": "arn:aws:iam::123456789012:role/spark-data-lake-role",
+        "path": "/",
+        "maxSessionDuration": "3600",
+        "policies": "2",
+        "created": "2023-09-26"
+      }
+    },
+    {
+      "id": "role:arn:aws:iam::123456789012:role/airflow-scheduler-role",
+      "type": "iam_role",
+      "label": "airflow-scheduler-role",
+      "metadata": {
+        "arn": "arn:aws:iam::123456789012:role/airflow-scheduler-role",
+        "path": "/",
+        "maxSessionDuration": "3600",
+        "policies": "4",
+        "created": "2023-05-08"
+      }
+    },
+    {
+      "id": "role:arn:aws:iam::123456789012:role/airflow-worker-role",
+      "type": "iam_role",
+      "label": "airflow-worker-role",
+      "metadata": {
+        "arn": "arn:aws:iam::123456789012:role/airflow-worker-role",
+        "path": "/",
+        "maxSessionDuration": "3600",
+        "policies": "3",
+        "created": "2023-01-11"
+      }
+    },
+    {
+      "id": "role:arn:aws:iam::123456789012:role/kafka-connect-role",
+      "type": "iam_role",
+      "label": "kafka-connect-role",
+      "metadata": {
+        "arn": "arn:aws:iam::123456789012:role/kafka-connect-role",
+        "path": "/",
+        "maxSessionDuration": "3600",
+        "policies": "3",
+        "created": "2023-07-03"
+      }
+    },
+    {
+      "id": "role:arn:aws:iam::123456789012:role/dbt-role",
+      "type": "iam_role",
+      "label": "dbt-role",
+      "metadata": {
+        "arn": "arn:aws:iam::123456789012:role/dbt-role",
+        "path": "/",
+        "maxSessionDuration": "3600",
+        "policies": "2",
+        "created": "2023-09-06"
+      }
+    },
+    {
+      "id": "role:arn:aws:iam::123456789012:role/prometheus-metrics-role",
+      "type": "iam_role",
+      "label": "prometheus-metrics-role",
+      "metadata": {
+        "arn": "arn:aws:iam::123456789012:role/prometheus-metrics-role",
+        "path": "/",
+        "maxSessionDuration": "3600",
+        "policies": "4",
+        "created": "2023-01-28"
+      }
+    },
+    {
+      "id": "role:arn:aws:iam::123456789012:role/grafana-role",
+      "type": "iam_role",
+      "label": "grafana-role",
+      "metadata": {
+        "arn": "arn:aws:iam::123456789012:role/grafana-role",
+        "path": "/",
+        "maxSessionDuration": "3600",
+        "policies": "4",
+        "created": "2023-02-12"
+      }
+    },
+    {
+      "id": "role:arn:aws:iam::123456789012:role/loki-role",
+      "type": "iam_role",
+      "label": "loki-role",
+      "metadata": {
+        "arn": "arn:aws:iam::123456789012:role/loki-role",
+        "path": "/",
+        "maxSessionDuration": "3600",
+        "policies": "1",
+        "created": "2023-02-13"
+      }
+    },
+    {
+      "id": "role:arn:aws:iam::123456789012:role/alertmanager-role",
+      "type": "iam_role",
+      "label": "alertmanager-role",
+      "metadata": {
+        "arn": "arn:aws:iam::123456789012:role/alertmanager-role",
+        "path": "/",
+        "maxSessionDuration": "3600",
+        "policies": "1",
+        "created": "2023-02-09"
+      }
+    },
+    {
+      "id": "role:arn:aws:iam::123456789012:role/vault-role",
+      "type": "iam_role",
+      "label": "vault-role",
+      "metadata": {
+        "arn": "arn:aws:iam::123456789012:role/vault-role",
+        "path": "/",
+        "maxSessionDuration": "3600",
+        "policies": "2",
+        "created": "2023-01-26"
+      }
+    },
+    {
+      "id": "role:arn:aws:iam::123456789012:role/external-secrets-role",
+      "type": "iam_role",
+      "label": "external-secrets-role",
+      "metadata": {
+        "arn": "arn:aws:iam::123456789012:role/external-secrets-role",
+        "path": "/",
+        "maxSessionDuration": "3600",
+        "policies": "1",
+        "created": "2023-02-25"
+      }
+    },
+    {
+      "id": "role:arn:aws:iam::123456789012:role/cert-manager-role",
+      "type": "iam_role",
+      "label": "cert-manager-role",
+      "metadata": {
+        "arn": "arn:aws:iam::123456789012:role/cert-manager-role",
+        "path": "/",
+        "maxSessionDuration": "3600",
+        "policies": "2",
+        "created": "2023-02-22"
+      }
+    },
+    {
+      "id": "role:arn:aws:iam::123456789012:role/alb-controller-role",
+      "type": "iam_role",
+      "label": "alb-controller-role",
+      "metadata": {
+        "arn": "arn:aws:iam::123456789012:role/alb-controller-role",
+        "path": "/",
+        "maxSessionDuration": "3600",
+        "policies": "2",
+        "created": "2023-05-14"
+      }
+    },
+    {
+      "id": "role:arn:aws:iam::123456789012:role/training-role",
+      "type": "iam_role",
+      "label": "training-role",
+      "metadata": {
+        "arn": "arn:aws:iam::123456789012:role/training-role",
+        "path": "/",
+        "maxSessionDuration": "3600",
+        "policies": "2",
+        "created": "2023-07-02"
+      }
+    },
+    {
+      "id": "role:arn:aws:iam::123456789012:role/serving-role",
+      "type": "iam_role",
+      "label": "serving-role",
+      "metadata": {
+        "arn": "arn:aws:iam::123456789012:role/serving-role",
+        "path": "/",
+        "maxSessionDuration": "3600",
+        "policies": "2",
+        "created": "2023-01-14"
+      }
+    },
+    {
+      "id": "svc:arn:aws:s3:::payments-transactions-prod",
+      "type": "aws_service",
+      "label": "S3: payments-transactions-prod",
+      "metadata": {
+        "arn": "arn:aws:s3:::payments-transactions-prod",
+        "service": "s3"
+      }
+    },
+    {
+      "id": "svc:arn:aws:s3:::user-avatars-prod",
+      "type": "aws_service",
+      "label": "S3: user-avatars-prod",
+      "metadata": {
+        "arn": "arn:aws:s3:::user-avatars-prod",
+        "service": "s3"
+      }
+    },
+    {
+      "id": "svc:arn:aws:s3:::data-lake-raw-eu",
+      "type": "aws_service",
+      "label": "S3: data-lake-raw-eu",
+      "metadata": {
+        "arn": "arn:aws:s3:::data-lake-raw-eu",
+        "service": "s3"
+      }
+    },
+    {
+      "id": "svc:arn:aws:s3:::data-lake-processed-eu",
+      "type": "aws_service",
+      "label": "S3: data-lake-processed-eu",
+      "metadata": {
+        "arn": "arn:aws:s3:::data-lake-processed-eu",
+        "service": "s3"
+      }
+    },
+    {
+      "id": "svc:arn:aws:s3:::ml-datasets-prod",
+      "type": "aws_service",
+      "label": "S3: ml-datasets-prod",
+      "metadata": {
+        "arn": "arn:aws:s3:::ml-datasets-prod",
+        "service": "s3"
+      }
+    },
+    {
+      "id": "svc:arn:aws:s3:::ml-models-prod",
+      "type": "aws_service",
+      "label": "S3: ml-models-prod",
+      "metadata": {
+        "arn": "arn:aws:s3:::ml-models-prod",
+        "service": "s3"
+      }
+    },
+    {
+      "id": "svc:arn:aws:s3:::airflow-dags-prod",
+      "type": "aws_service",
+      "label": "S3: airflow-dags-prod",
+      "metadata": {
+        "arn": "arn:aws:s3:::airflow-dags-prod",
+        "service": "s3"
+      }
+    },
+    {
+      "id": "svc:arn:aws:s3:::kafka-connect-backups",
+      "type": "aws_service",
+      "label": "S3: kafka-connect-backups",
+      "metadata": {
+        "arn": "arn:aws:s3:::kafka-connect-backups",
+        "service": "s3"
+      }
+    },
+    {
+      "id": "svc:arn:aws:s3:::loki-logs-prod",
+      "type": "aws_service",
+      "label": "S3: loki-logs-prod",
+      "metadata": {
+        "arn": "arn:aws:s3:::loki-logs-prod",
+        "service": "s3"
+      }
+    },
+    {
+      "id": "svc:arn:aws:s3:::grafana-dashboards",
+      "type": "aws_service",
+      "label": "S3: grafana-dashboards",
+      "metadata": {
+        "arn": "arn:aws:s3:::grafana-dashboards",
+        "service": "s3"
+      }
+    },
+    {
+      "id": "svc:arn:aws:s3:::payments-transactions-staging",
+      "type": "aws_service",
+      "label": "S3: payments-transactions-staging",
+      "metadata": {
+        "arn": "arn:aws:s3:::payments-transactions-staging",
+        "service": "s3"
+      }
+    },
+    {
+      "id": "svc:arn:aws:rds:eu-west-1:123456789012:db:payments-db-prod",
+      "type": "aws_service",
+      "label": "RDS: payments-db-prod",
+      "metadata": {
+        "arn": "arn:aws:rds:eu-west-1:123456789012:db:payments-db-prod",
+        "service": "rds"
+      }
+    },
+    {
+      "id": "svc:arn:aws:rds:eu-west-1:123456789012:db:users-db-prod",
+      "type": "aws_service",
+      "label": "RDS: users-db-prod",
+      "metadata": {
+        "arn": "arn:aws:rds:eu-west-1:123456789012:db:users-db-prod",
+        "service": "rds"
+      }
+    },
+    {
+      "id": "svc:arn:aws:rds:eu-west-1:123456789012:db:orders-db-prod",
+      "type": "aws_service",
+      "label": "RDS: orders-db-prod",
+      "metadata": {
+        "arn": "arn:aws:rds:eu-west-1:123456789012:db:orders-db-prod",
+        "service": "rds"
+      }
+    },
+    {
+      "id": "svc:arn:aws:rds:eu-west-1:123456789012:db:inventory-db-prod",
+      "type": "aws_service",
+      "label": "RDS: inventory-db-prod",
+      "metadata": {
+        "arn": "arn:aws:rds:eu-west-1:123456789012:db:inventory-db-prod",
+        "service": "rds"
+      }
+    },
+    {
+      "id": "svc:arn:aws:rds:eu-west-1:123456789012:db:airflow-metadata",
+      "type": "aws_service",
+      "label": "RDS: airflow-metadata",
+      "metadata": {
+        "arn": "arn:aws:rds:eu-west-1:123456789012:db:airflow-metadata",
+        "service": "rds"
+      }
+    },
+    {
+      "id": "svc:arn:aws:rds:eu-west-1:123456789012:db:analytics-db-prod",
+      "type": "aws_service",
+      "label": "RDS: analytics-db-prod",
+      "metadata": {
+        "arn": "arn:aws:rds:eu-west-1:123456789012:db:analytics-db-prod",
+        "service": "rds"
+      }
+    },
+    {
+      "id": "svc:arn:aws:rds:eu-west-1:123456789012:db:orders-db-staging",
+      "type": "aws_service",
+      "label": "RDS: orders-db-staging",
+      "metadata": {
+        "arn": "arn:aws:rds:eu-west-1:123456789012:db:orders-db-staging",
+        "service": "rds"
+      }
+    },
+    {
+      "id": "svc:arn:aws:dynamodb:eu-west-1:123456789012:table/payments-idempotency",
+      "type": "aws_service",
+      "label": "DynamoDB: payments-idempotency",
+      "metadata": {
+        "arn": "arn:aws:dynamodb:eu-west-1:123456789012:table/payments-idempotency",
+        "service": "dynamodb"
+      }
+    },
+    {
+      "id": "svc:arn:aws:dynamodb:eu-west-1:123456789012:table/sessions-prod",
+      "type": "aws_service",
+      "label": "DynamoDB: sessions-prod",
+      "metadata": {
+        "arn": "arn:aws:dynamodb:eu-west-1:123456789012:table/sessions-prod",
+        "service": "dynamodb"
+      }
+    },
+    {
+      "id": "svc:arn:aws:dynamodb:eu-west-1:123456789012:table/product-catalog",
+      "type": "aws_service",
+      "label": "DynamoDB: product-catalog",
+      "metadata": {
+        "arn": "arn:aws:dynamodb:eu-west-1:123456789012:table/product-catalog",
+        "service": "dynamodb"
+      }
+    },
+    {
+      "id": "svc:arn:aws:dynamodb:eu-west-1:123456789012:table/feature-store-prod",
+      "type": "aws_service",
+      "label": "DynamoDB: feature-store-prod",
+      "metadata": {
+        "arn": "arn:aws:dynamodb:eu-west-1:123456789012:table/feature-store-prod",
+        "service": "dynamodb"
+      }
+    },
+    {
+      "id": "svc:arn:aws:sqs:eu-west-1:123456789012:queue:payments-events",
+      "type": "aws_service",
+      "label": "SQS: payments-events",
+      "metadata": {
+        "arn": "arn:aws:sqs:eu-west-1:123456789012:queue:payments-events",
+        "service": "sqs"
+      }
+    },
+    {
+      "id": "svc:arn:aws:sqs:eu-west-1:123456789012:queue:order-events",
+      "type": "aws_service",
+      "label": "SQS: order-events",
+      "metadata": {
+        "arn": "arn:aws:sqs:eu-west-1:123456789012:queue:order-events",
+        "service": "sqs"
+      }
+    },
+    {
+      "id": "svc:arn:aws:sqs:eu-west-1:123456789012:queue:inventory-events",
+      "type": "aws_service",
+      "label": "SQS: inventory-events",
+      "metadata": {
+        "arn": "arn:aws:sqs:eu-west-1:123456789012:queue:inventory-events",
+        "service": "sqs"
+      }
+    },
+    {
+      "id": "svc:arn:aws:sqs:eu-west-1:123456789012:queue:airflow-celery",
+      "type": "aws_service",
+      "label": "SQS: airflow-celery",
+      "metadata": {
+        "arn": "arn:aws:sqs:eu-west-1:123456789012:queue:airflow-celery",
+        "service": "sqs"
+      }
+    },
+    {
+      "id": "svc:arn:aws:sns:eu-west-1:123456789012:notifications-topic",
+      "type": "aws_service",
+      "label": "SNS: notifications-topic",
+      "metadata": {
+        "arn": "arn:aws:sns:eu-west-1:123456789012:notifications-topic",
+        "service": "sns"
+      }
+    },
+    {
+      "id": "svc:arn:aws:sns:eu-west-1:123456789012:alerts-topic",
+      "type": "aws_service",
+      "label": "SNS: alerts-topic",
+      "metadata": {
+        "arn": "arn:aws:sns:eu-west-1:123456789012:alerts-topic",
+        "service": "sns"
+      }
+    },
+    {
+      "id": "svc:arn:aws:secretsmanager:eu-west-1:123456789012:secret:payments/db-credentials",
+      "type": "aws_service",
+      "label": "SM: payments/db-credentials",
+      "metadata": {
+        "arn": "arn:aws:secretsmanager:eu-west-1:123456789012:secret:payments/db-credentials",
+        "service": "secretsmanager"
+      }
+    },
+    {
+      "id": "svc:arn:aws:secretsmanager:eu-west-1:123456789012:secret:users/db-credentials",
+      "type": "aws_service",
+      "label": "SM: users/db-credentials",
+      "metadata": {
+        "arn": "arn:aws:secretsmanager:eu-west-1:123456789012:secret:users/db-credentials",
+        "service": "secretsmanager"
+      }
+    },
+    {
+      "id": "svc:arn:aws:secretsmanager:eu-west-1:123456789012:secret:auth/jwt-secret",
+      "type": "aws_service",
+      "label": "SM: auth/jwt-secret",
+      "metadata": {
+        "arn": "arn:aws:secretsmanager:eu-west-1:123456789012:secret:auth/jwt-secret",
+        "service": "secretsmanager"
+      }
+    },
+    {
+      "id": "svc:arn:aws:secretsmanager:eu-west-1:123456789012:secret:kafka/credentials",
+      "type": "aws_service",
+      "label": "SM: kafka/credentials",
+      "metadata": {
+        "arn": "arn:aws:secretsmanager:eu-west-1:123456789012:secret:kafka/credentials",
+        "service": "secretsmanager"
+      }
+    },
+    {
+      "id": "svc:arn:aws:secretsmanager:eu-west-1:123456789012:secret:*",
+      "type": "aws_service",
+      "label": "SM: * (ALL SECRETS)",
+      "metadata": {
+        "arn": "arn:aws:secretsmanager:eu-west-1:123456789012:secret:*",
+        "service": "secretsmanager"
+      }
+    },
+    {
+      "id": "svc:arn:aws:kms:eu-west-1:123456789012:key/auth-signing-key",
+      "type": "aws_service",
+      "label": "KMS: auth-signing-key",
+      "metadata": {
+        "arn": "arn:aws:kms:eu-west-1:123456789012:key/auth-signing-key",
+        "service": "kms"
+      }
+    },
+    {
+      "id": "svc:arn:aws:kms:eu-west-1:123456789012:key/*",
+      "type": "aws_service",
+      "label": "KMS: * (ALL KEYS)",
+      "metadata": {
+        "arn": "arn:aws:kms:eu-west-1:123456789012:key/*",
+        "service": "kms"
+      }
+    },
+    {
+      "id": "svc:arn:aws:cloudwatch:eu-west-1:123456789012:*",
+      "type": "aws_service",
+      "label": "CloudWatch: metrics",
+      "metadata": {
+        "arn": "arn:aws:cloudwatch:eu-west-1:123456789012:*",
+        "service": "cloudwatch"
+      }
+    },
+    {
+      "id": "svc:arn:aws:glue:eu-west-1:123456789012:catalog",
+      "type": "aws_service",
+      "label": "Glue: data catalog",
+      "metadata": {
+        "arn": "arn:aws:glue:eu-west-1:123456789012:catalog",
+        "service": "glue"
+      }
+    },
+    {
+      "id": "svc:arn:aws:route53:::hostedzone/Z1234567890ABC",
+      "type": "aws_service",
+      "label": "Route53: company.internal",
+      "metadata": {
+        "arn": "arn:aws:route53:::hostedzone/Z1234567890ABC",
+        "service": "route53"
+      }
+    },
+    {
+      "id": "svc:arn:aws:elasticloadbalancing:eu-west-1:123456789012:loadbalancer/*",
+      "type": "aws_service",
+      "label": "ELB: load-balancers/*",
+      "metadata": {
+        "arn": "arn:aws:elasticloadbalancing:eu-west-1:123456789012:loadbalancer/*",
+        "service": "elasticloadbalancing"
+      }
+    },
+    {
+      "id": "svc:arn:aws:sagemaker:eu-west-1:123456789012:training-job/*",
+      "type": "aws_service",
+      "label": "SageMaker: training-jobs/*",
+      "metadata": {
+        "arn": "arn:aws:sagemaker:eu-west-1:123456789012:training-job/*",
+        "service": "sagemaker"
+      }
+    },
+    {
+      "id": "deploy:production/payments-api",
+      "type": "deployment",
+      "label": "payments-api",
+      "namespace": "production",
+      "metadata": {
+        "replicas": "2",
+        "image": "company/payments-api:v2.4.1",
+        "strategy": "RollingUpdate",
+        "privileged": "true",
+        "available": "2",
+        "cpuRequest": "250m",
+        "cpuLimit": "1000m",
+        "memRequest": "64Mi",
+        "memLimit": "128Mi",
+        "selector": "app=payments-api",
+        "labels": "app=payments-api,env=production,managed-by=helm"
+      }
+    },
+    {
+      "id": "deploy:production/payments-worker",
+      "type": "deployment",
+      "label": "payments-worker",
+      "namespace": "production",
+      "metadata": {
+        "replicas": "3",
+        "image": "company/payments-worker:v2.4.1",
+        "strategy": "RollingUpdate",
+        "available": "3",
+        "cpuRequest": "250m",
+        "cpuLimit": "1000m",
+        "memRequest": "64Mi",
+        "memLimit": "128Mi",
+        "selector": "app=payments-worker",
+        "labels": "app=payments-worker,env=production,managed-by=helm"
+      }
+    },
+    {
+      "id": "deploy:production/user-service",
+      "type": "deployment",
+      "label": "user-service",
+      "namespace": "production",
+      "metadata": {
+        "replicas": "2",
+        "image": "company/user-service:v1.8.3",
+        "strategy": "RollingUpdate",
+        "available": "2",
+        "cpuRequest": "500m",
+        "cpuLimit": "2000m",
+        "memRequest": "2Gi",
+        "memLimit": "4Gi",
+        "selector": "app=user-service",
+        "labels": "app=user-service,env=production,managed-by=helm"
+      }
+    },
+    {
+      "id": "deploy:production/order-service",
+      "type": "deployment",
+      "label": "order-service",
+      "namespace": "production",
+      "metadata": {
+        "replicas": "2",
+        "image": "company/order-service:v3.1.0",
+        "strategy": "RollingUpdate",
+        "available": "2",
+        "cpuRequest": "250m",
+        "cpuLimit": "1000m",
+        "memRequest": "64Mi",
+        "memLimit": "128Mi",
+        "selector": "app=order-service",
+        "labels": "app=order-service,env=production,managed-by=helm"
+      }
+    },
+    {
+      "id": "deploy:production/notification-service",
+      "type": "deployment",
+      "label": "notification-service",
+      "namespace": "production",
+      "metadata": {
+        "replicas": "1",
+        "image": "company/notification-service:v1.2.5",
+        "strategy": "RollingUpdate",
+        "available": "1",
+        "cpuRequest": "200m",
+        "cpuLimit": "800m",
+        "memRequest": "256Mi",
+        "memLimit": "512Mi",
+        "selector": "app=notification-service",
+        "labels": "app=notification-service,env=production,managed-by=helm"
+      }
+    },
+    {
+      "id": "deploy:production/auth-service",
+      "type": "deployment",
+      "label": "auth-service",
+      "namespace": "production",
+      "metadata": {
+        "replicas": "2",
+        "image": "company/auth-service:v2.0.1",
+        "strategy": "RollingUpdate",
+        "available": "2",
+        "cpuRequest": "1000m",
+        "cpuLimit": "4000m",
+        "memRequest": "512Mi",
+        "memLimit": "1Gi",
+        "selector": "app=auth-service",
+        "labels": "app=auth-service,env=production,managed-by=helm"
+      }
+    },
+    {
+      "id": "deploy:production/inventory-service",
+      "type": "deployment",
+      "label": "inventory-service",
+      "namespace": "production",
+      "metadata": {
+        "replicas": "1",
+        "image": "company/inventory-service:v1.5.0",
+        "strategy": "RollingUpdate",
+        "available": "1",
+        "cpuRequest": "50m",
+        "cpuLimit": "200m",
+        "memRequest": "128Mi",
+        "memLimit": "256Mi",
+        "selector": "app=inventory-service",
+        "labels": "app=inventory-service,env=production,managed-by=helm"
+      }
+    },
+    {
+      "id": "deploy:production/checkout-service",
+      "type": "deployment",
+      "label": "checkout-service",
+      "namespace": "production",
+      "metadata": {
+        "replicas": "2",
+        "image": "company/checkout-service:v1.0.3",
+        "strategy": "RollingUpdate",
+        "available": "2",
+        "cpuRequest": "1000m",
+        "cpuLimit": "4000m",
+        "memRequest": "512Mi",
+        "memLimit": "1Gi",
+        "selector": "app=checkout-service",
+        "labels": "app=checkout-service,env=production,managed-by=helm"
+      }
+    },
+    {
+      "id": "deploy:production/product-service",
+      "type": "deployment",
+      "label": "product-service",
+      "namespace": "production",
+      "metadata": {
+        "replicas": "2",
+        "image": "company/product-service:v2.2.0",
+        "strategy": "RollingUpdate",
+        "available": "2",
+        "cpuRequest": "100m",
+        "cpuLimit": "500m",
+        "memRequest": "1Gi",
+        "memLimit": "2Gi",
+        "selector": "app=product-service",
+        "labels": "app=product-service,env=production,managed-by=helm"
+      }
+    },
+    {
+      "id": "deploy:staging/payments-api-staging",
+      "type": "deployment",
+      "label": "payments-api-staging",
+      "namespace": "staging",
+      "metadata": {
+        "replicas": "1",
+        "image": "company/payments-api:v2.5.0-rc1",
+        "strategy": "Recreate",
+        "runAsRoot": "true",
+        "hostPath": "true",
+        "available": "1",
+        "cpuRequest": "250m",
+        "cpuLimit": "1000m",
+        "memRequest": "64Mi",
+        "memLimit": "128Mi",
+        "selector": "app=payments-api-staging",
+        "labels": "app=payments-api-staging,env=staging,managed-by=helm"
+      }
+    },
+    {
+      "id": "deploy:staging/user-service-staging",
+      "type": "deployment",
+      "label": "user-service-staging",
+      "namespace": "staging",
+      "metadata": {
+        "replicas": "1",
+        "image": "company/user-service:v1.9.0-rc2",
+        "strategy": "Recreate",
+        "available": "1",
+        "cpuRequest": "200m",
+        "cpuLimit": "800m",
+        "memRequest": "256Mi",
+        "memLimit": "512Mi",
+        "selector": "app=user-service-staging",
+        "labels": "app=user-service-staging,env=staging,managed-by=helm"
+      }
+    },
+    {
+      "id": "deploy:staging/order-service-staging",
+      "type": "deployment",
+      "label": "order-service-staging",
+      "namespace": "staging",
+      "metadata": {
+        "replicas": "1",
+        "image": "company/order-service:v3.2.0-rc1",
+        "strategy": "Recreate",
+        "available": "1",
+        "cpuRequest": "250m",
+        "cpuLimit": "1000m",
+        "memRequest": "64Mi",
+        "memLimit": "128Mi",
+        "selector": "app=order-service-staging",
+        "labels": "app=order-service-staging,env=staging,managed-by=helm"
+      }
+    },
+    {
+      "id": "ss:monitoring/prometheus",
+      "type": "statefulset",
+      "label": "prometheus",
+      "namespace": "monitoring",
+      "metadata": {
+        "replicas": "1",
+        "storageClass": "gp3",
+        "pvc": "50Gi",
+        "image": "prom/prometheus:v2.48.0",
+        "cpuRequest": "250m",
+        "cpuLimit": "1000m",
+        "memRequest": "64Mi",
+        "memLimit": "128Mi",
+        "labels": "app=prometheus,env=monitoring,managed-by=helm"
+      }
+    },
+    {
+      "id": "ss:monitoring/loki",
+      "type": "statefulset",
+      "label": "loki",
+      "namespace": "monitoring",
+      "metadata": {
+        "replicas": "1",
+        "storageClass": "gp3",
+        "pvc": "100Gi",
+        "image": "company/loki:v1.0.0",
+        "cpuRequest": "100m",
+        "cpuLimit": "500m",
+        "memRequest": "1Gi",
+        "memLimit": "2Gi",
+        "labels": "app=loki,env=monitoring,managed-by=helm"
+      }
+    },
+    {
+      "id": "ss:monitoring/alertmanager",
+      "type": "statefulset",
+      "label": "alertmanager",
+      "namespace": "monitoring",
+      "metadata": {
+        "replicas": "1",
+        "storageClass": "gp2",
+        "pvc": "10Gi",
+        "image": "prom/alertmanager:v0.26.0",
+        "cpuRequest": "200m",
+        "cpuLimit": "800m",
+        "memRequest": "256Mi",
+        "memLimit": "512Mi",
+        "labels": "app=alertmanager,env=monitoring,managed-by=helm"
+      }
+    },
+    {
+      "id": "deploy:monitoring/grafana",
+      "type": "deployment",
+      "label": "grafana",
+      "namespace": "monitoring",
+      "metadata": {
+        "replicas": "1",
+        "image": "grafana/grafana:10.4.2",
+        "strategy": "RollingUpdate",
+        "available": "1",
+        "cpuRequest": "200m",
+        "cpuLimit": "800m",
+        "memRequest": "256Mi",
+        "memLimit": "512Mi",
+        "selector": "app=grafana",
+        "labels": "app=grafana,env=monitoring,managed-by=helm"
+      }
+    },
+    {
+      "id": "ds:monitoring/node-exporter",
+      "type": "daemonset",
+      "label": "node-exporter",
+      "namespace": "monitoring",
+      "metadata": {
+        "image": "prom/node-exporter:v1.8.0",
+        "nodeSelector": "all",
+        "desired": "4",
+        "ready": "4",
+        "cpuRequest": "500m",
+        "cpuLimit": "2000m",
+        "memRequest": "2Gi",
+        "memLimit": "4Gi",
+        "labels": "app=node-exporter,env=monitoring"
+      }
+    },
+    {
+      "id": "ds:security/falco",
+      "type": "daemonset",
+      "label": "falco",
+      "namespace": "security",
+      "metadata": {
+        "image": "falcosecurity/falco:0.37.1",
+        "nodeSelector": "all",
+        "desired": "5",
+        "ready": "5",
+        "cpuRequest": "50m",
+        "cpuLimit": "200m",
+        "memRequest": "128Mi",
+        "memLimit": "256Mi",
+        "labels": "app=falco,env=security"
+      }
+    },
+    {
+      "id": "ds:data-platform/fluentbit",
+      "type": "daemonset",
+      "label": "fluentbit",
+      "namespace": "data-platform",
+      "metadata": {
+        "image": "fluent/fluent-bit:3.0.4",
+        "nodeSelector": "all",
+        "desired": "6",
+        "ready": "6",
+        "cpuRequest": "1000m",
+        "cpuLimit": "4000m",
+        "memRequest": "512Mi",
+        "memLimit": "1Gi",
+        "labels": "app=fluentbit,env=data-platform"
+      }
+    },
+    {
+      "id": "deploy:data-platform/airflow-scheduler",
+      "type": "deployment",
+      "label": "airflow-scheduler",
+      "namespace": "data-platform",
+      "metadata": {
+        "replicas": "1",
+        "image": "apache/airflow:2.9.1",
+        "strategy": "Recreate",
+        "available": "1",
+        "cpuRequest": "200m",
+        "cpuLimit": "800m",
+        "memRequest": "256Mi",
+        "memLimit": "512Mi",
+        "selector": "app=airflow-scheduler",
+        "labels": "app=airflow-scheduler,env=data-platform,managed-by=helm"
+      }
+    },
+    {
+      "id": "deploy:data-platform/airflow-worker",
+      "type": "deployment",
+      "label": "airflow-worker",
+      "namespace": "data-platform",
+      "metadata": {
+        "replicas": "3",
+        "image": "apache/airflow:2.9.1",
+        "strategy": "RollingUpdate",
+        "available": "3",
+        "cpuRequest": "1000m",
+        "cpuLimit": "4000m",
+        "memRequest": "512Mi",
+        "memLimit": "1Gi",
+        "selector": "app=airflow-worker",
+        "labels": "app=airflow-worker,env=data-platform,managed-by=helm"
+      }
+    },
+    {
+      "id": "deploy:data-platform/kafka-connect",
+      "type": "deployment",
+      "label": "kafka-connect",
+      "namespace": "data-platform",
+      "metadata": {
+        "replicas": "2",
+        "image": "confluentinc/cp-kafka-connect:7.6.0",
+        "strategy": "RollingUpdate",
+        "available": "2",
+        "cpuRequest": "250m",
+        "cpuLimit": "1000m",
+        "memRequest": "64Mi",
+        "memLimit": "128Mi",
+        "selector": "app=kafka-connect",
+        "labels": "app=kafka-connect,env=data-platform,managed-by=helm"
+      }
+    },
+    {
+      "id": "deploy:data-platform/dbt-runner",
+      "type": "deployment",
+      "label": "dbt-runner",
+      "namespace": "data-platform",
+      "metadata": {
+        "replicas": "1",
+        "image": "company/dbt-runner:v1.7.3",
+        "strategy": "Recreate",
+        "available": "1",
+        "cpuRequest": "50m",
+        "cpuLimit": "200m",
+        "memRequest": "128Mi",
+        "memLimit": "256Mi",
+        "selector": "app=dbt-runner",
+        "labels": "app=dbt-runner,env=data-platform,managed-by=helm"
+      }
+    },
+    {
+      "id": "deploy:ingress/nginx-ingress",
+      "type": "deployment",
+      "label": "nginx-ingress",
+      "namespace": "ingress",
+      "metadata": {
+        "replicas": "2",
+        "image": "ingress-nginx/controller:v1.10.1",
+        "strategy": "RollingUpdate",
+        "available": "2",
+        "cpuRequest": "50m",
+        "cpuLimit": "200m",
+        "memRequest": "128Mi",
+        "memLimit": "256Mi",
+        "selector": "app=nginx-ingress",
+        "labels": "app=nginx-ingress,env=ingress,managed-by=helm"
+      }
+    },
+    {
+      "id": "deploy:ingress/aws-load-balancer",
+      "type": "deployment",
+      "label": "aws-load-balancer-ctrl",
+      "namespace": "ingress",
+      "metadata": {
+        "replicas": "2",
+        "image": "amazon/aws-load-balancer-controller:v2.7.2",
+        "strategy": "RollingUpdate",
+        "available": "2",
+        "cpuRequest": "200m",
+        "cpuLimit": "800m",
+        "memRequest": "256Mi",
+        "memLimit": "512Mi",
+        "selector": "app=aws-load-balancer-ctrl",
+        "labels": "app=aws-load-balancer-ctrl,env=ingress,managed-by=helm"
+      }
+    },
+    {
+      "id": "deploy:ml-platform/training-job-runner",
+      "type": "deployment",
+      "label": "training-job-runner",
+      "namespace": "ml-platform",
+      "metadata": {
+        "replicas": "1",
+        "image": "company/training-runner:v0.4.2",
+        "strategy": "Recreate",
+        "available": "1",
+        "cpuRequest": "100m",
+        "cpuLimit": "500m",
+        "memRequest": "1Gi",
+        "memLimit": "2Gi",
+        "selector": "app=training-job-runner",
+        "labels": "app=training-job-runner,env=ml-platform,managed-by=helm"
+      }
+    },
+    {
+      "id": "deploy:ml-platform/model-serving",
+      "type": "deployment",
+      "label": "model-serving-api",
+      "namespace": "ml-platform",
+      "metadata": {
+        "replicas": "2",
+        "image": "company/model-serving:v0.3.1",
+        "strategy": "RollingUpdate",
+        "hostNetwork": "true",
+        "hostPID": "true",
+        "available": "2",
+        "cpuRequest": "250m",
+        "cpuLimit": "1000m",
+        "memRequest": "64Mi",
+        "memLimit": "128Mi",
+        "selector": "app=model-serving-api",
+        "labels": "app=model-serving-api,env=ml-platform,managed-by=helm"
+      }
+    },
+    {
+      "id": "k8s-svc:production/payments-api",
+      "type": "k8s_service",
+      "label": "payments-api",
+      "namespace": "production",
+      "metadata": {
+        "svcType": "ClusterIP",
+        "port": "8080",
+        "protocol": "TCP",
+        "selector": "app=payments-api",
+        "clusterIP": "10.100.248.153",
+        "labels": "app=payments-api,env=production"
+      }
+    },
+    {
+      "id": "k8s-svc:production/user-service",
+      "type": "k8s_service",
+      "label": "user-service",
+      "namespace": "production",
+      "metadata": {
+        "svcType": "ClusterIP",
+        "port": "8080",
+        "protocol": "TCP",
+        "selector": "app=user-service",
+        "clusterIP": "10.100.189.42",
+        "labels": "app=user-service,env=production"
+      }
+    },
+    {
+      "id": "k8s-svc:production/order-service",
+      "type": "k8s_service",
+      "label": "order-service",
+      "namespace": "production",
+      "metadata": {
+        "svcType": "ClusterIP",
+        "port": "8080",
+        "protocol": "TCP",
+        "selector": "app=order-service",
+        "clusterIP": "10.100.53.171",
+        "labels": "app=order-service,env=production"
+      }
+    },
+    {
+      "id": "k8s-svc:production/auth-service",
+      "type": "k8s_service",
+      "label": "auth-service",
+      "namespace": "production",
+      "metadata": {
+        "svcType": "ClusterIP",
+        "port": "8080",
+        "protocol": "TCP",
+        "selector": "app=auth-service",
+        "clusterIP": "10.100.254.11",
+        "labels": "app=auth-service,env=production"
+      }
+    },
+    {
+      "id": "k8s-svc:production/inventory-service",
+      "type": "k8s_service",
+      "label": "inventory-service",
+      "namespace": "production",
+      "metadata": {
+        "svcType": "ClusterIP",
+        "port": "8080",
+        "protocol": "TCP",
+        "selector": "app=inventory-service",
+        "clusterIP": "10.100.110.51",
+        "labels": "app=inventory-service,env=production"
+      }
+    },
+    {
+      "id": "k8s-svc:production/checkout-service",
+      "type": "k8s_service",
+      "label": "checkout-service",
+      "namespace": "production",
+      "metadata": {
+        "svcType": "ClusterIP",
+        "port": "8080",
+        "protocol": "TCP",
+        "selector": "app=checkout-service",
+        "clusterIP": "10.100.226.53",
+        "labels": "app=checkout-service,env=production"
+      }
+    },
+    {
+      "id": "k8s-svc:monitoring/grafana",
+      "type": "k8s_service",
+      "label": "grafana",
+      "namespace": "monitoring",
+      "metadata": {
+        "svcType": "ClusterIP",
+        "port": "3000",
+        "protocol": "TCP",
+        "selector": "app=grafana",
+        "clusterIP": "10.100.13.116",
+        "labels": "app=grafana,env=monitoring"
+      }
+    },
+    {
+      "id": "k8s-svc:monitoring/prometheus",
+      "type": "k8s_service",
+      "label": "prometheus",
+      "namespace": "monitoring",
+      "metadata": {
+        "svcType": "ClusterIP",
+        "port": "9090",
+        "protocol": "TCP",
+        "selector": "app=prometheus",
+        "clusterIP": "10.100.70.242",
+        "labels": "app=prometheus,env=monitoring"
+      }
+    },
+    {
+      "id": "k8s-svc:data-platform/airflow-webserver",
+      "type": "k8s_service",
+      "label": "airflow-webserver",
+      "namespace": "data-platform",
+      "metadata": {
+        "svcType": "ClusterIP",
+        "port": "8080",
+        "protocol": "TCP",
+        "selector": "app=airflow-scheduler",
+        "clusterIP": "10.100.137.10",
+        "labels": "app=airflow-webserver,env=data-platform"
+      }
+    },
+    {
+      "id": "k8s-svc:ml-platform/model-serving",
+      "type": "k8s_service",
+      "label": "model-serving-api",
+      "namespace": "ml-platform",
+      "metadata": {
+        "svcType": "ClusterIP",
+        "port": "8000",
+        "protocol": "TCP",
+        "selector": "app=model-serving",
+        "clusterIP": "10.100.59.143",
+        "labels": "app=model-serving-api,env=ml-platform"
+      }
+    },
+    {
+      "id": "ing:production/app-ingress",
+      "type": "ingress",
+      "label": "app-ingress",
+      "namespace": "production",
+      "metadata": {
+        "class": "nginx",
+        "host": "api.company.com",
+        "tls": "true",
+        "rules": "3",
+        "annotations": "nginx.ingress.kubernetes.io/ssl-redirect=true",
+        "labels": "app=app-ingress,env=production"
+      }
+    },
+    {
+      "id": "ing:monitoring/monitoring-ingress",
+      "type": "ingress",
+      "label": "monitoring-ingress",
+      "namespace": "monitoring",
+      "metadata": {
+        "class": "nginx",
+        "host": "grafana.internal.company.com",
+        "tls": "true",
+        "rules": "2",
+        "annotations": "nginx.ingress.kubernetes.io/ssl-redirect=true",
+        "labels": "app=monitoring-ingress,env=monitoring"
+      }
+    },
+    {
+      "id": "netpol:production/deny-all-ingress",
+      "type": "networkpolicy",
+      "label": "deny-all-ingress",
+      "namespace": "production",
+      "metadata": {
+        "podSelector": "{}",
+        "policyTypes": "Ingress",
+        "effect": "deny"
+      }
+    },
+    {
+      "id": "netpol:production/allow-payments-internal",
+      "type": "networkpolicy",
+      "label": "allow-payments-internal",
+      "namespace": "production",
+      "metadata": {
+        "podSelector": "app=payments-api",
+        "policyTypes": "Ingress,Egress",
+        "effect": "allow"
+      }
+    },
+    {
+      "id": "netpol:production/allow-order-internal",
+      "type": "networkpolicy",
+      "label": "allow-order-internal",
+      "namespace": "production",
+      "metadata": {
+        "podSelector": "app=order-service",
+        "policyTypes": "Ingress",
+        "effect": "allow"
+      }
+    },
+    {
+      "id": "netpol:staging/deny-all-ingress",
+      "type": "networkpolicy",
+      "label": "deny-all-ingress",
+      "namespace": "staging",
+      "metadata": {
+        "podSelector": "{}",
+        "policyTypes": "Ingress",
+        "effect": "deny"
+      }
+    },
+    {
+      "id": "netpol:monitoring/allow-scraping",
+      "type": "networkpolicy",
+      "label": "allow-prometheus-scraping",
+      "namespace": "monitoring",
+      "metadata": {
+        "podSelector": "app=prometheus",
+        "policyTypes": "Egress",
+        "effect": "allow"
+      }
+    },
+    {
+      "id": "k8s-clusterrole:payments-cluster-admin",
+      "type": "k8s_clusterrole",
+      "label": "payments-cluster-admin",
+      "metadata": {
+        "rules": "*:*",
+        "danger": "critical",
+        "namespace": "cluster-wide"
+      }
+    },
+    {
+      "id": "k8s-role:production/payments-secret-reader",
+      "type": "k8s_role",
+      "label": "payments-secret-reader",
+      "namespace": "production",
+      "metadata": {
+        "rules": "secrets:get,list,watch",
+        "danger": "high",
+        "namespace": "production"
+      }
+    },
+    {
+      "id": "k8s-role:production/payments-pod-exec",
+      "type": "k8s_role",
+      "label": "payments-pod-exec",
+      "namespace": "production",
+      "metadata": {
+        "rules": "pods/exec:create",
+        "danger": "high",
+        "namespace": "production"
+      }
+    },
+    {
+      "id": "k8s-clusterrole:monitoring-reader",
+      "type": "k8s_clusterrole",
+      "label": "monitoring-reader",
+      "metadata": {
+        "rules": "pods:get,list,watch; services:get,list",
+        "danger": "low",
+        "namespace": "cluster-wide"
+      }
+    },
+    {
+      "id": "k8s-crb:payments-admin-binding",
+      "type": "k8s_clusterrolebinding",
+      "label": "payments-admin-binding",
+      "metadata": {
+        "roleRef": "payments-cluster-admin",
+        "roleKind": "ClusterRole",
+        "subjects": "system:serviceaccount"
+      }
+    },
+    {
+      "id": "k8s-rb:production/payments-secrets-binding",
+      "type": "k8s_rolebinding",
+      "label": "payments-secrets-binding",
+      "namespace": "production",
+      "metadata": {
+        "roleRef": "payments-secret-reader",
+        "roleKind": "Role",
+        "subjects": "system:serviceaccount"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e0",
+      "source": "pod:production/payments-api-7d4f9c8b6-xk2p9",
+      "target": "sa:production/payments-api-sa",
+      "label": "uses"
+    },
+    {
+      "id": "e1",
+      "source": "pod:production/payments-worker-6c5b4d3e2-mn7q1",
+      "target": "sa:production/payments-worker-sa",
+      "label": "uses"
+    },
+    {
+      "id": "e2",
+      "source": "pod:production/user-service-5b8c9d4f3-pq8r2",
+      "target": "sa:production/user-service-sa",
+      "label": "uses"
+    },
+    {
+      "id": "e3",
+      "source": "pod:production/user-service-5b8c9d4f3-ab3c4",
+      "target": "sa:production/user-service-sa",
+      "label": "uses"
+    },
+    {
+      "id": "e4",
+      "source": "pod:production/order-service-3d6e7f8a1-st5u6",
+      "target": "sa:production/order-service-sa",
+      "label": "uses"
+    },
+    {
+      "id": "e5",
+      "source": "pod:production/notification-service-9a2b3c4d5-vw9x0",
+      "target": "sa:production/notification-service-sa",
+      "label": "uses"
+    },
+    {
+      "id": "e6",
+      "source": "pod:production/auth-service-1c4d5e6f7-yz1a2",
+      "target": "sa:production/auth-service-sa",
+      "label": "uses"
+    },
+    {
+      "id": "e7",
+      "source": "pod:production/inventory-service-7f8a9b0c1-bc3d4",
+      "target": "sa:production/inventory-service-sa",
+      "label": "uses"
+    },
+    {
+      "id": "e8",
+      "source": "pod:production/checkout-service-2e3f4a5b6-ef5g6",
+      "target": "sa:production/checkout-service-sa",
+      "label": "uses"
+    },
+    {
+      "id": "e9",
+      "source": "pod:production/product-service-8b9c0d1e2-gh7h8",
+      "target": "sa:production/product-service-sa",
+      "label": "uses"
+    },
+    {
+      "id": "e10",
+      "source": "pod:staging/payments-api-staging-4f5g6h7i8-ij9j0",
+      "target": "sa:staging/payments-staging-sa",
+      "label": "uses"
+    },
+    {
+      "id": "e11",
+      "source": "pod:staging/user-service-staging-0a1b2c3d4-kl1l2",
+      "target": "sa:staging/user-staging-sa",
+      "label": "uses"
+    },
+    {
+      "id": "e12",
+      "source": "pod:staging/order-service-staging-6g7h8i9j0-mn3n4",
+      "target": "sa:staging/order-staging-sa",
+      "label": "uses"
+    },
+    {
+      "id": "e13",
+      "source": "pod:data-platform/spark-driver-abc123",
+      "target": "sa:data-platform/spark-sa",
+      "label": "uses"
+    },
+    {
+      "id": "e14",
+      "source": "pod:data-platform/spark-executor-def456",
+      "target": "sa:data-platform/spark-sa",
+      "label": "uses"
+    },
+    {
+      "id": "e15",
+      "source": "pod:data-platform/spark-executor-ghi789",
+      "target": "sa:data-platform/spark-sa",
+      "label": "uses"
+    },
+    {
+      "id": "e16",
+      "source": "pod:data-platform/airflow-scheduler-5c6d7e8f9-qr7r8",
+      "target": "sa:data-platform/airflow-scheduler-sa",
+      "label": "uses"
+    },
+    {
+      "id": "e17",
+      "source": "pod:data-platform/airflow-worker-3a4b5c6d7-st9t0",
+      "target": "sa:data-platform/airflow-worker-sa",
+      "label": "uses"
+    },
+    {
+      "id": "e18",
+      "source": "pod:data-platform/kafka-connect-1e2f3g4h5-uv1u2",
+      "target": "sa:data-platform/kafka-connect-sa",
+      "label": "uses"
+    },
+    {
+      "id": "e19",
+      "source": "pod:data-platform/dbt-runner-7i8j9k0l1-wx3w4",
+      "target": "sa:data-platform/dbt-sa",
+      "label": "uses"
+    },
+    {
+      "id": "e20",
+      "source": "pod:monitoring/prometheus-0",
+      "target": "sa:monitoring/prometheus-sa",
+      "label": "uses"
+    },
+    {
+      "id": "e21",
+      "source": "pod:monitoring/grafana-6d7e8f9a0-yz5y6",
+      "target": "sa:monitoring/grafana-sa",
+      "label": "uses"
+    },
+    {
+      "id": "e22",
+      "source": "pod:monitoring/alertmanager-0",
+      "target": "sa:monitoring/alertmanager-sa",
+      "label": "uses"
+    },
+    {
+      "id": "e23",
+      "source": "pod:monitoring/loki-0",
+      "target": "sa:monitoring/loki-sa",
+      "label": "uses"
+    },
+    {
+      "id": "e24",
+      "source": "pod:security/vault-agent-4f5g6h7i8-cd9c0",
+      "target": "sa:security/vault-sa",
+      "label": "uses"
+    },
+    {
+      "id": "e25",
+      "source": "pod:security/external-secrets-operator-0k1l2m3n4-ef1e2",
+      "target": "sa:security/external-secrets-sa",
+      "label": "uses"
+    },
+    {
+      "id": "e26",
+      "source": "pod:security/cert-manager-6p7q8r9s0-gh3g4",
+      "target": "sa:security/cert-manager-sa",
+      "label": "uses"
+    },
+    {
+      "id": "e27",
+      "source": "pod:ingress/nginx-ingress-controller-x1y2z3-kl7k8",
+      "target": "sa:ingress/nginx-sa",
+      "label": "uses"
+    },
+    {
+      "id": "e28",
+      "source": "pod:ingress/aws-load-balancer-controller-6b7c8d9e0-mn9",
+      "target": "sa:ingress/alb-sa",
+      "label": "uses"
+    },
+    {
+      "id": "e29",
+      "source": "pod:ml-platform/training-job-runner-8j9k0l1m2-qr3q4",
+      "target": "sa:ml-platform/training-sa",
+      "label": "uses"
+    },
+    {
+      "id": "e30",
+      "source": "pod:ml-platform/model-serving-api-4n5o6p7q8-st5s6",
+      "target": "sa:ml-platform/serving-sa",
+      "label": "uses"
+    },
+    {
+      "id": "e31",
+      "source": "sa:production/payments-api-sa",
+      "target": "role:arn:aws:iam::123456789012:role/payments-api-role",
+      "label": "assumes (IRSA)"
+    },
+    {
+      "id": "e32",
+      "source": "sa:production/payments-worker-sa",
+      "target": "role:arn:aws:iam::123456789012:role/payments-worker-role",
+      "label": "assumes (IRSA)"
+    },
+    {
+      "id": "e33",
+      "source": "sa:production/user-service-sa",
+      "target": "role:arn:aws:iam::123456789012:role/user-service-role",
+      "label": "assumes (IRSA)"
+    },
+    {
+      "id": "e34",
+      "source": "sa:production/order-service-sa",
+      "target": "role:arn:aws:iam::123456789012:role/order-service-role",
+      "label": "assumes (IRSA)"
+    },
+    {
+      "id": "e35",
+      "source": "sa:production/notification-service-sa",
+      "target": "role:arn:aws:iam::123456789012:role/notification-service-role",
+      "label": "assumes (IRSA)"
+    },
+    {
+      "id": "e36",
+      "source": "sa:production/auth-service-sa",
+      "target": "role:arn:aws:iam::123456789012:role/auth-service-role",
+      "label": "assumes (IRSA)"
+    },
+    {
+      "id": "e37",
+      "source": "sa:production/inventory-service-sa",
+      "target": "role:arn:aws:iam::123456789012:role/inventory-service-role",
+      "label": "assumes (IRSA)"
+    },
+    {
+      "id": "e38",
+      "source": "sa:production/checkout-service-sa",
+      "target": "role:arn:aws:iam::123456789012:role/order-service-role",
+      "label": "assumes (IRSA)"
+    },
+    {
+      "id": "e39",
+      "source": "sa:production/product-service-sa",
+      "target": "role:arn:aws:iam::123456789012:role/product-service-role",
+      "label": "assumes (IRSA)"
+    },
+    {
+      "id": "e40",
+      "source": "sa:staging/payments-staging-sa",
+      "target": "role:arn:aws:iam::123456789012:role/payments-staging-role",
+      "label": "assumes (IRSA)"
+    },
+    {
+      "id": "e41",
+      "source": "sa:staging/user-staging-sa",
+      "target": "role:arn:aws:iam::123456789012:role/user-service-role",
+      "label": "assumes (IRSA)"
+    },
+    {
+      "id": "e42",
+      "source": "sa:staging/order-staging-sa",
+      "target": "role:arn:aws:iam::123456789012:role/order-staging-role",
+      "label": "assumes (IRSA)"
+    },
+    {
+      "id": "e43",
+      "source": "sa:data-platform/spark-sa",
+      "target": "role:arn:aws:iam::123456789012:role/spark-data-lake-role",
+      "label": "assumes (IRSA)"
+    },
+    {
+      "id": "e44",
+      "source": "sa:data-platform/airflow-scheduler-sa",
+      "target": "role:arn:aws:iam::123456789012:role/airflow-scheduler-role",
+      "label": "assumes (IRSA)"
+    },
+    {
+      "id": "e45",
+      "source": "sa:data-platform/airflow-worker-sa",
+      "target": "role:arn:aws:iam::123456789012:role/airflow-worker-role",
+      "label": "assumes (IRSA)"
+    },
+    {
+      "id": "e46",
+      "source": "sa:data-platform/kafka-connect-sa",
+      "target": "role:arn:aws:iam::123456789012:role/kafka-connect-role",
+      "label": "assumes (IRSA)"
+    },
+    {
+      "id": "e47",
+      "source": "sa:data-platform/dbt-sa",
+      "target": "role:arn:aws:iam::123456789012:role/dbt-role",
+      "label": "assumes (IRSA)"
+    },
+    {
+      "id": "e48",
+      "source": "sa:monitoring/prometheus-sa",
+      "target": "role:arn:aws:iam::123456789012:role/prometheus-metrics-role",
+      "label": "assumes (IRSA)"
+    },
+    {
+      "id": "e49",
+      "source": "sa:monitoring/grafana-sa",
+      "target": "role:arn:aws:iam::123456789012:role/grafana-role",
+      "label": "assumes (IRSA)"
+    },
+    {
+      "id": "e50",
+      "source": "sa:monitoring/alertmanager-sa",
+      "target": "role:arn:aws:iam::123456789012:role/alertmanager-role",
+      "label": "assumes (IRSA)"
+    },
+    {
+      "id": "e51",
+      "source": "sa:monitoring/loki-sa",
+      "target": "role:arn:aws:iam::123456789012:role/loki-role",
+      "label": "assumes (IRSA)"
+    },
+    {
+      "id": "e52",
+      "source": "sa:security/vault-sa",
+      "target": "role:arn:aws:iam::123456789012:role/vault-role",
+      "label": "assumes (IRSA)"
+    },
+    {
+      "id": "e53",
+      "source": "sa:security/external-secrets-sa",
+      "target": "role:arn:aws:iam::123456789012:role/external-secrets-role",
+      "label": "assumes (IRSA)"
+    },
+    {
+      "id": "e54",
+      "source": "sa:security/cert-manager-sa",
+      "target": "role:arn:aws:iam::123456789012:role/cert-manager-role",
+      "label": "assumes (IRSA)"
+    },
+    {
+      "id": "e55",
+      "source": "sa:ingress/nginx-sa",
+      "target": "role:arn:aws:iam::123456789012:role/prometheus-metrics-role",
+      "label": "assumes (IRSA)"
+    },
+    {
+      "id": "e56",
+      "source": "sa:ingress/alb-sa",
+      "target": "role:arn:aws:iam::123456789012:role/alb-controller-role",
+      "label": "assumes (IRSA)"
+    },
+    {
+      "id": "e57",
+      "source": "sa:ml-platform/training-sa",
+      "target": "role:arn:aws:iam::123456789012:role/training-role",
+      "label": "assumes (IRSA)"
+    },
+    {
+      "id": "e58",
+      "source": "sa:ml-platform/serving-sa",
+      "target": "role:arn:aws:iam::123456789012:role/serving-role",
+      "label": "assumes (IRSA)"
+    },
+    {
+      "id": "e59",
+      "source": "role:arn:aws:iam::123456789012:role/payments-api-role",
+      "target": "svc:arn:aws:s3:::payments-transactions-prod",
+      "label": "s3:GetObject, s3:PutObject",
+      "accessLevel": "write",
+      "actions": [
+        "s3:GetObject",
+        "s3:PutObject"
+      ]
+    },
+    {
+      "id": "e60",
+      "source": "role:arn:aws:iam::123456789012:role/payments-api-role",
+      "target": "svc:arn:aws:rds:eu-west-1:123456789012:db:payments-db-prod",
+      "label": "rds-db:connect",
+      "accessLevel": "read",
+      "actions": [
+        "rds-db:connect"
+      ]
+    },
+    {
+      "id": "e61",
+      "source": "role:arn:aws:iam::123456789012:role/payments-api-role",
+      "target": "svc:arn:aws:secretsmanager:eu-west-1:123456789012:secret:payments/db-credentials",
+      "label": "secretsmanager:GetSecretValue",
+      "accessLevel": "read",
+      "actions": [
+        "secretsmanager:GetSecretValue"
+      ]
+    },
+    {
+      "id": "e62",
+      "source": "role:arn:aws:iam::123456789012:role/payments-api-role",
+      "target": "svc:arn:aws:dynamodb:eu-west-1:123456789012:table/payments-idempotency",
+      "label": "dynamodb:GetItem, dynamodb:PutItem",
+      "accessLevel": "write",
+      "actions": [
+        "dynamodb:GetItem",
+        "dynamodb:PutItem"
+      ]
+    },
+    {
+      "id": "e63",
+      "source": "role:arn:aws:iam::123456789012:role/payments-worker-role",
+      "target": "svc:arn:aws:sqs:eu-west-1:123456789012:queue:payments-events",
+      "label": "sqs:ReceiveMessage, sqs:DeleteMessage",
+      "accessLevel": "write",
+      "actions": [
+        "sqs:ReceiveMessage",
+        "sqs:DeleteMessage",
+        "sqs:SendMessage"
+      ]
+    },
+    {
+      "id": "e64",
+      "source": "role:arn:aws:iam::123456789012:role/payments-worker-role",
+      "target": "svc:arn:aws:s3:::payments-transactions-prod",
+      "label": "s3:*",
+      "accessLevel": "full",
+      "actions": [
+        "s3:*"
+      ]
+    },
+    {
+      "id": "e65",
+      "source": "role:arn:aws:iam::123456789012:role/payments-worker-role",
+      "target": "svc:arn:aws:dynamodb:eu-west-1:123456789012:table/payments-idempotency",
+      "label": "dynamodb:*",
+      "accessLevel": "full",
+      "actions": [
+        "dynamodb:*"
+      ]
+    },
+    {
+      "id": "e66",
+      "source": "role:arn:aws:iam::123456789012:role/user-service-role",
+      "target": "svc:arn:aws:rds:eu-west-1:123456789012:db:users-db-prod",
+      "label": "rds-db:connect",
+      "accessLevel": "read",
+      "actions": [
+        "rds-db:connect"
+      ]
+    },
+    {
+      "id": "e67",
+      "source": "role:arn:aws:iam::123456789012:role/user-service-role",
+      "target": "svc:arn:aws:s3:::user-avatars-prod",
+      "label": "s3:GetObject, s3:PutObject, s3:DeleteObject",
+      "accessLevel": "write",
+      "actions": [
+        "s3:GetObject",
+        "s3:PutObject",
+        "s3:DeleteObject"
+      ]
+    },
+    {
+      "id": "e68",
+      "source": "role:arn:aws:iam::123456789012:role/user-service-role",
+      "target": "svc:arn:aws:secretsmanager:eu-west-1:123456789012:secret:users/db-credentials",
+      "label": "secretsmanager:GetSecretValue",
+      "accessLevel": "read",
+      "actions": [
+        "secretsmanager:GetSecretValue"
+      ]
+    },
+    {
+      "id": "e69",
+      "source": "role:arn:aws:iam::123456789012:role/order-service-role",
+      "target": "svc:arn:aws:rds:eu-west-1:123456789012:db:orders-db-prod",
+      "label": "rds-db:connect",
+      "accessLevel": "read",
+      "actions": [
+        "rds-db:connect"
+      ]
+    },
+    {
+      "id": "e70",
+      "source": "role:arn:aws:iam::123456789012:role/order-service-role",
+      "target": "svc:arn:aws:sqs:eu-west-1:123456789012:queue:order-events",
+      "label": "sqs:SendMessage, sqs:ReceiveMessage",
+      "accessLevel": "write",
+      "actions": [
+        "sqs:SendMessage",
+        "sqs:ReceiveMessage"
+      ]
+    },
+    {
+      "id": "e71",
+      "source": "role:arn:aws:iam::123456789012:role/order-service-role",
+      "target": "svc:arn:aws:sns:eu-west-1:123456789012:notifications-topic",
+      "label": "sns:Publish",
+      "accessLevel": "write",
+      "actions": [
+        "sns:Publish"
+      ]
+    },
+    {
+      "id": "e72",
+      "source": "role:arn:aws:iam::123456789012:role/notification-service-role",
+      "target": "svc:arn:aws:sqs:eu-west-1:123456789012:queue:order-events",
+      "label": "sqs:ReceiveMessage, sqs:DeleteMessage",
+      "accessLevel": "write",
+      "actions": [
+        "sqs:ReceiveMessage",
+        "sqs:DeleteMessage"
+      ]
+    },
+    {
+      "id": "e73",
+      "source": "role:arn:aws:iam::123456789012:role/notification-service-role",
+      "target": "svc:arn:aws:sns:eu-west-1:123456789012:notifications-topic",
+      "label": "sns:Publish",
+      "accessLevel": "write",
+      "actions": [
+        "sns:Publish"
+      ]
+    },
+    {
+      "id": "e74",
+      "source": "role:arn:aws:iam::123456789012:role/auth-service-role",
+      "target": "svc:arn:aws:secretsmanager:eu-west-1:123456789012:secret:auth/jwt-secret",
+      "label": "secretsmanager:GetSecretValue",
+      "accessLevel": "read",
+      "actions": [
+        "secretsmanager:GetSecretValue"
+      ]
+    },
+    {
+      "id": "e75",
+      "source": "role:arn:aws:iam::123456789012:role/auth-service-role",
+      "target": "svc:arn:aws:dynamodb:eu-west-1:123456789012:table/sessions-prod",
+      "label": "dynamodb:GetItem, dynamodb:PutItem, dynamodb:DeleteItem",
+      "accessLevel": "write",
+      "actions": [
+        "dynamodb:GetItem",
+        "dynamodb:PutItem",
+        "dynamodb:DeleteItem"
+      ]
+    },
+    {
+      "id": "e76",
+      "source": "role:arn:aws:iam::123456789012:role/auth-service-role",
+      "target": "svc:arn:aws:kms:eu-west-1:123456789012:key/auth-signing-key",
+      "label": "kms:Sign, kms:Verify",
+      "accessLevel": "read",
+      "actions": [
+        "kms:Sign",
+        "kms:Verify"
+      ]
+    },
+    {
+      "id": "e77",
+      "source": "role:arn:aws:iam::123456789012:role/inventory-service-role",
+      "target": "svc:arn:aws:rds:eu-west-1:123456789012:db:inventory-db-prod",
+      "label": "rds-db:connect",
+      "accessLevel": "read",
+      "actions": [
+        "rds-db:connect"
+      ]
+    },
+    {
+      "id": "e78",
+      "source": "role:arn:aws:iam::123456789012:role/inventory-service-role",
+      "target": "svc:arn:aws:sqs:eu-west-1:123456789012:queue:inventory-events",
+      "label": "sqs:SendMessage, sqs:ReceiveMessage",
+      "accessLevel": "write",
+      "actions": [
+        "sqs:SendMessage",
+        "sqs:ReceiveMessage"
+      ]
+    },
+    {
+      "id": "e79",
+      "source": "role:arn:aws:iam::123456789012:role/product-service-role",
+      "target": "svc:arn:aws:dynamodb:eu-west-1:123456789012:table/product-catalog",
+      "label": "dynamodb:GetItem, dynamodb:Query, dynamodb:PutItem",
+      "accessLevel": "write",
+      "actions": [
+        "dynamodb:GetItem",
+        "dynamodb:Query",
+        "dynamodb:PutItem"
+      ]
+    },
+    {
+      "id": "e80",
+      "source": "role:arn:aws:iam::123456789012:role/payments-staging-role",
+      "target": "svc:arn:aws:s3:::payments-transactions-staging",
+      "label": "s3:GetObject, s3:PutObject",
+      "accessLevel": "write",
+      "actions": [
+        "s3:GetObject",
+        "s3:PutObject"
+      ]
+    },
+    {
+      "id": "e81",
+      "source": "role:arn:aws:iam::123456789012:role/order-staging-role",
+      "target": "svc:arn:aws:rds:eu-west-1:123456789012:db:orders-db-staging",
+      "label": "rds-db:connect",
+      "accessLevel": "read",
+      "actions": [
+        "rds-db:connect"
+      ]
+    },
+    {
+      "id": "e82",
+      "source": "role:arn:aws:iam::123456789012:role/spark-data-lake-role",
+      "target": "svc:arn:aws:s3:::data-lake-raw-eu",
+      "label": "s3:GetObject, s3:ListBucket",
+      "accessLevel": "read",
+      "actions": [
+        "s3:GetObject",
+        "s3:ListBucket"
+      ]
+    },
+    {
+      "id": "e83",
+      "source": "role:arn:aws:iam::123456789012:role/spark-data-lake-role",
+      "target": "svc:arn:aws:s3:::data-lake-processed-eu",
+      "label": "s3:PutObject, s3:DeleteObject, s3:GetObject",
+      "accessLevel": "write",
+      "actions": [
+        "s3:PutObject",
+        "s3:DeleteObject",
+        "s3:GetObject"
+      ]
+    },
+    {
+      "id": "e84",
+      "source": "role:arn:aws:iam::123456789012:role/spark-data-lake-role",
+      "target": "svc:arn:aws:glue:eu-west-1:123456789012:catalog",
+      "label": "glue:GetTable, glue:UpdateTable, glue:CreateTable",
+      "accessLevel": "write",
+      "actions": [
+        "glue:GetTable",
+        "glue:UpdateTable",
+        "glue:CreateTable"
+      ]
+    },
+    {
+      "id": "e85",
+      "source": "role:arn:aws:iam::123456789012:role/airflow-scheduler-role",
+      "target": "svc:arn:aws:s3:::airflow-dags-prod",
+      "label": "s3:GetObject, s3:ListBucket",
+      "accessLevel": "read",
+      "actions": [
+        "s3:GetObject",
+        "s3:ListBucket"
+      ]
+    },
+    {
+      "id": "e86",
+      "source": "role:arn:aws:iam::123456789012:role/airflow-scheduler-role",
+      "target": "svc:arn:aws:rds:eu-west-1:123456789012:db:airflow-metadata",
+      "label": "rds-db:connect",
+      "accessLevel": "read",
+      "actions": [
+        "rds-db:connect"
+      ]
+    },
+    {
+      "id": "e87",
+      "source": "role:arn:aws:iam::123456789012:role/airflow-scheduler-role",
+      "target": "svc:arn:aws:sqs:eu-west-1:123456789012:queue:airflow-celery",
+      "label": "sqs:SendMessage",
+      "accessLevel": "write",
+      "actions": [
+        "sqs:SendMessage"
+      ]
+    },
+    {
+      "id": "e88",
+      "source": "role:arn:aws:iam::123456789012:role/airflow-worker-role",
+      "target": "svc:arn:aws:s3:::airflow-dags-prod",
+      "label": "s3:GetObject",
+      "accessLevel": "read",
+      "actions": [
+        "s3:GetObject"
+      ]
+    },
+    {
+      "id": "e89",
+      "source": "role:arn:aws:iam::123456789012:role/airflow-worker-role",
+      "target": "svc:arn:aws:s3:::data-lake-raw-eu",
+      "label": "s3:GetObject, s3:PutObject",
+      "accessLevel": "write",
+      "actions": [
+        "s3:GetObject",
+        "s3:PutObject"
+      ]
+    },
+    {
+      "id": "e90",
+      "source": "role:arn:aws:iam::123456789012:role/airflow-worker-role",
+      "target": "svc:arn:aws:secretsmanager:eu-west-1:123456789012:secret:*",
+      "label": "secretsmanager:GetSecretValue",
+      "accessLevel": "read",
+      "actions": [
+        "secretsmanager:GetSecretValue"
+      ]
+    },
+    {
+      "id": "e91",
+      "source": "role:arn:aws:iam::123456789012:role/airflow-worker-role",
+      "target": "svc:arn:aws:sqs:eu-west-1:123456789012:queue:airflow-celery",
+      "label": "sqs:ReceiveMessage, sqs:DeleteMessage",
+      "accessLevel": "write",
+      "actions": [
+        "sqs:ReceiveMessage",
+        "sqs:DeleteMessage"
+      ]
+    },
+    {
+      "id": "e92",
+      "source": "role:arn:aws:iam::123456789012:role/kafka-connect-role",
+      "target": "svc:arn:aws:s3:::kafka-connect-backups",
+      "label": "s3:PutObject, s3:GetObject",
+      "accessLevel": "write",
+      "actions": [
+        "s3:PutObject",
+        "s3:GetObject"
+      ]
+    },
+    {
+      "id": "e93",
+      "source": "role:arn:aws:iam::123456789012:role/kafka-connect-role",
+      "target": "svc:arn:aws:secretsmanager:eu-west-1:123456789012:secret:kafka/credentials",
+      "label": "secretsmanager:GetSecretValue",
+      "accessLevel": "read",
+      "actions": [
+        "secretsmanager:GetSecretValue"
+      ]
+    },
+    {
+      "id": "e94",
+      "source": "role:arn:aws:iam::123456789012:role/dbt-role",
+      "target": "svc:arn:aws:s3:::data-lake-processed-eu",
+      "label": "s3:GetObject, s3:ListBucket",
+      "accessLevel": "read",
+      "actions": [
+        "s3:GetObject",
+        "s3:ListBucket"
+      ]
+    },
+    {
+      "id": "e95",
+      "source": "role:arn:aws:iam::123456789012:role/dbt-role",
+      "target": "svc:arn:aws:rds:eu-west-1:123456789012:db:analytics-db-prod",
+      "label": "rds-db:connect",
+      "accessLevel": "read",
+      "actions": [
+        "rds-db:connect"
+      ]
+    },
+    {
+      "id": "e96",
+      "source": "role:arn:aws:iam::123456789012:role/prometheus-metrics-role",
+      "target": "svc:arn:aws:cloudwatch:eu-west-1:123456789012:*",
+      "label": "cloudwatch:GetMetricData, cloudwatch:ListMetrics",
+      "accessLevel": "read",
+      "actions": [
+        "cloudwatch:GetMetricData",
+        "cloudwatch:ListMetrics"
+      ]
+    },
+    {
+      "id": "e97",
+      "source": "role:arn:aws:iam::123456789012:role/grafana-role",
+      "target": "svc:arn:aws:cloudwatch:eu-west-1:123456789012:*",
+      "label": "cloudwatch:GetMetricData",
+      "accessLevel": "read",
+      "actions": [
+        "cloudwatch:GetMetricData"
+      ]
+    },
+    {
+      "id": "e98",
+      "source": "role:arn:aws:iam::123456789012:role/grafana-role",
+      "target": "svc:arn:aws:s3:::grafana-dashboards",
+      "label": "s3:GetObject, s3:PutObject",
+      "accessLevel": "write",
+      "actions": [
+        "s3:GetObject",
+        "s3:PutObject"
+      ]
+    },
+    {
+      "id": "e99",
+      "source": "role:arn:aws:iam::123456789012:role/alertmanager-role",
+      "target": "svc:arn:aws:sns:eu-west-1:123456789012:alerts-topic",
+      "label": "sns:Publish",
+      "accessLevel": "write",
+      "actions": [
+        "sns:Publish"
+      ]
+    },
+    {
+      "id": "e100",
+      "source": "role:arn:aws:iam::123456789012:role/loki-role",
+      "target": "svc:arn:aws:s3:::loki-logs-prod",
+      "label": "s3:*",
+      "accessLevel": "full",
+      "actions": [
+        "s3:*"
+      ]
+    },
+    {
+      "id": "e101",
+      "source": "role:arn:aws:iam::123456789012:role/vault-role",
+      "target": "svc:arn:aws:kms:eu-west-1:123456789012:key/*",
+      "label": "kms:*",
+      "accessLevel": "full",
+      "actions": [
+        "kms:*"
+      ]
+    },
+    {
+      "id": "e102",
+      "source": "role:arn:aws:iam::123456789012:role/vault-role",
+      "target": "svc:arn:aws:secretsmanager:eu-west-1:123456789012:secret:*",
+      "label": "secretsmanager:*",
+      "accessLevel": "full",
+      "actions": [
+        "secretsmanager:*"
+      ]
+    },
+    {
+      "id": "e103",
+      "source": "role:arn:aws:iam::123456789012:role/external-secrets-role",
+      "target": "svc:arn:aws:secretsmanager:eu-west-1:123456789012:secret:*",
+      "label": "secretsmanager:GetSecretValue, secretsmanager:ListSecrets",
+      "accessLevel": "read",
+      "actions": [
+        "secretsmanager:GetSecretValue",
+        "secretsmanager:ListSecrets"
+      ]
+    },
+    {
+      "id": "e104",
+      "source": "role:arn:aws:iam::123456789012:role/cert-manager-role",
+      "target": "svc:arn:aws:route53:::hostedzone/Z1234567890ABC",
+      "label": "route53:ChangeResourceRecordSets",
+      "accessLevel": "write",
+      "actions": [
+        "route53:ChangeResourceRecordSets",
+        "route53:ListHostedZones"
+      ]
+    },
+    {
+      "id": "e105",
+      "source": "role:arn:aws:iam::123456789012:role/alb-controller-role",
+      "target": "svc:arn:aws:elasticloadbalancing:eu-west-1:123456789012:loadbalancer/*",
+      "label": "elasticloadbalancing:*",
+      "accessLevel": "full",
+      "actions": [
+        "elasticloadbalancing:*"
+      ]
+    },
+    {
+      "id": "e106",
+      "source": "role:arn:aws:iam::123456789012:role/training-role",
+      "target": "svc:arn:aws:s3:::ml-datasets-prod",
+      "label": "s3:GetObject, s3:ListBucket",
+      "accessLevel": "read",
+      "actions": [
+        "s3:GetObject",
+        "s3:ListBucket"
+      ]
+    },
+    {
+      "id": "e107",
+      "source": "role:arn:aws:iam::123456789012:role/training-role",
+      "target": "svc:arn:aws:s3:::ml-models-prod",
+      "label": "s3:PutObject, s3:GetObject",
+      "accessLevel": "write",
+      "actions": [
+        "s3:PutObject",
+        "s3:GetObject"
+      ]
+    },
+    {
+      "id": "e108",
+      "source": "role:arn:aws:iam::123456789012:role/training-role",
+      "target": "svc:arn:aws:sagemaker:eu-west-1:123456789012:training-job/*",
+      "label": "sagemaker:CreateTrainingJob, sagemaker:DescribeTrainingJob",
+      "accessLevel": "write",
+      "actions": [
+        "sagemaker:CreateTrainingJob",
+        "sagemaker:DescribeTrainingJob"
+      ]
+    },
+    {
+      "id": "e109",
+      "source": "role:arn:aws:iam::123456789012:role/serving-role",
+      "target": "svc:arn:aws:s3:::ml-models-prod",
+      "label": "s3:GetObject",
+      "accessLevel": "read",
+      "actions": [
+        "s3:GetObject"
+      ]
+    },
+    {
+      "id": "e110",
+      "source": "role:arn:aws:iam::123456789012:role/serving-role",
+      "target": "svc:arn:aws:dynamodb:eu-west-1:123456789012:table/feature-store-prod",
+      "label": "dynamodb:GetItem, dynamodb:Query",
+      "accessLevel": "read",
+      "actions": [
+        "dynamodb:GetItem",
+        "dynamodb:Query"
+      ]
+    },
+    {
+      "id": "e111",
+      "source": "deploy:production/payments-api",
+      "target": "pod:production/payments-api-7d4f9c8b6-xk2p9",
+      "label": "manages"
+    },
+    {
+      "id": "e112",
+      "source": "deploy:production/payments-worker",
+      "target": "pod:production/payments-worker-6c5b4d3e2-mn7q1",
+      "label": "manages"
+    },
+    {
+      "id": "e113",
+      "source": "deploy:production/user-service",
+      "target": "pod:production/user-service-5b8c9d4f3-pq8r2",
+      "label": "manages"
+    },
+    {
+      "id": "e114",
+      "source": "deploy:production/user-service",
+      "target": "pod:production/user-service-5b8c9d4f3-ab3c4",
+      "label": "manages"
+    },
+    {
+      "id": "e115",
+      "source": "deploy:production/order-service",
+      "target": "pod:production/order-service-3d6e7f8a1-st5u6",
+      "label": "manages"
+    },
+    {
+      "id": "e116",
+      "source": "deploy:production/notification-service",
+      "target": "pod:production/notification-service-9a2b3c4d5-vw9x0",
+      "label": "manages"
+    },
+    {
+      "id": "e117",
+      "source": "deploy:production/auth-service",
+      "target": "pod:production/auth-service-1c4d5e6f7-yz1a2",
+      "label": "manages"
+    },
+    {
+      "id": "e118",
+      "source": "deploy:production/inventory-service",
+      "target": "pod:production/inventory-service-7f8a9b0c1-bc3d4",
+      "label": "manages"
+    },
+    {
+      "id": "e119",
+      "source": "deploy:production/checkout-service",
+      "target": "pod:production/checkout-service-2e3f4a5b6-ef5g6",
+      "label": "manages"
+    },
+    {
+      "id": "e120",
+      "source": "deploy:production/product-service",
+      "target": "pod:production/product-service-8b9c0d1e2-gh7h8",
+      "label": "manages"
+    },
+    {
+      "id": "e121",
+      "source": "deploy:staging/payments-api-staging",
+      "target": "pod:staging/payments-api-staging-4f5g6h7i8-ij9j0",
+      "label": "manages"
+    },
+    {
+      "id": "e122",
+      "source": "deploy:staging/user-service-staging",
+      "target": "pod:staging/user-service-staging-0a1b2c3d4-kl1l2",
+      "label": "manages"
+    },
+    {
+      "id": "e123",
+      "source": "deploy:staging/order-service-staging",
+      "target": "pod:staging/order-service-staging-6g7h8i9j0-mn3n4",
+      "label": "manages"
+    },
+    {
+      "id": "e124",
+      "source": "ss:monitoring/prometheus",
+      "target": "pod:monitoring/prometheus-0",
+      "label": "manages"
+    },
+    {
+      "id": "e125",
+      "source": "ss:monitoring/loki",
+      "target": "pod:monitoring/loki-0",
+      "label": "manages"
+    },
+    {
+      "id": "e126",
+      "source": "ss:monitoring/alertmanager",
+      "target": "pod:monitoring/alertmanager-0",
+      "label": "manages"
+    },
+    {
+      "id": "e127",
+      "source": "deploy:monitoring/grafana",
+      "target": "pod:monitoring/grafana-6d7e8f9a0-yz5y6",
+      "label": "manages"
+    },
+    {
+      "id": "e128",
+      "source": "deploy:data-platform/airflow-scheduler",
+      "target": "pod:data-platform/airflow-scheduler-5c6d7e8f9-qr7r8",
+      "label": "manages"
+    },
+    {
+      "id": "e129",
+      "source": "deploy:data-platform/airflow-worker",
+      "target": "pod:data-platform/airflow-worker-3a4b5c6d7-st9t0",
+      "label": "manages"
+    },
+    {
+      "id": "e130",
+      "source": "deploy:data-platform/kafka-connect",
+      "target": "pod:data-platform/kafka-connect-1e2f3g4h5-uv1u2",
+      "label": "manages"
+    },
+    {
+      "id": "e131",
+      "source": "deploy:data-platform/dbt-runner",
+      "target": "pod:data-platform/dbt-runner-7i8j9k0l1-wx3w4",
+      "label": "manages"
+    },
+    {
+      "id": "e132",
+      "source": "deploy:ingress/nginx-ingress",
+      "target": "pod:ingress/nginx-ingress-controller-x1y2z3-kl7k8",
+      "label": "manages"
+    },
+    {
+      "id": "e133",
+      "source": "deploy:ingress/aws-load-balancer",
+      "target": "pod:ingress/aws-load-balancer-controller-6b7c8d9e0-mn9",
+      "label": "manages"
+    },
+    {
+      "id": "e134",
+      "source": "deploy:ml-platform/training-job-runner",
+      "target": "pod:ml-platform/training-job-runner-8j9k0l1m2-qr3q4",
+      "label": "manages"
+    },
+    {
+      "id": "e135",
+      "source": "deploy:ml-platform/model-serving",
+      "target": "pod:ml-platform/model-serving-api-4n5o6p7q8-st5s6",
+      "label": "manages"
+    },
+    {
+      "id": "e136",
+      "source": "k8s-svc:production/payments-api",
+      "target": "deploy:production/payments-api",
+      "label": "selects"
+    },
+    {
+      "id": "e137",
+      "source": "k8s-svc:production/user-service",
+      "target": "deploy:production/user-service",
+      "label": "selects"
+    },
+    {
+      "id": "e138",
+      "source": "k8s-svc:production/order-service",
+      "target": "deploy:production/order-service",
+      "label": "selects"
+    },
+    {
+      "id": "e139",
+      "source": "k8s-svc:production/auth-service",
+      "target": "deploy:production/auth-service",
+      "label": "selects"
+    },
+    {
+      "id": "e140",
+      "source": "k8s-svc:production/inventory-service",
+      "target": "deploy:production/inventory-service",
+      "label": "selects"
+    },
+    {
+      "id": "e141",
+      "source": "k8s-svc:production/checkout-service",
+      "target": "deploy:production/checkout-service",
+      "label": "selects"
+    },
+    {
+      "id": "e142",
+      "source": "k8s-svc:monitoring/grafana",
+      "target": "deploy:monitoring/grafana",
+      "label": "selects"
+    },
+    {
+      "id": "e143",
+      "source": "k8s-svc:monitoring/prometheus",
+      "target": "ss:monitoring/prometheus",
+      "label": "selects"
+    },
+    {
+      "id": "e144",
+      "source": "k8s-svc:data-platform/airflow-webserver",
+      "target": "deploy:data-platform/airflow-scheduler",
+      "label": "selects"
+    },
+    {
+      "id": "e145",
+      "source": "k8s-svc:ml-platform/model-serving",
+      "target": "deploy:ml-platform/model-serving",
+      "label": "selects"
+    },
+    {
+      "id": "e146",
+      "source": "ing:production/app-ingress",
+      "target": "k8s-svc:production/payments-api",
+      "label": "routes →"
+    },
+    {
+      "id": "e147",
+      "source": "ing:production/app-ingress",
+      "target": "k8s-svc:production/user-service",
+      "label": "routes →"
+    },
+    {
+      "id": "e148",
+      "source": "ing:production/app-ingress",
+      "target": "k8s-svc:production/order-service",
+      "label": "routes →"
+    },
+    {
+      "id": "e149",
+      "source": "ing:monitoring/monitoring-ingress",
+      "target": "k8s-svc:monitoring/grafana",
+      "label": "routes →"
+    },
+    {
+      "id": "e150",
+      "source": "ing:monitoring/monitoring-ingress",
+      "target": "k8s-svc:monitoring/prometheus",
+      "label": "routes →"
+    },
+    {
+      "id": "e151",
+      "source": "k8s-crb:payments-admin-binding",
+      "target": "k8s-clusterrole:payments-cluster-admin",
+      "label": "grants →"
+    },
+    {
+      "id": "e152",
+      "source": "k8s-rb:production/payments-secrets-binding",
+      "target": "k8s-role:production/payments-secret-reader",
+      "label": "grants →"
+    },
+    {
+      "id": "e153",
+      "source": "sa:production/payments-api",
+      "target": "k8s-crb:payments-admin-binding",
+      "label": "bound →"
+    },
+    {
+      "id": "e154",
+      "source": "sa:production/payments-api",
+      "target": "k8s-rb:production/payments-secrets-binding",
+      "label": "bound →"
+    }
+  ]
+}

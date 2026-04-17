@@ -1,0 +1,74 @@
+import { memo } from 'react'
+import { Handle, Position, NodeProps } from 'reactflow'
+import { Layers, Database, Cpu } from 'lucide-react'
+import { NodeType } from '../../types'
+
+interface WorkloadData {
+  label: string
+  namespace: string
+  nodeType: NodeType
+  replicas?: string
+  dimmed: boolean
+  privileged?: string
+  runAsRoot?: string
+  hostNetwork?: string
+  hostPID?: string
+  hostPath?: string
+}
+
+const config = {
+  deployment:  { icon: Layers,   headerText: 'text-blue-400',   headerBg: 'rgba(59,130,246,0.08)',  border: 'border-blue-500/40',   bodyBg: 'rgba(3,14,46,0.4)',    nameText: 'text-blue-200',   kind: 'Deployment'  },
+  statefulset: { icon: Database, headerText: 'text-purple-400', headerBg: 'rgba(168,85,247,0.08)', border: 'border-purple-500/40', bodyBg: 'rgba(24,5,46,0.4)',    nameText: 'text-purple-200', kind: 'StatefulSet' },
+  daemonset:   { icon: Cpu,      headerText: 'text-orange-400', headerBg: 'rgba(249,115,22,0.08)', border: 'border-orange-500/40', bodyBg: 'rgba(46,14,3,0.4)',    nameText: 'text-orange-200', kind: 'DaemonSet'   },
+}
+
+export const WorkloadNode = memo(({ data }: NodeProps<WorkloadData>) => {
+  const { label, namespace, nodeType, replicas, dimmed, privileged, runAsRoot, hostNetwork, hostPID, hostPath } = data
+  const cfg = config[nodeType as keyof typeof config] ?? config.deployment
+  const Icon = cfg.icon
+
+  const secBadges = [
+    privileged   === 'true' && { label: 'PRIV',    cls: 'bg-red-900/60 text-red-300 border-red-600/40' },
+    runAsRoot    === 'true' && { label: 'ROOT',    cls: 'bg-orange-900/60 text-orange-300 border-orange-600/40' },
+    hostNetwork  === 'true' && { label: 'hNet',    cls: 'bg-orange-900/50 text-orange-300 border-orange-600/40' },
+    hostPID      === 'true' && { label: 'hPID',    cls: 'bg-orange-900/50 text-orange-300 border-orange-600/40' },
+    hostPath     === 'true' && { label: 'hPath',   cls: 'bg-yellow-900/50 text-yellow-300 border-yellow-600/40' },
+  ].filter(Boolean) as { label: string; cls: string }[]
+
+  return (
+    <div
+      className={`
+        relative rounded-xl border transition-all duration-300 cursor-pointer select-none overflow-hidden
+        ${dimmed ? 'opacity-20 scale-95' : 'opacity-100'}
+        ${secBadges.some(b => b.label === 'PRIV' || b.label === 'ROOT') ? 'border-red-500/50' : cfg.border} hover:brightness-110
+        backdrop-blur-sm
+      `}
+      style={{ minWidth: 190, background: cfg.bodyBg }}
+    >
+      <div className="flex items-center gap-1.5 px-2.5 pt-1.5 pb-1 border-b"
+        style={{ background: cfg.headerBg, borderColor: 'rgba(255,255,255,0.06)' }}>
+        <span className={cfg.headerText}><Icon size={9} /></span>
+        <span className={`text-[9px] font-mono font-bold tracking-widest uppercase ${cfg.headerText}`}>
+          {cfg.kind}
+        </span>
+        <div className="ml-auto flex items-center gap-1">
+          {secBadges.map(b => (
+            <span key={b.label} className={`text-[7px] font-mono font-bold px-1 py-px rounded border ${b.cls}`}>
+              {b.label}
+            </span>
+          ))}
+          {replicas && !secBadges.length && (
+            <span className={`text-[9px] font-mono ${cfg.headerText} opacity-70`}>{replicas}×</span>
+          )}
+        </div>
+      </div>
+
+      <div className="px-2.5 py-1.5">
+        <div className={`text-[12px] font-mono font-semibold leading-tight truncate ${cfg.nameText}`}>{label}</div>
+        <div className="text-[9px] font-mono text-slate-500 mt-0.5">{namespace}</div>
+      </div>
+
+      <Handle type="source" position={Position.Right} className="!w-2 !h-2 !bg-blue-600 !border-cyber-bg" />
+    </div>
+  )
+})

@@ -1,0 +1,20 @@
+# Node
+node_modules/
+frontend/node_modules/
+docs/node_modules/
+frontend/dist/
+docs/build/
+docs/.docusaurus/
+
+# Go
+backend/guardmap-server
+backend/guardmap-agent
+backend/agent
+
+# Env
+.env
+.env.local
+*.env
+
+# OS
+.DS_Store

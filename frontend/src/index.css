@@ -1,0 +1,45 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* { box-sizing: border-box; }
+
+html, body, #root {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+}
+
+/* ReactFlow overrides */
+.react-flow__controls {
+  box-shadow: none !important;
+}
+.react-flow__controls button {
+  background: transparent !important;
+  border-color: #1a2840 !important;
+  color: #64748b !important;
+}
+.react-flow__controls button:hover {
+  color: #e2e8f0 !important;
+  background: #0d1421 !important;
+}
+
+.react-flow__minimap {
+  border-radius: 12px !important;
+  overflow: hidden !important;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar       { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #1a2840; border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: #2d4060; }
+
+/* React Flow node wrapper — disable default selection ring */
+.react-flow__node.selected > div {
+  outline: none !important;
+}
+.react-flow__node:focus { outline: none !important; }
