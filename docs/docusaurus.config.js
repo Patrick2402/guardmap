@@ -17,18 +17,6 @@ const config = {
   onBrokenLinks: 'warn',
   onBrokenMarkdownLinks: 'warn',
 
-  future: {
-    faster: {
-      swcJsLoader: true,
-      swcJsMinimizer: true,
-      swcHtmlMinimizer: true,
-      lightningCssMinimizer: true,
-      rspackBundler: false,
-      mdxCrossCompilerCache: true,
-      ssgWorkerThreads: false,
-    },
-  },
-
   i18n: {
     defaultLocale: 'en',
     locales: ['en'],
