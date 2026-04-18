@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   Search, X, Container, KeyRound, ShieldCheck, HardDrive,
   ChevronUp, ChevronDown, ExternalLink, Layers, Database,
-  Cpu, Network, Globe, ShieldOff,
+  Cpu, Network, Globe, ShieldOff, PlayCircle, Clock,
 } from 'lucide-react'
 import { GraphData, GraphNode, NodeType, AccessLevel } from '../../types'
 
@@ -18,6 +18,8 @@ const TYPE_TABS: { id: NodeType | 'all'; label: string; icon: React.ReactNode }[
   { id: 'deployment',     label: 'Deployments',      icon: <Layers size={11} /> },
   { id: 'statefulset',    label: 'StatefulSets',     icon: <Database size={11} /> },
   { id: 'daemonset',      label: 'DaemonSets',       icon: <Cpu size={11} /> },
+  { id: 'job',            label: 'Jobs',             icon: <PlayCircle size={11} /> },
+  { id: 'cronjob',        label: 'CronJobs',         icon: <Clock size={11} /> },
   { id: 'serviceaccount', label: 'ServiceAccounts',  icon: <KeyRound size={11} /> },
   { id: 'iam_role',       label: 'IAM Roles',        icon: <ShieldCheck size={11} /> },
   { id: 'aws_service',    label: 'AWS Resources',    icon: <HardDrive size={11} /> },
@@ -34,6 +36,8 @@ const TYPE_COLOR: Record<NodeType, string> = {
   deployment:             'text-blue-400   bg-blue-950/40   border-blue-500/30',
   statefulset:            'text-purple-400 bg-purple-950/40 border-purple-500/30',
   daemonset:              'text-orange-400 bg-orange-950/35 border-orange-500/30',
+  job:                    'text-green-400  bg-green-950/35  border-green-500/30',
+  cronjob:                'text-teal-400   bg-teal-950/35   border-teal-500/30',
   k8s_service:            'text-teal-400   bg-teal-950/35   border-teal-500/30',
   ingress:                'text-green-400  bg-green-950/30  border-green-500/30',
   networkpolicy:          'text-rose-400   bg-rose-950/30   border-rose-500/30',
@@ -46,7 +50,8 @@ const TYPE_COLOR: Record<NodeType, string> = {
 const TYPE_LABEL: Record<NodeType, string> = {
   pod: 'Pod', serviceaccount: 'ServiceAccount', iam_role: 'IAM Role',
   aws_service: 'AWS Resource', deployment: 'Deployment', statefulset: 'StatefulSet',
-  daemonset: 'DaemonSet', k8s_service: 'Service', ingress: 'Ingress',
+  daemonset: 'DaemonSet', job: 'Job', cronjob: 'CronJob',
+  k8s_service: 'Service', ingress: 'Ingress',
   networkpolicy: 'NetworkPolicy',
   k8s_role: 'Role', k8s_clusterrole: 'ClusterRole',
   k8s_rolebinding: 'RoleBinding', k8s_clusterrolebinding: 'ClusterRoleBinding',
@@ -60,6 +65,8 @@ const TYPE_ICON: Record<NodeType, React.ReactNode> = {
   deployment:             <Layers size={9} />,
   statefulset:            <Database size={9} />,
   daemonset:              <Cpu size={9} />,
+  job:                    <PlayCircle size={9} />,
+  cronjob:                <Clock size={9} />,
   k8s_service:            <Network size={9} />,
   ingress:                <Globe size={9} />,
   networkpolicy:          <ShieldOff size={9} />,

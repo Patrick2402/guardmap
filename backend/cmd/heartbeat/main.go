@@ -16,11 +16,10 @@ func main() {
 		SupabaseURL: mustEnv("SUPABASE_URL"),
 		AnonKey:     mustEnv("SUPABASE_ANON_KEY"),
 		ClusterName: mustEnv("CLUSTER_NAME"),
-		Kubeconfig:  os.Getenv("KUBECONFIG"),
 	}
 
-	if err := agent.RunScan(context.Background(), cfg); err != nil {
-		slog.Error("scan failed", "err", err)
+	if err := agent.SendHeartbeat(context.Background(), cfg); err != nil {
+		slog.Error("heartbeat failed", "err", err)
 		os.Exit(1)
 	}
 }

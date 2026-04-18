@@ -139,3 +139,21 @@ Tailwind custom tokens: `cyber-bg`, `cyber-panel`, `cyber-border` in `tailwind.c
 ### Mock data
 
 `frontend/public/data.json` — 168 nodes, 151 edges across 7 namespaces. Has intentional vulnerabilities (shared roles, wildcards, cross-env access). Use for UI development without a cluster.
+
+---
+
+## Sync rule — UI, docs and manifests must stay consistent
+
+After every change, check and update **all three** if affected:
+
+1. **UI** (`frontend/src/`) — labels, copy, feature descriptions, checklists, terminal demos
+2. **Docs** (`docs/docs/`) — counts ("30+ checks"), CronJob descriptions, install steps, quickstart
+3. **K8s manifests** (`k8s/`) — must match `buildManifest()` in `IntegrationsPage.tsx` exactly
+
+**Concrete things that drift and must stay in sync:**
+- Number of security checks: source of truth is `internal/discovery/security.go` — reflect in docs and landing page copy
+- CronJob names/schedules: `k8s/agent/install.yaml` ↔ `buildManifest()` ↔ `quickstart.md` ↔ `LandingPage.tsx` terminal demo
+- Agent install checklist in `IntegrationsPage.tsx` step 3 ↔ what the manifest actually creates
+- Docker image tag: `Dockerfile` build ↔ `install.yaml` ↔ `buildManifest()`
+
+Do not close a task without checking these. If something is out of sync, fix it in the same response.

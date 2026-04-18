@@ -25,6 +25,8 @@ const nodeTypes = {
   deployment:      WorkloadNode,
   statefulset:     WorkloadNode,
   daemonset:       WorkloadNode,
+  job:             WorkloadNode,
+  cronjob:         WorkloadNode,
   namespaceGroup:  NamespaceGroupNode,
 }
 
@@ -230,6 +232,10 @@ export function Graph({ data, blastRadius, onNodeClick, onFocusReady, search = '
         service:        n.metadata?.service ?? '',
         nodeType:       n.type,
         replicas:       n.metadata?.replicas,
+        schedule:       n.metadata?.schedule,
+        succeeded:      n.metadata?.succeeded,
+        completions:    n.metadata?.completions,
+        activeJobs:     n.metadata?.activeJobs,
         maxAccessLevel: maxAccessForNode(n.id, visibleEdges),
         topActions:     topActionsMap.get(n.id) ?? [],
         selected:       n.id === selectedId,

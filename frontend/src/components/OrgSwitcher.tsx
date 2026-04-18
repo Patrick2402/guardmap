@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Building2, ChevronDown, Activity, Plus, LogOut } from 'lucide-react'
+import { Building2, ChevronDown, Activity, Plus, LogOut, Settings } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 
 export function OrgSwitcher() {
@@ -68,6 +68,16 @@ export function OrgSwitcher() {
               ))}
 
               <div className="border-t border-white/5">
+                <button
+                  onClick={() => { navigate('/settings'); setOpen(false) }}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 transition-colors hover:bg-white/5 text-left"
+                >
+                  <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
+                    style={{ background: 'rgba(124,58,237,0.1)' }}>
+                    <Settings size={12} className="text-violet-400" />
+                  </div>
+                  <span className="text-sm font-sans text-slate-400">Settings</span>
+                </button>
                 <button
                   onClick={() => { navigate('/integrations'); setOpen(false) }}
                   className="w-full flex items-center gap-3 px-3 py-2.5 transition-colors hover:bg-white/5 text-left"

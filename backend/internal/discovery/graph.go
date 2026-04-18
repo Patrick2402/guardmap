@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+	"time"
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -25,7 +26,7 @@ func NewGraphBuilder(k8s *K8sDiscovery, iam *IAMDiscovery) *GraphBuilder {
 
 // workloadRef identifies a K8s workload controller.
 type workloadRef struct {
-	kind string // "deployment" | "statefulset" | "daemonset"
+	kind string // "deployment" | "statefulset" | "daemonset" | "job" | "cronjob"
 	ns   string
 	name string
 }
@@ -38,6 +39,10 @@ func (w workloadRef) nodeID() string {
 		return fmt.Sprintf("ss:%s/%s", w.ns, w.name)
 	case "daemonset":
 		return fmt.Sprintf("ds:%s/%s", w.ns, w.name)
+	case "job":
+		return fmt.Sprintf("job:%s/%s", w.ns, w.name)
+	case "cronjob":
+		return fmt.Sprintf("cj:%s/%s", w.ns, w.name)
 	}
 	return ""
 }
@@ -48,6 +53,10 @@ func (w workloadRef) nodeType() models.NodeType {
 		return models.NodeTypeStatefulSet
 	case "daemonset":
 		return models.NodeTypeDaemonSet
+	case "job":
+		return models.NodeTypeJob
+	case "cronjob":
+		return models.NodeTypeCronJob
 	default:
 		return models.NodeTypeDeployment
 	}
@@ -85,6 +94,12 @@ func (g *GraphBuilder) Build(ctx context.Context) (*models.GraphData, error) {
 		}
 	}
 
+	// Job UID → Job ref (for pod→Job lookup)
+	jobByUID := make(map[string]struct{ ns, name string })
+	for _, job := range snap.Jobs {
+		jobByUID[string(job.UID)] = struct{ ns, name string }{job.Namespace, job.Name}
+	}
+
 	// Pod key ("ns/name") → workloadRef
 	podWorkload := make(map[string]workloadRef)
 	for _, pod := range snap.Pods {
@@ -99,6 +114,10 @@ func (g *GraphBuilder) Build(ctx context.Context) (*models.GraphData, error) {
 				podWorkload[key] = workloadRef{"statefulset", pod.Namespace, owner.Name}
 			case "DaemonSet":
 				podWorkload[key] = workloadRef{"daemonset", pod.Namespace, owner.Name}
+			case "Job":
+				if jInfo, ok := jobByUID[string(owner.UID)]; ok {
+					podWorkload[key] = workloadRef{"job", jInfo.ns, jInfo.name}
+				}
 			}
 		}
 	}
@@ -392,6 +411,92 @@ func (g *GraphBuilder) Build(ctx context.Context) (*models.GraphData, error) {
 			}
 		}
 		nodeSet[id] = models.Node{ID: id, Type: models.NodeTypeDaemonSet, Label: d.Name, Namespace: d.Namespace, Metadata: meta}
+	}
+
+	// ── Jobs ─────────────────────────────────────────────────────────────────
+	for _, job := range snap.Jobs {
+		id := fmt.Sprintf("job:%s/%s", job.Namespace, job.Name)
+		image := ""
+		if len(job.Spec.Template.Spec.Containers) > 0 {
+			image = job.Spec.Template.Spec.Containers[0].Image
+		}
+		completions := "1"
+		if job.Spec.Completions != nil {
+			completions = fmt.Sprintf("%d", *job.Spec.Completions)
+		}
+		parallelism := "1"
+		if job.Spec.Parallelism != nil {
+			parallelism = fmt.Sprintf("%d", *job.Spec.Parallelism)
+		}
+		cpuReq, cpuLim, memReq, memLim := containerResources(job.Spec.Template.Spec.Containers)
+		meta := map[string]string{
+			"image":       image,
+			"completions": completions,
+			"parallelism": parallelism,
+			"succeeded":   fmt.Sprintf("%d", job.Status.Succeeded),
+			"failed":      fmt.Sprintf("%d", job.Status.Failed),
+			"active":      fmt.Sprintf("%d", job.Status.Active),
+			"labels":      labelsToString(job.Spec.Template.Labels),
+		}
+		if cpuReq != "" { meta["cpuRequest"] = cpuReq }
+		if cpuLim != "" { meta["cpuLimit"]   = cpuLim }
+		if memReq != "" { meta["memRequest"] = memReq }
+		if memLim != "" { meta["memLimit"]   = memLim }
+		if existing, ok := nodeSet[id]; ok {
+			for _, k := range []string{"privileged", "runAsRoot", "hostPID", "hostNetwork", "hostPath"} {
+				if v := existing.Metadata[k]; v != "" {
+					meta[k] = v
+				}
+			}
+		}
+		nodeSet[id] = models.Node{ID: id, Type: models.NodeTypeJob, Label: job.Name, Namespace: job.Namespace, Metadata: meta}
+
+		// CronJob → Job "schedules" edge
+		for _, owner := range job.OwnerReferences {
+			if owner.Kind == "CronJob" {
+				cjID := fmt.Sprintf("cj:%s/%s", job.Namespace, owner.Name)
+				newEdge(cjID, id, "schedules", "", nil)
+			}
+		}
+	}
+
+	// ── CronJobs ─────────────────────────────────────────────────────────────
+	for _, cj := range snap.CronJobs {
+		id := fmt.Sprintf("cj:%s/%s", cj.Namespace, cj.Name)
+		image := ""
+		if len(cj.Spec.JobTemplate.Spec.Template.Spec.Containers) > 0 {
+			image = cj.Spec.JobTemplate.Spec.Template.Spec.Containers[0].Image
+		}
+		lastSchedule := ""
+		if cj.Status.LastScheduleTime != nil {
+			lastSchedule = cj.Status.LastScheduleTime.UTC().Format(time.RFC3339)
+		}
+		suspend := "false"
+		if cj.Spec.Suspend != nil && *cj.Spec.Suspend {
+			suspend = "true"
+		}
+		cpuReq, cpuLim, memReq, memLim := containerResources(cj.Spec.JobTemplate.Spec.Template.Spec.Containers)
+		meta := map[string]string{
+			"schedule":          cj.Spec.Schedule,
+			"concurrencyPolicy": string(cj.Spec.ConcurrencyPolicy),
+			"suspend":           suspend,
+			"lastScheduleTime":  lastSchedule,
+			"activeJobs":        fmt.Sprintf("%d", len(cj.Status.Active)),
+			"image":             image,
+			"labels":            labelsToString(cj.Spec.JobTemplate.Labels),
+		}
+		if cpuReq != "" { meta["cpuRequest"] = cpuReq }
+		if cpuLim != "" { meta["cpuLimit"]   = cpuLim }
+		if memReq != "" { meta["memRequest"] = memReq }
+		if memLim != "" { meta["memLimit"]   = memLim }
+		if existing, ok := nodeSet[id]; ok {
+			for _, k := range []string{"privileged", "runAsRoot", "hostPID", "hostNetwork", "hostPath"} {
+				if v := existing.Metadata[k]; v != "" {
+					meta[k] = v
+				}
+			}
+		}
+		nodeSet[id] = models.Node{ID: id, Type: models.NodeTypeCronJob, Label: cj.Name, Namespace: cj.Namespace, Metadata: meta}
 	}
 
 	// ── All ServiceAccount nodes ─────────────────────────────────────────────
@@ -733,6 +838,30 @@ func (g *GraphBuilder) Build(ctx context.Context) (*models.GraphData, error) {
 			nodeSet[id] = n
 		}
 	}
+	for _, job := range snap.Jobs {
+		id := fmt.Sprintf("job:%s/%s", job.Namespace, job.Name)
+		if n, ok := nodeSet[id]; ok {
+			priv, root, hPID, hNet, hPath := podSecurityFlags(job.Spec.Template.Spec)
+			n.Metadata["privileged"]  = boolFlag(priv)
+			n.Metadata["runAsRoot"]   = boolFlag(root)
+			n.Metadata["hostPID"]     = boolFlag(hPID)
+			n.Metadata["hostNetwork"] = boolFlag(hNet)
+			n.Metadata["hostPath"]    = boolFlag(hPath)
+			nodeSet[id] = n
+		}
+	}
+	for _, cj := range snap.CronJobs {
+		id := fmt.Sprintf("cj:%s/%s", cj.Namespace, cj.Name)
+		if n, ok := nodeSet[id]; ok {
+			priv, root, hPID, hNet, hPath := podSecurityFlags(cj.Spec.JobTemplate.Spec.Template.Spec)
+			n.Metadata["privileged"]  = boolFlag(priv)
+			n.Metadata["runAsRoot"]   = boolFlag(root)
+			n.Metadata["hostPID"]     = boolFlag(hPID)
+			n.Metadata["hostNetwork"] = boolFlag(hNet)
+			n.Metadata["hostPath"]    = boolFlag(hPath)
+			nodeSet[id] = n
+		}
+	}
 
 	// ── Assemble output ───────────────────────────────────────────────────────
 	graph := &models.GraphData{}
@@ -760,6 +889,14 @@ func workloadReplicas(snap *ClusterSnapshot, wl workloadRef) string {
 			if s.Namespace == wl.ns && s.Name == wl.name {
 				if s.Spec.Replicas != nil {
 					return fmt.Sprintf("%d", *s.Spec.Replicas)
+				}
+			}
+		}
+	case "job":
+		for _, j := range snap.Jobs {
+			if j.Namespace == wl.ns && j.Name == wl.name {
+				if j.Spec.Parallelism != nil {
+					return fmt.Sprintf("%d", *j.Spec.Parallelism)
 				}
 			}
 		}

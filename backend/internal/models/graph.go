@@ -13,6 +13,8 @@ const (
 	NodeTypeDeployment  NodeType = "deployment"
 	NodeTypeStatefulSet NodeType = "statefulset"
 	NodeTypeDaemonSet   NodeType = "daemonset"
+	NodeTypeJob         NodeType = "job"
+	NodeTypeCronJob     NodeType = "cronjob"
 
 	// K8s networking
 	NodeTypeK8sService    NodeType = "k8s_service"

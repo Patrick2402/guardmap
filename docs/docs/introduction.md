@@ -16,7 +16,7 @@ GuardMap is a security monitoring platform for Kubernetes clusters. It continuou
 ## Key features
 
 - **Security score** — a single 0–100 score using a diminishing-returns formula, updated after every scan
-- **71 security checks** across pod security, RBAC, network policies, and IAM
+- **30+ security checks** across pod security, RBAC, network policies, and IAM
 - **IRSA graph** — visualise the full chain from Deployment → ServiceAccount → IAM Role → AWS Resource
 - **Topology view** — see workloads, services, ingresses, and network policies per namespace
 - **Scan history** — track your security posture over time with trend charts

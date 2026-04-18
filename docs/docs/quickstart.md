@@ -38,7 +38,8 @@ The manifest creates:
 - A `guardmap` namespace
 - A `ServiceAccount` with read-only cluster permissions
 - A `Secret` with your API key
-- A `CronJob` that runs every 6 hours
+- A `guardmap-scanner` CronJob that runs a full scan every 6 hours
+- A `guardmap-heartbeat` CronJob that pings every 5 minutes (keeps cluster status live)
 
 ## Step 4 — Trigger the first scan
 

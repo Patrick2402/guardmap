@@ -26,8 +26,8 @@ export function OnboardingPage() {
     try {
       const { error } = await db.orgs().insert({ name: name.trim(), slug })
       if (error) throw error
-      // Reload the page — AuthContext will pick up the new org
-      window.location.href = '/'
+      // Hard reload so AuthContext re-fetches orgs fresh
+      window.location.href = '/overview'
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Could not create organization')
       setLoading(false)

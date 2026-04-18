@@ -4,7 +4,7 @@ import {
   Search, X, Container, KeyRound, ShieldCheck, HardDrive,
   ChevronUp, ChevronDown, ChevronRight, ExternalLink, Layers, Database,
   Cpu, Network, Globe, ShieldOff, Server, MessageSquare, Lock,
-  BarChart2, Filter,
+  BarChart2, Filter, PlayCircle, Clock,
 } from 'lucide-react'
 import { GraphData, GraphNode, NodeType, AccessLevel } from '../../types'
 
@@ -26,6 +26,8 @@ const TYPE_COLOR: Record<NodeType, string> = {
   deployment:             'text-blue-400   bg-blue-950/40   border-blue-500/30',
   statefulset:            'text-purple-400 bg-purple-950/40 border-purple-500/30',
   daemonset:              'text-orange-400 bg-orange-950/35 border-orange-500/30',
+  job:                    'text-green-400  bg-green-950/35  border-green-500/30',
+  cronjob:                'text-teal-400   bg-teal-950/35   border-teal-500/30',
   k8s_service:            'text-teal-400   bg-teal-950/35   border-teal-500/30',
   ingress:                'text-green-400  bg-green-950/30  border-green-500/30',
   networkpolicy:          'text-rose-400   bg-rose-950/30   border-rose-500/30',
@@ -38,7 +40,8 @@ const TYPE_COLOR: Record<NodeType, string> = {
 const TYPE_LABEL: Record<NodeType, string> = {
   pod: 'Pod', serviceaccount: 'ServiceAccount', iam_role: 'IAM Role',
   aws_service: 'AWS Resource', deployment: 'Deployment', statefulset: 'StatefulSet',
-  daemonset: 'DaemonSet', k8s_service: 'Service', ingress: 'Ingress',
+  daemonset: 'DaemonSet', job: 'Job', cronjob: 'CronJob',
+  k8s_service: 'Service', ingress: 'Ingress',
   networkpolicy: 'NetworkPolicy', k8s_role: 'Role', k8s_clusterrole: 'ClusterRole',
   k8s_rolebinding: 'RoleBinding', k8s_clusterrolebinding: 'ClusterRoleBinding',
 }
@@ -51,6 +54,8 @@ const TYPE_ICON: Record<NodeType, React.ReactNode> = {
   deployment:             <Layers size={9} />,
   statefulset:            <Database size={9} />,
   daemonset:              <Cpu size={9} />,
+  job:                    <PlayCircle size={9} />,
+  cronjob:                <Clock size={9} />,
   k8s_service:            <Network size={9} />,
   ingress:                <Globe size={9} />,
   networkpolicy:          <ShieldOff size={9} />,
@@ -74,6 +79,8 @@ const TYPE_GROUPS: { label: string; types: NodeType[]; color: string; icon: Reac
   { label: 'Deployments',    types: ['deployment'],      color: 'text-blue-400',   icon: <Layers size={12} /> },
   { label: 'StatefulSets',   types: ['statefulset'],     color: 'text-purple-400', icon: <Database size={12} /> },
   { label: 'DaemonSets',     types: ['daemonset'],       color: 'text-orange-400', icon: <Cpu size={12} /> },
+  { label: 'Jobs',           types: ['job'],             color: 'text-green-400',  icon: <PlayCircle size={12} /> },
+  { label: 'CronJobs',       types: ['cronjob'],         color: 'text-teal-400',   icon: <Clock size={12} /> },
   { label: 'ServiceAccounts',types: ['serviceaccount'],  color: 'text-violet-400', icon: <KeyRound size={12} /> },
   { label: 'Services',       types: ['k8s_service'],     color: 'text-teal-400',   icon: <Network size={12} /> },
   { label: 'Ingresses',      types: ['ingress'],         color: 'text-green-400',  icon: <Globe size={12} /> },

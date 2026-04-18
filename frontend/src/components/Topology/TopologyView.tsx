@@ -1,29 +1,32 @@
-import { useMemo, useCallback, useState } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import ReactFlow, {
-  Background, BackgroundVariant, Controls, MiniMap,
-  Node, Edge, NodeMouseHandler,
+  Node, Edge, Background, BackgroundVariant, Controls, MiniMap,
+  NodeMouseHandler,
 } from 'reactflow'
-import { useFocusNode } from '../../hooks/useFocusNode'
 import 'reactflow/dist/style.css'
 import { Layers } from 'lucide-react'
 
-import { GraphData, GraphNode } from '../../types'
-import { applyTopologyLayout } from '../../utils/layout'
-import { PodNode }            from '../NodeTypes/PodNode'
-import { WorkloadNode }       from '../NodeTypes/WorkloadNode'
-import { K8sNetworkNode }     from '../NodeTypes/K8sNetworkNode'
-import { NamespaceGroupNode } from '../NodeTypes/NamespaceGroupNode'
-import { RBACRoleNode }       from '../NodeTypes/RBACRoleNode'
-import { RBACBindingNode }    from '../NodeTypes/RBACBindingNode'
-import { RBACGroupNode }      from '../NodeTypes/RBACGroupNode'
-import { TopologyEdge }       from '../EdgeTypes/TopologyEdge'
-import { TopologyDetails }    from './TopologyDetails'
+import { GraphData, GraphNode, GraphEdge }  from '../../types'
+import { PodNode }                          from '../NodeTypes/PodNode'
+import { WorkloadNode }                     from '../NodeTypes/WorkloadNode'
+import { K8sNetworkNode }                   from '../NodeTypes/K8sNetworkNode'
+import { NamespaceGroupNode }               from '../NodeTypes/NamespaceGroupNode'
+import { RBACRoleNode }                     from '../NodeTypes/RBACRoleNode'
+import { RBACBindingNode }                  from '../NodeTypes/RBACBindingNode'
+import { RBACGroupNode }                    from '../NodeTypes/RBACGroupNode'
+import { TopologyEdge }                     from '../EdgeTypes/TopologyEdge'
+import { TopologyDetails }                  from './TopologyDetails'
+import { useFocusNode }                     from '../../hooks/useFocusNode'
+
+// ── React Flow registries ────────────────────────────────────────────────────
 
 const nodeTypes = {
   pod:                    PodNode,
   deployment:             WorkloadNode,
   statefulset:            WorkloadNode,
   daemonset:              WorkloadNode,
+  job:                    WorkloadNode,
+  cronjob:                WorkloadNode,
   k8s_service:            K8sNetworkNode,
   ingress:                K8sNetworkNode,
   networkpolicy:          K8sNetworkNode,
@@ -37,62 +40,207 @@ const nodeTypes = {
 
 const edgeTypes = { topology: TopologyEdge }
 
-const TOPO_TYPES      = new Set([
-  'pod', 'deployment', 'statefulset', 'daemonset',
+// ── Topology filters ─────────────────────────────────────────────────────────
+
+const TOPO_TYPES = new Set([
+  'pod', 'deployment', 'statefulset', 'daemonset', 'job', 'cronjob',
   'k8s_service', 'ingress', 'networkpolicy',
   'k8s_role', 'k8s_clusterrole', 'k8s_rolebinding', 'k8s_clusterrolebinding',
 ])
-const TOPO_EDGE_LABELS = new Set(['manages', 'selects', 'routes →', 'grants →'])
+
+const TOPO_EDGE_LABELS = new Set([
+  'manages', 'selects', 'routes →', 'grants →', 'bound →', 'schedules',
+])
 
 const EDGE_COLOR: Record<string, string> = {
-  'manages':  '#3b82f6',
-  'selects':  '#14b8a6',
-  'routes →': '#22c55e',
-  'grants →': '#8b5cf6',
+  'manages':   '#3b82f6',
+  'selects':   '#14b8a6',
+  'routes →':  '#22c55e',
+  'grants →':  '#8b5cf6',
+  'bound →':   '#8b5cf6',
+  'schedules': '#2dd4bf',
 }
+
+// ── Layout engine ────────────────────────────────────────────────────────────
+// Namespace blocks in a 2-column grid.
+// Within each namespace: resources grouped by category (workloads, batch, pods,
+// services, networking, rbac) — laid out left-to-right, wrapping every 4 nodes.
+
+const NW = 210, NH = 66           // node width / row height (with buffer)
+const H_GAP = 16                  // gap between nodes in a row
+const ROW_VGAP = 12               // gap between wrapped rows within a category
+const CAT_GAP = 20                // vertical gap between categories
+const NS_PX = 20, NS_PY = 14     // namespace inner padding x/y
+const NS_HDR = 28                 // namespace header strip height
+const COL_HGAP = 40               // gap between the 2 namespace columns
+const NS_VGAP = 24                // gap between namespace rows in same column
+const MAX_PER_ROW = 3             // max nodes per row within a category
+
+const CAT_DEFS: { key: string; types: Set<string> }[] = [
+  { key: 'wl',   types: new Set(['deployment','statefulset','daemonset']) },
+  { key: 'bat',  types: new Set(['cronjob','job']) },
+  { key: 'pod',  types: new Set(['pod']) },
+  { key: 'svc',  types: new Set(['k8s_service']) },
+  { key: 'net',  types: new Set(['ingress','networkpolicy']) },
+  { key: 'rbac', types: new Set(['k8s_role','k8s_clusterrole','k8s_rolebinding','k8s_clusterrolebinding']) },
+]
+
+function rowsFor(n: number) { return Math.ceil(n / MAX_PER_ROW) }
+
+function catBlockH(count: number) {
+  if (!count) return 0
+  return rowsFor(count) * NH + (rowsFor(count) - 1) * ROW_VGAP
+}
+
+function nsWidth(cats: Node[][]): number {
+  const maxInRow = Math.min(Math.max(...cats.map(c => c.length), 1), MAX_PER_ROW)
+  return 2 * NS_PX + maxInRow * NW + (maxInRow - 1) * H_GAP
+}
+
+function nsHeight(cats: Node[][]): number {
+  const active = cats.filter(c => c.length > 0)
+  if (!active.length) return NS_HDR + 2 * NS_PY
+  const inner = active.reduce((sum, c, i) =>
+    sum + catBlockH(c.length) + (i < active.length - 1 ? CAT_GAP : 0), 0)
+  return NS_HDR + 2 * NS_PY + inner
+}
+
+function buildLayout(nodes: Node[], showPods: boolean) {
+  const visible = showPods ? nodes : nodes.filter(n => n.type !== 'pod')
+
+  // Group nodes by namespace
+  const byNs = new Map<string, Node[]>()
+  for (const n of visible) {
+    const ns = (n.data?.namespace as string) || '_global'
+    if (!byNs.has(ns)) byNs.set(ns, [])
+    byNs.get(ns)!.push(n)
+  }
+
+  // Build namespace blocks with category grouping
+  type NsBlk = { ns: string; cats: Node[][]; w: number; h: number }
+  const blocks: NsBlk[] = []
+  for (const [ns, nsNodes] of byNs) {
+    const cats = CAT_DEFS.map(def => nsNodes.filter(n => def.types.has(n.type!)))
+    if (!cats.some(c => c.length > 0)) continue
+    blocks.push({ ns, cats, w: nsWidth(cats), h: nsHeight(cats) })
+  }
+
+  // Sort largest-first for better greedy column packing
+  blocks.sort((a, b) => b.h - a.h)
+
+  // Greedy 2-column assignment
+  const col0: NsBlk[] = [], col1: NsBlk[] = []
+  const colH = [0, 0]
+  for (const blk of blocks) {
+    const c = colH[0] <= colH[1] ? 0 : 1
+    if (c === 0) col0.push(blk); else col1.push(blk)
+    colH[c] += blk.h + NS_VGAP
+  }
+
+  // Column widths
+  const w0 = col0.reduce((m, b) => Math.max(m, b.w), 0)
+
+  // Assign positions
+  const nsPos = new Map<string, { x: number; y: number }>()
+  let y = 0
+  for (const b of col0) { nsPos.set(b.ns, { x: 0, y }); y += b.h + NS_VGAP }
+  y = 0
+  for (const b of col1) { nsPos.set(b.ns, { x: w0 + COL_HGAP, y }); y += b.h + NS_VGAP }
+
+  const groupNodes: Node[] = []
+  const positionedNodes: Node[] = []
+
+  for (const blk of blocks) {
+    const pos = nsPos.get(blk.ns)!
+
+    groupNodes.push({
+      id:         `topo-group:${blk.ns}`,
+      type:       'namespaceGroup',
+      position:   pos,
+      style:      { width: blk.w, height: blk.h },
+      data:       { label: blk.ns, podCount: 0 },
+      selectable: false,
+      draggable:  false,
+      zIndex:     -1,
+    })
+
+    let catY = NS_HDR + NS_PY
+    for (let ci = 0; ci < CAT_DEFS.length; ci++) {
+      const cNodes = blk.cats[ci]
+      if (!cNodes.length) continue
+
+      for (let ni = 0; ni < cNodes.length; ni++) {
+        const row = Math.floor(ni / MAX_PER_ROW)
+        const col = ni % MAX_PER_ROW
+        positionedNodes.push({
+          ...cNodes[ni],
+          style: { width: NW },          // force fixed width — prevents content overflow
+          position: {
+            x: pos.x + NS_PX + col * (NW + H_GAP),
+            y: pos.y + catY + row * (NH + ROW_VGAP),
+          },
+        })
+      }
+      catY += catBlockH(cNodes.length) + CAT_GAP
+    }
+  }
+
+  return { groupNodes, positionedNodes }
+}
+
+// Bidirectional BFS — returns all reachable node IDs from start
+function bfsAll(startId: string, edges: GraphEdge[]): Set<string> {
+  const visited = new Set([startId])
+  const queue = [startId]
+  while (queue.length) {
+    const cur = queue.shift()!
+    for (const e of edges) {
+      const next = e.source === cur ? e.target : e.target === cur ? e.source : null
+      if (next && !visited.has(next)) { visited.add(next); queue.push(next) }
+    }
+  }
+  return visited
+}
+
+// ── FocusController ──────────────────────────────────────────────────────────
 
 function FocusController({ nodeId }: { nodeId?: string | null }) {
   useFocusNode(nodeId)
   return null
 }
 
-interface TopologyViewProps { data: GraphData; focusNodeId?: string | null }
+// ── Component ────────────────────────────────────────────────────────────────
 
-function directNeighbors(startId: string, edges: GraphData['edges']): Set<string> {
-  const result = new Set<string>([startId])
-  for (const e of edges) {
-    if (e.source === startId) result.add(e.target)
-    if (e.target === startId) result.add(e.source)
-  }
-  return result
+interface TopologyViewProps {
+  data: GraphData
+  focusNodeId?: string | null
 }
 
 export function TopologyView({ data, focusNodeId }: TopologyViewProps) {
+  const [showPods,     setShowPods]     = useState(false)
   const [selectedNode, setSelectedNode] = useState<GraphNode | null>(null)
-  const [showPods, setShowPods]         = useState(true)
-  const [hoveredId, setHoveredId]       = useState<string | null>(null)
 
-  const filteredNodes = useMemo(() => {
-    const base = data.nodes.filter(n => TOPO_TYPES.has(n.type))
-    return showPods ? base : base.filter(n => n.type !== 'pod')
-  }, [data, showPods])
+  // ── Filter to topology-relevant resources ──────────────────────────────────
+  const filteredNodes = useMemo(() =>
+    data.nodes.filter(n => TOPO_TYPES.has(n.type)),
+    [data.nodes])
 
-  const filteredIds = useMemo(() => new Set(filteredNodes.map(n => n.id)), [filteredNodes])
-
-  const filteredEdges = useMemo(() =>
-    data.edges.filter(e =>
+  const filteredEdges = useMemo(() => {
+    const nodeIds = new Set(filteredNodes.map(n => n.id))
+    return data.edges.filter(e =>
       TOPO_EDGE_LABELS.has(e.label ?? '') &&
-      filteredIds.has(e.source) &&
-      filteredIds.has(e.target)
-    ), [data.edges, filteredIds])
+      nodeIds.has(e.source) &&
+      nodeIds.has(e.target)
+    )
+  }, [data.edges, filteredNodes])
 
-  // BFS from hovered node (both directions)
-  const connectedIds = useMemo(() =>
-    hoveredId ? directNeighbors(hoveredId, filteredEdges) : null,
-    [hoveredId, filteredEdges])
+  // ── BFS from selected node ─────────────────────────────────────────────────
+  const connectedIds: Set<string> | null = useMemo(() =>
+    selectedNode ? bfsAll(selectedNode.id, filteredEdges) : null,
+    [selectedNode, filteredEdges])
 
-  // Base RF nodes — layout only recomputes when data/showPods changes
-  const rfNodesBase: Node[] = useMemo(() =>
+  // ── Build base React Flow nodes ────────────────────────────────────────────
+  const baseNodes: Node[] = useMemo(() =>
     filteredNodes.map(n => ({
       id:   n.id,
       type: n.type,
@@ -102,11 +250,14 @@ export function TopologyView({ data, focusNodeId }: TopologyViewProps) {
         namespace:    n.namespace ?? '',
         nodeType:     n.type,
         replicas:     n.metadata?.replicas,
+        schedule:     n.metadata?.schedule,
+        succeeded:    n.metadata?.succeeded,
+        completions:  n.metadata?.completions,
+        activeJobs:   n.metadata?.activeJobs,
         svcType:      n.metadata?.svcType,
         host:         n.metadata?.host,
         effect:       n.metadata?.effect,
         phase:        n.metadata?.phase,
-        restartCount: n.metadata?.restartCount,
         ready:        n.metadata?.ready,
         danger:       n.metadata?.danger,
         rules:        n.metadata?.rules,
@@ -122,97 +273,93 @@ export function TopologyView({ data, focusNodeId }: TopologyViewProps) {
       },
     })), [filteredNodes])
 
-  // Layout — fixed 3-col swimlanes per namespace
+  // ── Layout ─────────────────────────────────────────────────────────────────
   const { groupNodes, positionedNodes } = useMemo(
-    () => applyTopologyLayout(rfNodesBase, [], showPods),
-    [rfNodesBase, showPods])
+    () => buildLayout(baseNodes, showPods),
+    [baseNodes, showPods])
 
-  const allNodes = useMemo(() => {
-    const active = connectedIds
-    return [
-      ...groupNodes.map(n => ({
-        ...n,
-        data: { ...n.data, dimmed: false },
-      })),
-      ...positionedNodes.map(n => ({
-        ...n,
-        data: {
-          ...n.data,
-          dimmed:   active ? !active.has(n.id) : false,
-          selected: n.id === selectedNode?.id,
-        },
-      })),
-    ]
-  }, [groupNodes, positionedNodes, connectedIds, selectedNode])
+  // ── Merge dimming + selection into final nodes ─────────────────────────────
+  const allNodes: Node[] = useMemo(() => [
+    ...groupNodes.map(n => ({ ...n, data: { ...n.data, dimmed: false } })),
+    ...positionedNodes.map(n => ({
+      ...n,
+      data: {
+        ...n.data,
+        dimmed:   connectedIds ? !connectedIds.has(n.id) : false,
+        selected: n.id === selectedNode?.id,
+      },
+    })),
+  ], [groupNodes, positionedNodes, connectedIds, selectedNode])
 
-  // Edges — highlight connected, dim rest when hovering
+  // ── Edges: hidden by default, fade in on selection ────────────────────────
   const rfEdges: Edge[] = useMemo(() =>
     filteredEdges.map(e => {
-      const isRoutes  = e.label === 'routes →'
-      const color = EDGE_COLOR[e.label ?? ''] ?? '#475569'
-      const isActive = connectedIds
+      const show = connectedIds
         ? connectedIds.has(e.source) && connectedIds.has(e.target)
-        : true
-
+        : false
+      const color = EDGE_COLOR[e.label ?? ''] ?? '#475569'
       return {
         id:     e.id,
         source: e.source,
         target: e.target,
         type:   'topology',
-        zIndex: isActive ? 10 : 1,
+        zIndex: show ? 10 : 0,
         data: {
-          color:       isActive ? color : '#1e293b',
-          strokeWidth: isActive ? (isRoutes ? 3 : 2) : 0.5,
-          opacity:     isActive ? (isRoutes ? 0.95 : 0.8) : 0.08,
-          dashed:      isActive && isRoutes,
-          label:       e.label,
+          color:       show ? color : 'transparent',
+          strokeWidth: show ? 2 : 0,
+          opacity:     show ? 0.85 : 0,
+          dashed:      show && e.label === 'routes →',
+          label:       show ? e.label : '',
         },
       }
     }), [filteredEdges, connectedIds])
 
+  // ── Interaction ────────────────────────────────────────────────────────────
   const handleNodeClick: NodeMouseHandler = useCallback((_evt, node) => {
     if (node.id.startsWith('topo-group:') || node.type === 'rbacGroup') return
-    const graphNode = data.nodes.find(n => n.id === node.id) ?? null
-    setSelectedNode(prev => prev?.id === graphNode?.id ? null : graphNode)
+    const gn = data.nodes.find(n => n.id === node.id) ?? null
+    setSelectedNode(prev => prev?.id === gn?.id ? null : gn)
   }, [data.nodes])
 
-  const handleMouseEnter: NodeMouseHandler = useCallback((_evt, node) => {
-    if (!node.id.startsWith('topo-group:') && node.type !== 'rbacGroup') setHoveredId(node.id)
-  }, [])
-
-  const handleMouseLeave: NodeMouseHandler = useCallback(() => {
-    setHoveredId(null)
-  }, [])
-
+  // ── Stats ──────────────────────────────────────────────────────────────────
   const stats = useMemo(() => ({
-    workloads:  filteredNodes.filter(n => ['deployment','statefulset','daemonset'].includes(n.type)).length,
+    namespaces: new Set(filteredNodes.filter(n => n.namespace).map(n => n.namespace!)).size,
+    workloads:  filteredNodes.filter(n =>
+      ['deployment','statefulset','daemonset','job','cronjob'].includes(n.type)).length,
     pods:       filteredNodes.filter(n => n.type === 'pod').length,
     services:   filteredNodes.filter(n => n.type === 'k8s_service').length,
     ingresses:  filteredNodes.filter(n => n.type === 'ingress').length,
     netpols:    filteredNodes.filter(n => n.type === 'networkpolicy').length,
-    namespaces: new Set(filteredNodes.filter(n => n.namespace).map(n => n.namespace!)).size,
   }), [filteredNodes])
 
+  // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <div className="absolute inset-0">
-      {/* Stat bar */}
+
+      {/* ── Top stat bar ────────────────────────────────────────────────── */}
       <div className="absolute top-0 left-0 right-0 z-10 px-5 py-1.5 border-b border-cyber-border/30 bg-cyber-panel/30 backdrop-blur-sm flex items-center gap-5">
-        {[
+        {([
           { label: 'namespaces', value: stats.namespaces, color: 'text-violet-400' },
           { label: 'workloads',  value: stats.workloads,  color: 'text-blue-400'   },
           { label: 'pods',       value: stats.pods,       color: 'text-cyan-400'   },
           { label: 'services',   value: stats.services,   color: 'text-teal-400'   },
           { label: 'ingresses',  value: stats.ingresses,  color: 'text-green-400'  },
           { label: 'netpols',    value: stats.netpols,    color: 'text-rose-400'   },
-        ].map(({ label, value, color }) => (
+        ] as const).map(({ label, value, color }) => (
           <div key={label} className="flex items-center gap-1.5">
             <span className={`text-sm font-mono font-bold ${color}`}>{value}</span>
             <span className="text-[10px] font-mono text-slate-600">{label}</span>
           </div>
         ))}
-        <span className="ml-auto text-[9px] font-mono text-slate-700 hidden md:block">
-          hover node to see connections · click for details
+
+        {/* Hint */}
+        <span className="ml-auto text-[9px] font-mono text-slate-600 hidden md:block">
+          {selectedNode
+            ? `${selectedNode.label} · showing connections · click again or background to clear`
+            : 'click any resource to reveal connections'}
         </span>
+
+        {/* Pods toggle */}
         <button
           onClick={() => setShowPods(p => !p)}
           className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-[10px] font-mono transition-all ${
@@ -222,42 +369,24 @@ export function TopologyView({ data, focusNodeId }: TopologyViewProps) {
           }`}
         >
           <Layers size={10} />
-          {showPods ? 'Pods ON' : 'Pods OFF'}
+          Pods {showPods ? 'ON' : 'OFF'}
         </button>
       </div>
 
-      {/* Legend */}
-      <div className="absolute left-4 bottom-4 z-10 rounded-xl border border-cyber-border bg-cyber-panel/80 backdrop-blur-sm px-4 py-3 space-y-1.5">
-        <div className="text-[9px] font-mono text-slate-500 uppercase tracking-widest mb-2">Topology Legend</div>
-        {[
-          { color: '#3b82f6', label: 'manages (Workload→Pod)' },
-          { color: '#14b8a6', label: 'selects (Service→Workload)' },
-          { color: '#22c55e', label: 'routes → (Ingress→Service)' },
-          { color: '#8b5cf6', label: 'grants → (Binding→Role)' },
-        ].map(({ color, label }) => (
-          <div key={label} className="flex items-center gap-2">
-            <div className="w-5 h-px" style={{ background: color }} />
-            <span className="text-[10px] font-mono text-slate-400">{label}</span>
-          </div>
-        ))}
-        {[
-          { color: 'bg-blue-400',   label: 'Deployment'    },
-          { color: 'bg-purple-400', label: 'StatefulSet'   },
-          { color: 'bg-orange-400', label: 'DaemonSet'     },
-          { color: 'bg-cyan-400',   label: 'Pod'           },
-          { color: 'bg-teal-400',   label: 'Service'       },
-          { color: 'bg-green-400',  label: 'Ingress'       },
-          { color: 'bg-rose-400',   label: 'NetworkPolicy' },
-          { color: 'bg-violet-500', label: 'RoleBinding'   },
-          { color: 'bg-red-500',    label: 'Role (critical)' },
-        ].map(({ color, label }) => (
-          <div key={label} className="flex items-center gap-2">
-            <div className={`w-1.5 h-1.5 rounded-full ${color}`} />
-            <span className="text-[10px] font-mono text-slate-400">{label}</span>
-          </div>
-        ))}
-      </div>
+      {/* ── Edge legend — only when a node is selected ──────────────────── */}
+      {selectedNode && (
+        <div className="absolute left-4 bottom-4 z-10 rounded-xl border border-cyber-border bg-cyber-panel/80 backdrop-blur-sm px-3.5 py-2.5 space-y-1">
+          <div className="text-[8px] font-mono text-slate-600 uppercase tracking-widest mb-1.5">Connections</div>
+          {Object.entries(EDGE_COLOR).map(([label, color]) => (
+            <div key={label} className="flex items-center gap-2">
+              <div className="w-4 h-px" style={{ background: color }} />
+              <span className="text-[9px] font-mono text-slate-400">{label}</span>
+            </div>
+          ))}
+        </div>
+      )}
 
+      {/* ── React Flow canvas ───────────────────────────────────────────── */}
       <div className="absolute inset-0 pt-8">
         <ReactFlow
           nodes={allNodes}
@@ -265,31 +394,34 @@ export function TopologyView({ data, focusNodeId }: TopologyViewProps) {
           nodeTypes={nodeTypes}
           edgeTypes={edgeTypes}
           onNodeClick={handleNodeClick}
-          onNodeMouseEnter={handleMouseEnter}
-          onNodeMouseLeave={handleMouseLeave}
-          onPaneClick={() => { setSelectedNode(null); setHoveredId(null) }}
+          onPaneClick={() => setSelectedNode(null)}
           fitView
-          fitViewOptions={{ padding: 0.06 }}
-          minZoom={0.04}
+          fitViewOptions={{ padding: 0.05 }}
+          minZoom={0.03}
           maxZoom={2}
           proOptions={{ hideAttribution: true }}
           elevateEdgesOnSelect
         >
           <FocusController nodeId={focusNodeId} />
           <Background variant={BackgroundVariant.Dots} gap={24} size={1} color="#1a2840" />
-          <Controls className="!border-cyber-border !bg-cyber-panel/80 !rounded-xl overflow-hidden" showInteractive={false} />
+          <Controls
+            className="!border-cyber-border !bg-cyber-panel/80 !rounded-xl overflow-hidden"
+            showInteractive={false}
+          />
           <MiniMap
             nodeColor={n => {
-              if (n.type === 'deployment')             return '#1d4ed8'
-              if (n.type === 'statefulset')            return '#7e22ce'
-              if (n.type === 'daemonset')              return '#c2410c'
-              if (n.type === 'pod')                    return '#0e7490'
-              if (n.type === 'k8s_service')            return '#0d9488'
-              if (n.type === 'ingress')                return '#16a34a'
-              if (n.type === 'networkpolicy')          return '#e11d48'
-              if (n.type === 'k8s_rolebinding' || n.type === 'k8s_clusterrolebinding') return '#7c3aed'
-              if (n.type === 'k8s_clusterrole')        return '#f97316'
-              if (n.type === 'k8s_role')               return '#ef4444'
+              const t = n.type
+              if (t === 'deployment')             return '#1d4ed8'
+              if (t === 'statefulset')            return '#7e22ce'
+              if (t === 'daemonset')              return '#c2410c'
+              if (t === 'job')                    return '#16a34a'
+              if (t === 'cronjob')                return '#0d9488'
+              if (t === 'pod')                    return '#0e7490'
+              if (t === 'k8s_service')            return '#0d9488'
+              if (t === 'ingress')                return '#16a34a'
+              if (t === 'networkpolicy')          return '#e11d48'
+              if (t === 'k8s_rolebinding' || t === 'k8s_clusterrolebinding') return '#7c3aed'
+              if (t === 'k8s_role' || t === 'k8s_clusterrole')               return '#ef4444'
               return '#1e293b'
             }}
             className="!border-cyber-border !bg-cyber-panel/90 !rounded-xl"

@@ -1,0 +1,170 @@
+# GuardMap Agent — Kubernetes install manifest
+#
+# Usage:
+#   1. Edit the Secret below (replace <...> placeholders)
+#   2. kubectl apply -f install.yaml
+#
+# ── Daemon migration note ──────────────────────────────────────────────────────
+# When migrating to the real-time daemon (Deployment), only the two CronJobs
+# at the bottom of this file change. Namespace, ServiceAccount, ClusterRole,
+# ClusterRoleBinding and Secret all stay identical — no RBAC or credential
+# changes needed.
+# See: k8s/agent/daemon-deployment.yaml (to be created when ready)
+# ──────────────────────────────────────────────────────────────────────────────
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: guardmap
+
+---
+
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: guardmap-agent
+  namespace: guardmap
+
+---
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: guardmap-agent
+rules:
+  - apiGroups: [""]
+    resources:
+      - pods
+      - serviceaccounts
+      - services
+      - namespaces
+      - nodes
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["apps"]
+    resources:
+      - deployments
+      - statefulsets
+      - daemonsets
+      - replicasets
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["networking.k8s.io"]
+    resources:
+      - ingresses
+      - networkpolicies
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["batch"]
+    resources:
+      - jobs
+      - cronjobs
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["rbac.authorization.k8s.io"]
+    resources:
+      - roles
+      - clusterroles
+      - rolebindings
+      - clusterrolebindings
+    verbs: ["get", "list", "watch"]
+
+---
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: guardmap-agent
+subjects:
+  - kind: ServiceAccount
+    name: guardmap-agent
+    namespace: guardmap
+roleRef:
+  kind: ClusterRole
+  name: guardmap-agent
+  apiGroup: rbac.authorization.k8s.io
+
+---
+
+# Edit this Secret before applying.
+# GUARDMAP_API_KEY: generate in GuardMap dashboard → Settings → API Keys
+apiVersion: v1
+kind: Secret
+metadata:
+  name: guardmap-credentials
+  namespace: guardmap
+type: Opaque
+stringData:
+  GUARDMAP_API_KEY: "<your-api-key>"
+  SUPABASE_URL: "<your-supabase-url>"
+  SUPABASE_ANON_KEY: "<your-supabase-anon-key>"
+  CLUSTER_NAME: "<your-cluster-name>"
+
+---
+
+# Full scan — runs every 6 hours
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: guardmap-scanner
+  namespace: guardmap
+spec:
+  schedule: "0 */6 * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      activeDeadlineSeconds: 600
+      template:
+        spec:
+          serviceAccountName: guardmap-agent
+          restartPolicy: OnFailure
+          containers:
+            - name: scanner
+              image: patryk2402/guardmap-agent:latest
+              command: ["/guardmap-agent"]
+              envFrom:
+                - secretRef:
+                    name: guardmap-credentials
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 128Mi
+                limits:
+                  cpu: 500m
+                  memory: 512Mi
+
+---
+
+# Heartbeat — runs every 5 minutes, keeps last_seen_at fresh
+# No K8s API calls — just a lightweight HTTP ping to Supabase.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: guardmap-heartbeat
+  namespace: guardmap
+spec:
+  schedule: "*/5 * * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 2
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      activeDeadlineSeconds: 30
+      template:
+        spec:
+          serviceAccountName: guardmap-agent
+          restartPolicy: OnFailure
+          containers:
+            - name: heartbeat
+              image: patryk2402/guardmap-agent:latest
+              command: ["/guardmap-heartbeat"]
+              envFrom:
+                - secretRef:
+                    name: guardmap-credentials
+              resources:
+                requests:
+                  cpu: 10m
+                  memory: 16Mi
+                limits:
+                  cpu: 50m
+                  memory: 32Mi

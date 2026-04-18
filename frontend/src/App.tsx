@@ -22,6 +22,8 @@ import { LoginPage }          from './pages/LoginPage'
 import { OnboardingPage }     from './pages/OnboardingPage'
 import { IntegrationsPage }   from './pages/IntegrationsPage'
 import { LandingPage }        from './pages/LandingPage'
+import { SettingsPage }       from './pages/SettingsPage'
+import { InvitePage }         from './pages/InvitePage'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import { OrgSwitcher }        from './components/OrgSwitcher'
 
@@ -32,6 +34,14 @@ function RedirectIfAuth({ children }: { children: React.ReactNode }) {
   const { user, orgs, initialLoading } = useAuth()
   if (initialLoading) return null
   if (user) return <Navigate to={orgs.length === 0 ? '/onboarding' : '/overview'} replace />
+  return <>{children}</>
+}
+
+// ── Requires login but does NOT redirect away based on orgs ──────────────────
+function RequireAuthOnly({ children }: { children: React.ReactNode }) {
+  const { user, initialLoading } = useAuth()
+  if (initialLoading) return null
+  if (!user) return <Navigate to="/login" replace />
   return <>{children}</>
 }
 
@@ -449,11 +459,13 @@ export default function App() {
     <AuthProvider>
       <Routes>
         <Route path="/login"         element={<RedirectIfAuth><LoginPage /></RedirectIfAuth>} />
-        <Route path="/onboarding"    element={<RedirectIfAuth><OnboardingPage /></RedirectIfAuth>} />
+        <Route path="/onboarding"    element={<RequireAuthOnly><OnboardingPage /></RequireAuthOnly>} />
         <Route path="/integrations"  element={<RequireAuth><IntegrationsPage /></RequireAuth>} />
+        <Route path="/settings"      element={<RequireAuth><SettingsPage /></RequireAuth>} />
+        <Route path="/invite/:token" element={<InvitePage />} />
         <Route path="/:tab/focus/:focusId" element={<RequireAuth><ClusterView /></RequireAuth>} />
         <Route path="/:tab"                element={<RequireAuth><ClusterView /></RequireAuth>} />
-        <Route path="/"                    element={<LandingPage />} />
+        <Route path="/"                    element={<RedirectIfAuth><LandingPage /></RedirectIfAuth>} />
       </Routes>
     </AuthProvider>
   )

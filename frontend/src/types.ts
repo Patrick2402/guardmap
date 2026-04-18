@@ -6,6 +6,8 @@ export type NodeType =
   | 'deployment'
   | 'statefulset'
   | 'daemonset'
+  | 'job'
+  | 'cronjob'
   | 'k8s_service'
   | 'ingress'
   | 'networkpolicy'
@@ -16,7 +18,7 @@ export type NodeType =
 
 export type AccessLevel = 'read' | 'write' | 'full'
 
-export const WORKLOAD_TYPES: NodeType[] = ['deployment', 'statefulset', 'daemonset']
+export const WORKLOAD_TYPES: NodeType[] = ['deployment', 'statefulset', 'daemonset', 'job', 'cronjob']
 export const NETWORKING_TYPES: NodeType[] = ['k8s_service', 'ingress', 'networkpolicy']
 export const IRSA_TYPES: NodeType[] = ['pod', 'serviceaccount', 'iam_role', 'aws_service']
 

@@ -2327,6 +2327,186 @@
         "roleKind": "Role",
         "subjects": "system:serviceaccount"
       }
+    },
+    {
+      "id": "cj:production/billing-export",
+      "type": "cronjob",
+      "label": "billing-export",
+      "namespace": "production",
+      "metadata": {
+        "schedule": "0 1 * * *",
+        "concurrencyPolicy": "Forbid",
+        "suspend": "false",
+        "lastScheduleTime": "2026-04-18T01:00:00Z",
+        "activeJobs": "0",
+        "image": "company/billing-exporter:v1.2.0",
+        "cpuRequest": "200m",
+        "cpuLimit": "500m",
+        "memRequest": "128Mi",
+        "memLimit": "256Mi"
+      }
+    },
+    {
+      "id": "job:production/billing-export-28960320",
+      "type": "job",
+      "label": "billing-export-28960320",
+      "namespace": "production",
+      "metadata": {
+        "image": "company/billing-exporter:v1.2.0",
+        "completions": "1",
+        "parallelism": "1",
+        "succeeded": "1",
+        "failed": "0",
+        "active": "0",
+        "cpuRequest": "200m",
+        "memRequest": "128Mi"
+      }
+    },
+    {
+      "id": "pod:production/billing-export-28960320-xr4kp",
+      "type": "pod",
+      "label": "billing-export-28960320-xr4kp",
+      "namespace": "production",
+      "metadata": {
+        "uid": "bf001234-bb01",
+        "nodeName": "ip-10-0-1-45.eu-west-1.compute.internal",
+        "image": "company/billing-exporter:v1.2.0",
+        "phase": "Succeeded",
+        "condition": "Ready",
+        "restarts": "0",
+        "serviceAccount": "payments-api-sa"
+      }
+    },
+    {
+      "id": "cj:data-platform/log-archiver",
+      "type": "cronjob",
+      "label": "log-archiver",
+      "namespace": "data-platform",
+      "metadata": {
+        "schedule": "0 3 * * *",
+        "concurrencyPolicy": "Allow",
+        "suspend": "false",
+        "lastScheduleTime": "2026-04-18T03:00:00Z",
+        "activeJobs": "0",
+        "image": "company/log-archiver:v2.0.1",
+        "privileged": "true",
+        "runAsRoot": "true",
+        "cpuRequest": "100m",
+        "memRequest": "64Mi"
+      }
+    },
+    {
+      "id": "job:data-platform/log-archiver-28960080",
+      "type": "job",
+      "label": "log-archiver-28960080",
+      "namespace": "data-platform",
+      "metadata": {
+        "image": "company/log-archiver:v2.0.1",
+        "completions": "1",
+        "parallelism": "1",
+        "succeeded": "1",
+        "failed": "0",
+        "active": "0",
+        "privileged": "true",
+        "runAsRoot": "true"
+      }
+    },
+    {
+      "id": "pod:data-platform/log-archiver-28960080-p9kwz",
+      "type": "pod",
+      "label": "log-archiver-28960080-p9kwz",
+      "namespace": "data-platform",
+      "metadata": {
+        "uid": "bf001234-bb02",
+        "nodeName": "ip-10-0-2-12.eu-west-1.compute.internal",
+        "image": "company/log-archiver:v2.0.1",
+        "phase": "Succeeded",
+        "condition": "Ready",
+        "restarts": "0",
+        "privileged": "true",
+        "runAsRoot": "true",
+        "serviceAccount": "spark-sa"
+      }
+    },
+    {
+      "id": "job:staging/schema-migration-v4",
+      "type": "job",
+      "label": "schema-migration-v4",
+      "namespace": "staging",
+      "metadata": {
+        "image": "company/migrator:v4.0.0",
+        "completions": "1",
+        "parallelism": "1",
+        "succeeded": "0",
+        "failed": "1",
+        "active": "1",
+        "cpuRequest": "500m",
+        "memRequest": "256Mi"
+      }
+    },
+    {
+      "id": "pod:staging/schema-migration-v4-zx9vq",
+      "type": "pod",
+      "label": "schema-migration-v4-zx9vq",
+      "namespace": "staging",
+      "metadata": {
+        "uid": "bf001234-bb03",
+        "nodeName": "ip-10-0-3-88.eu-west-1.compute.internal",
+        "image": "company/migrator:v4.0.0",
+        "phase": "Running",
+        "condition": "NotReady",
+        "restarts": "2",
+        "serviceAccount": "payments-staging-sa"
+      }
+    },
+    {
+      "id": "cj:ml-platform/model-trainer",
+      "type": "cronjob",
+      "label": "model-trainer",
+      "namespace": "ml-platform",
+      "metadata": {
+        "schedule": "0 22 * * *",
+        "concurrencyPolicy": "Forbid",
+        "suspend": "false",
+        "lastScheduleTime": "2026-04-17T22:00:00Z",
+        "activeJobs": "0",
+        "image": "company/ml-trainer:v3.1.0",
+        "cpuRequest": "2000m",
+        "cpuLimit": "4000m",
+        "memRequest": "4Gi",
+        "memLimit": "8Gi"
+      }
+    },
+    {
+      "id": "job:ml-platform/model-trainer-28959960",
+      "type": "job",
+      "label": "model-trainer-28959960",
+      "namespace": "ml-platform",
+      "metadata": {
+        "image": "company/ml-trainer:v3.1.0",
+        "completions": "1",
+        "parallelism": "1",
+        "succeeded": "1",
+        "failed": "0",
+        "active": "0",
+        "cpuRequest": "2000m",
+        "memRequest": "4Gi"
+      }
+    },
+    {
+      "id": "pod:ml-platform/model-trainer-28959960-k8tqn",
+      "type": "pod",
+      "label": "model-trainer-28959960-k8tqn",
+      "namespace": "ml-platform",
+      "metadata": {
+        "uid": "bf001234-bb04",
+        "nodeName": "ip-10-0-4-55.eu-west-1.compute.internal",
+        "image": "company/ml-trainer:v3.1.0",
+        "phase": "Succeeded",
+        "condition": "Ready",
+        "restarts": "0",
+        "serviceAccount": "training-sa"
+      }
     }
   ],
   "edges": [
@@ -3451,55 +3631,121 @@
       "id": "e146",
       "source": "ing:production/app-ingress",
       "target": "k8s-svc:production/payments-api",
-      "label": "routes →"
+      "label": "routes \u2192"
     },
     {
       "id": "e147",
       "source": "ing:production/app-ingress",
       "target": "k8s-svc:production/user-service",
-      "label": "routes →"
+      "label": "routes \u2192"
     },
     {
       "id": "e148",
       "source": "ing:production/app-ingress",
       "target": "k8s-svc:production/order-service",
-      "label": "routes →"
+      "label": "routes \u2192"
     },
     {
       "id": "e149",
       "source": "ing:monitoring/monitoring-ingress",
       "target": "k8s-svc:monitoring/grafana",
-      "label": "routes →"
+      "label": "routes \u2192"
     },
     {
       "id": "e150",
       "source": "ing:monitoring/monitoring-ingress",
       "target": "k8s-svc:monitoring/prometheus",
-      "label": "routes →"
+      "label": "routes \u2192"
     },
     {
       "id": "e151",
       "source": "k8s-crb:payments-admin-binding",
       "target": "k8s-clusterrole:payments-cluster-admin",
-      "label": "grants →"
+      "label": "grants \u2192"
     },
     {
       "id": "e152",
       "source": "k8s-rb:production/payments-secrets-binding",
       "target": "k8s-role:production/payments-secret-reader",
-      "label": "grants →"
+      "label": "grants \u2192"
     },
     {
       "id": "e153",
       "source": "sa:production/payments-api",
       "target": "k8s-crb:payments-admin-binding",
-      "label": "bound →"
+      "label": "bound \u2192"
     },
     {
       "id": "e154",
       "source": "sa:production/payments-api",
       "target": "k8s-rb:production/payments-secrets-binding",
-      "label": "bound →"
+      "label": "bound \u2192"
+    },
+    {
+      "id": "e155",
+      "source": "cj:production/billing-export",
+      "target": "job:production/billing-export-28960320",
+      "label": "schedules"
+    },
+    {
+      "id": "e156",
+      "source": "cj:data-platform/log-archiver",
+      "target": "job:data-platform/log-archiver-28960080",
+      "label": "schedules"
+    },
+    {
+      "id": "e157",
+      "source": "cj:ml-platform/model-trainer",
+      "target": "job:ml-platform/model-trainer-28959960",
+      "label": "schedules"
+    },
+    {
+      "id": "e158",
+      "source": "job:production/billing-export-28960320",
+      "target": "pod:production/billing-export-28960320-xr4kp",
+      "label": "manages"
+    },
+    {
+      "id": "e159",
+      "source": "job:data-platform/log-archiver-28960080",
+      "target": "pod:data-platform/log-archiver-28960080-p9kwz",
+      "label": "manages"
+    },
+    {
+      "id": "e160",
+      "source": "job:staging/schema-migration-v4",
+      "target": "pod:staging/schema-migration-v4-zx9vq",
+      "label": "manages"
+    },
+    {
+      "id": "e161",
+      "source": "job:ml-platform/model-trainer-28959960",
+      "target": "pod:ml-platform/model-trainer-28959960-k8tqn",
+      "label": "manages"
+    },
+    {
+      "id": "e162",
+      "source": "pod:production/billing-export-28960320-xr4kp",
+      "target": "sa:production/payments-api-sa",
+      "label": "uses"
+    },
+    {
+      "id": "e163",
+      "source": "pod:data-platform/log-archiver-28960080-p9kwz",
+      "target": "sa:data-platform/spark-sa",
+      "label": "uses"
+    },
+    {
+      "id": "e164",
+      "source": "pod:ml-platform/model-trainer-28959960-k8tqn",
+      "target": "sa:ml-platform/training-sa",
+      "label": "uses"
+    },
+    {
+      "id": "e165",
+      "source": "pod:staging/schema-migration-v4-zx9vq",
+      "target": "sa:staging/payments-staging-sa",
+      "label": "uses"
     }
   ]
 }

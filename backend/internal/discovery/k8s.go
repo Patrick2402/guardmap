@@ -3,8 +3,10 @@ package discovery
 import (
 	"context"
 	"fmt"
+	"path/filepath"
 
 	appsv1 "k8s.io/api/apps/v1"
+	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
@@ -13,7 +15,6 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/util/homedir"
-	"path/filepath"
 )
 
 const irsaAnnotation = "eks.amazonaws.com/role-arn"
@@ -31,6 +32,10 @@ type ClusterSnapshot struct {
 	NetworkPolicies []networkingv1.NetworkPolicy
 	Endpoints       []corev1.Endpoints
 	Nodes           []corev1.Node
+
+	// Batch
+	Jobs     []batchv1.Job
+	CronJobs []batchv1.CronJob
 
 	// RBAC
 	Roles                []rbacv1.Role
@@ -147,6 +152,14 @@ func (d *K8sDiscovery) DiscoverCluster(ctx context.Context) (*ClusterSnapshot, e
 	// ── Nodes ─────────────────────────────────────────────────────────────────
 	if nodes, err := d.client.CoreV1().Nodes().List(ctx, metav1.ListOptions{}); err == nil {
 		snap.Nodes = nodes.Items
+	}
+
+	// ── Batch (Jobs + CronJobs) ───────────────────────────────────────────────
+	if jobs, err := d.client.BatchV1().Jobs("").List(ctx, metav1.ListOptions{}); err == nil {
+		snap.Jobs = jobs.Items
+	}
+	if cjs, err := d.client.BatchV1().CronJobs("").List(ctx, metav1.ListOptions{}); err == nil {
+		snap.CronJobs = cjs.Items
 	}
 
 	// ── RBAC ─────────────────────────────────────────────────────────────────

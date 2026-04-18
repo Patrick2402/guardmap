@@ -37,7 +37,7 @@ export function applyNamespacedLayout(nodes: Node[], _edges: Edge[]): SwimLaneRe
   const iamRoles: Node[] = []
   const awsServices: Node[] = []
 
-  const WORKLOAD_SET = new Set(['deployment', 'statefulset', 'daemonset'])
+  const WORKLOAD_SET = new Set(['deployment', 'statefulset', 'daemonset', 'job', 'cronjob'])
 
   for (const n of nodes) {
     const ns = (n.data?.namespace as string) ?? 'default'
@@ -130,7 +130,7 @@ const NS_PRIORITY: Record<string, number> = {
   default: 3,
 }
 
-const WORKLOAD_SET  = new Set(['deployment', 'statefulset', 'daemonset'])
+const WORKLOAD_SET  = new Set(['deployment', 'statefulset', 'daemonset', 'job', 'cronjob'])
 const NETWORK_SET   = new Set(['k8s_service', 'ingress', 'networkpolicy'])
 const RBAC_SET      = new Set(['k8s_role', 'k8s_clusterrole', 'k8s_rolebinding', 'k8s_clusterrolebinding'])
 const RBAC_SKIP_NS  = new Set(['kube-system', 'kube-public', 'kube-node-lease', 'ingress-nginx', 'cert-manager'])

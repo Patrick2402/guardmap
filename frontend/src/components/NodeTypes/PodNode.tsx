@@ -13,6 +13,14 @@ interface PodData {
   ready?: string
 }
 
+const PHASE_STYLE: Record<string, string> = {
+  Running:   'text-emerald-400 bg-emerald-900/40 border-emerald-600/30',
+  Succeeded: 'text-slate-400   bg-slate-800/40   border-slate-600/30',
+  Pending:   'text-yellow-400  bg-yellow-900/40  border-yellow-600/30',
+  Failed:    'text-red-400     bg-red-900/40     border-red-600/30',
+  Unknown:   'text-slate-500   bg-slate-800/30   border-slate-600/20',
+}
+
 export const PodNode = memo(({ data }: NodeProps<PodData>) => {
   const { label, namespace, selected, dimmed, phase, restartCount, ready } = data
   const restarts = parseInt(restartCount ?? '0', 10)
@@ -24,6 +32,8 @@ export const PodNode = memo(({ data }: NodeProps<PodData>) => {
     : hasCrash || isNotRunning
       ? 'border-red-500/50 hover:border-red-400/70'
       : 'border-cyan-500/30 hover:border-cyan-400/60 hover:shadow-[0_0_10px_#00d4ff22]'
+
+  const phaseCls = phase ? (PHASE_STYLE[phase] ?? PHASE_STYLE.Unknown) : null
 
   return (
     <div
@@ -37,13 +47,13 @@ export const PodNode = memo(({ data }: NodeProps<PodData>) => {
         <span className="text-[9px] font-mono font-bold text-cyan-500 tracking-widest uppercase">Pod</span>
         <div className="ml-auto flex items-center gap-1.5">
           {hasCrash && (
-            <span className="text-[8px] font-mono text-red-400 bg-red-900/40 px-1 rounded">
+            <span className="text-[8px] font-mono text-red-400 bg-red-900/40 px-1 rounded border border-red-600/30">
               ↺{restarts}
             </span>
           )}
-          {ready && (
-            <span className={`text-[8px] font-mono ${ready.startsWith(ready.split('/')[1]) ? 'text-emerald-400' : 'text-yellow-400'}`}>
-              {ready}
+          {phaseCls && (
+            <span className={`text-[8px] font-mono px-1 py-px rounded border ${phaseCls}`}>
+              {phase}
             </span>
           )}
           {selected && <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping" />}

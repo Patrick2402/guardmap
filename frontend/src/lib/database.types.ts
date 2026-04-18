@@ -140,6 +140,7 @@ export type Database = {
           last_scan_critical: number | null
           last_scan_high: number | null
           last_scan_score: number | null
+          last_seen_at: string | null
           name: string
           node_count: number | null
           organization_id: string
@@ -161,6 +162,7 @@ export type Database = {
           last_scan_critical?: number | null
           last_scan_high?: number | null
           last_scan_score?: number | null
+          last_seen_at?: string | null
           name: string
           node_count?: number | null
           organization_id: string
@@ -182,6 +184,7 @@ export type Database = {
           last_scan_critical?: number | null
           last_scan_high?: number | null
           last_scan_score?: number | null
+          last_seen_at?: string | null
           name?: string
           node_count?: number | null
           organization_id?: string
@@ -451,6 +454,40 @@ export type Database = {
     }
     Functions: {
       get_my_org_ids: { Args: never; Returns: string[] }
+      get_invitation_by_token: {
+        Args: { p_token: string }
+        Returns: {
+          id: string
+          email: string
+          role: Database["public"]["Enums"]["org_role"]
+          organization_name: string
+          expires_at: string
+          accepted_at: string | null
+        }[]
+      }
+      accept_invitation: {
+        Args: { p_token: string }
+        Returns: void
+      }
+      delete_organization: {
+        Args: { p_org_id: string }
+        Returns: void
+      }
+      soft_delete_organization: {
+        Args: { p_org_id: string }
+        Returns: void
+      }
+      get_org_members: {
+        Args: { p_org_id: string }
+        Returns: {
+          user_id: string
+          email: string
+          display_name: string | null
+          avatar_url: string | null
+          role: Database["public"]["Enums"]["org_role"]
+          joined_at: string
+        }[]
+      }
       get_my_role: {
         Args: { p_org_id: string }
         Returns: Database["public"]["Enums"]["org_role"]

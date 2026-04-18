@@ -4,7 +4,7 @@ import { motion, useInView, useMotionValue, useSpring, AnimatePresence } from 'f
 import {
   Shield, ArrowRight, GitGraph, Network, ShieldAlert,
   Zap, Activity, Lock, Eye, ChevronRight, Terminal,
-  Cloud, Check, AlertTriangle, AlertCircle, Info,
+  Cloud, Check, AlertTriangle, AlertCircle, Info, Sparkles,
 } from 'lucide-react'
 
 // ── Animated hero graph ───────────────────────────────────────────────────────
@@ -228,6 +228,150 @@ const FEATURES = [
   },
 ]
 
+// ── Terminal install demo ─────────────────────────────────────────────────────
+const TERMINAL_SCRIPT = [
+  { delay: 0,    prompt: true,  text: 'kubectl apply -f https://guardmap.io/install.yaml',  color: '#22d3ee' },
+  { delay: 900,  prompt: false, text: 'namespace/guardmap created',                          color: '#64748b' },
+  { delay: 1200, prompt: false, text: 'serviceaccount/guardmap-agent created',               color: '#64748b' },
+  { delay: 1500, prompt: false, text: 'clusterrole.rbac.authorization.k8s.io/guardmap created', color: '#64748b' },
+  { delay: 1800, prompt: false, text: 'clusterrolebinding.rbac.authorization.k8s.io/guardmap created', color: '#64748b' },
+  { delay: 2100, prompt: false, text: 'cronjob.batch/guardmap-scanner created',              color: '#64748b' },
+  { delay: 2400, prompt: false, text: 'cronjob.batch/guardmap-heartbeat created',            color: '#64748b' },
+  { delay: 2900, prompt: true,  text: '# First scan starts automatically…',                  color: '#475569' },
+  { delay: 3400, prompt: false, text: '✓  Discovered 47 workloads, 23 service accounts',    color: '#10b981' },
+  { delay: 3800, prompt: false, text: '✓  Resolved 18 IAM roles, 142 policy statements',    color: '#10b981' },
+  { delay: 4200, prompt: false, text: '⚠  3 critical findings — open dashboard to review',  color: '#f59e0b' },
+]
+
+function TerminalBlock() {
+  const [visible, setVisible] = useState<number[]>([])
+  const ref = useRef(null)
+  const inView = useInView(ref, { once: true })
+
+  useEffect(() => {
+    if (!inView) return
+    TERMINAL_SCRIPT.forEach(({ delay }, i) => {
+      setTimeout(() => setVisible(v => [...v, i]), delay)
+    })
+  }, [inView])
+
+  const done = visible.length >= TERMINAL_SCRIPT.length
+
+  return (
+    <div
+      ref={ref}
+      className="rounded-2xl overflow-hidden font-mono text-[12px] leading-relaxed"
+      style={{ background: '#060a12', border: '1px solid rgba(255,255,255,0.07)' }}
+    >
+      {/* chrome */}
+      <div className="flex items-center gap-2 px-4 py-2.5 border-b border-white/5"
+        style={{ background: 'rgba(255,255,255,0.02)' }}>
+        <div className="flex gap-1.5">
+          <div className="w-2.5 h-2.5 rounded-full bg-red-500/40" />
+          <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/40" />
+          <div className="w-2.5 h-2.5 rounded-full bg-green-500/40" />
+        </div>
+        <span className="text-slate-600 text-[11px] ml-1">bash — guardmap setup</span>
+      </div>
+      {/* body */}
+      <div className="p-5 space-y-1.5 min-h-[200px]">
+        {TERMINAL_SCRIPT.map((line, i) => (
+          <AnimatePresence key={i}>
+            {visible.includes(i) && (
+              <motion.div
+                initial={{ opacity: 0, x: -6 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.18 }}
+                className="flex items-start gap-2"
+              >
+                {line.prompt && (
+                  <span className="text-cyan-600 shrink-0 select-none">$</span>
+                )}
+                {!line.prompt && (
+                  <span className="text-slate-700 shrink-0 select-none w-3" />
+                )}
+                <span style={{ color: line.color }}>{line.text}</span>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        ))}
+        {!done && visible.length > 0 && (
+          <span className="inline-block w-2 h-3.5 rounded-sm bg-cyan-500/60 animate-pulse ml-5" />
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ── Pricing ───────────────────────────────────────────────────────────────────
+const PLANS = [
+  {
+    name: 'Free',
+    price: '$0',
+    period: 'forever',
+    sub: '1 cluster included',
+    color: '#22d3ee',
+    border: 'rgba(34,211,238,0.2)',
+    bg: 'rgba(34,211,238,0.04)',
+    features: [
+      '1 cluster',
+      'Unlimited scans',
+      '30+ security checks',
+      '7-day scan history',
+      'IRSA graph & topology',
+      'Blast radius analysis',
+      'Up to 3 team members',
+    ],
+    cta: 'Get started free',
+    ctaSecondary: false,
+    popular: false,
+  },
+  {
+    name: 'Teams',
+    price: '$79',
+    period: 'per month',
+    sub: 'Up to 5 clusters',
+    color: '#a78bfa',
+    border: 'rgba(167,139,250,0.3)',
+    bg: 'rgba(167,139,250,0.06)',
+    features: [
+      'Up to 5 clusters',
+      'Unlimited scans',
+      '1-year scan history',
+      'Unlimited team members',
+      'Slack & webhook alerts',
+      'Custom scan intervals',
+      'REST API access',
+      'Priority support',
+    ],
+    cta: 'Start 14-day trial',
+    ctaSecondary: false,
+    popular: true,
+  },
+  {
+    name: 'Enterprise',
+    price: 'Custom',
+    period: '',
+    sub: 'Unlimited clusters',
+    color: '#f59e0b',
+    border: 'rgba(245,158,11,0.2)',
+    bg: 'rgba(245,158,11,0.04)',
+    features: [
+      'Unlimited clusters',
+      'Dedicated scan infrastructure',
+      'SSO / SAML integration',
+      'Compliance exports (SOC2, CIS)',
+      'Custom retention policy',
+      'SLA guarantee',
+      'Dedicated Slack channel',
+      'On-prem / private cloud option',
+    ],
+    cta: 'Contact sales',
+    ctaSecondary: true,
+    popular: false,
+  },
+]
+
 // ── Main landing page ─────────────────────────────────────────────────────────
 export function LandingPage() {
   const navigate = useNavigate()
@@ -254,7 +398,7 @@ export function LandingPage() {
 
       {/* ── Navbar ── */}
       <nav className="sticky top-0 z-50 flex items-center justify-between px-8 h-14"
-        style={{ background: 'rgba(8,12,20,0.8)', backdropFilter: 'blur(20px)', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+        style={{ background: 'rgba(8,12,20,0.85)', backdropFilter: 'blur(20px)', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
         <div className="flex items-center gap-2.5">
           <div className="relative">
             <Shield size={16} className="text-cyan-400" />
@@ -267,9 +411,14 @@ export function LandingPage() {
         </div>
 
         <div className="hidden md:flex items-center gap-6 text-[13px] text-slate-500">
-          {['Features', 'How it works', 'Security checks'].map(l => (
-            <a key={l} href={`#${l.toLowerCase().replace(/ /g, '-')}`}
-              className="hover:text-slate-200 transition-colors cursor-pointer">{l}</a>
+          {[
+            { label: 'Features',         href: '#features' },
+            { label: 'How it works',     href: '#how-it-works' },
+            { label: 'Security checks',  href: '#security-checks' },
+            { label: 'Pricing',          href: '#pricing' },
+          ].map(({ label, href }) => (
+            <a key={label} href={href}
+              className="hover:text-slate-200 transition-colors cursor-pointer">{label}</a>
           ))}
         </div>
 
@@ -279,7 +428,7 @@ export function LandingPage() {
             Sign in
           </button>
           <button onClick={() => navigate('/login')}
-            className="flex items-center gap-1.5 px-4 py-1.5 rounded-xl text-[13px] font-semibold transition-all"
+            className="flex items-center gap-1.5 px-4 py-1.5 rounded-xl text-[13px] font-semibold transition-all hover:opacity-90"
             style={{ background: 'rgba(34,211,238,0.12)', border: '1px solid rgba(34,211,238,0.25)', color: '#22d3ee' }}>
             Get started free
             <ArrowRight size={13} />
@@ -340,7 +489,7 @@ export function LandingPage() {
             >
               <button
                 onClick={() => navigate('/login')}
-                className="flex items-center gap-2 px-6 py-3 rounded-xl text-[14px] font-bold transition-all"
+                className="flex items-center gap-2 px-6 py-3 rounded-xl text-[14px] font-bold transition-all hover:opacity-90"
                 style={{
                   background: 'linear-gradient(135deg, rgba(34,211,238,0.2) 0%, rgba(167,139,250,0.2) 100%)',
                   border: '1px solid rgba(34,211,238,0.35)',
@@ -365,7 +514,7 @@ export function LandingPage() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.6 }}
-              className="flex items-center gap-4 mt-8"
+              className="flex items-center gap-4 mt-8 flex-wrap"
             >
               {['No credit card', 'Free forever plan', 'Deploy in 2 min'].map(t => (
                 <div key={t} className="flex items-center gap-1.5 text-[12px] text-slate-600">
@@ -418,6 +567,29 @@ export function LandingPage() {
         </div>
       </section>
 
+      {/* ── Works with ── */}
+      <FadeIn>
+        <section className="py-6 px-8 max-w-7xl mx-auto">
+          <div className="flex items-center justify-center gap-3 flex-wrap">
+            <span className="text-[11px] text-slate-700 uppercase tracking-widest mr-2">Works with</span>
+            {[
+              { label: 'Amazon EKS',   color: '#f59e0b' },
+              { label: 'AWS IAM',      color: '#f59e0b' },
+              { label: 'Kubernetes',   color: '#22d3ee' },
+              { label: 'kubectl',      color: '#a78bfa' },
+              { label: 'Helm',         color: '#10b981' },
+              { label: 'Terraform',    color: '#a78bfa' },
+            ].map(({ label, color }) => (
+              <span key={label}
+                className="text-[11px] font-semibold px-3 py-1 rounded-full"
+                style={{ color, background: color + '12', border: `1px solid ${color}20` }}>
+                {label}
+              </span>
+            ))}
+          </div>
+        </section>
+      </FadeIn>
+
       {/* ── Stats ── */}
       <FadeIn>
         <section className="py-10 px-8 max-w-7xl mx-auto">
@@ -462,7 +634,7 @@ export function LandingPage() {
                   border: '1px solid rgba(255,255,255,0.05)',
                 }}
                 onMouseEnter={e => {
-                  (e.currentTarget as HTMLElement).style.background = `rgba(${f.color === '#22d3ee' ? '34,211,238' : f.color === '#a78bfa' ? '167,139,250' : '255,255,255'},0.04)`
+                  (e.currentTarget as HTMLElement).style.background = `${f.color}08`
                   ;(e.currentTarget as HTMLElement).style.borderColor = f.color + '30'
                 }}
                 onMouseLeave={e => {
@@ -491,7 +663,7 @@ export function LandingPage() {
           </h2>
         </FadeIn>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-12">
           {[
             { n: '01', icon: <Shield size={16} />, color: '#22d3ee', title: 'Create account', desc: 'Sign up free, create your organization. No credit card needed.' },
             { n: '02', icon: <Terminal size={16} />, color: '#a78bfa', title: 'kubectl apply', desc: 'One command deploys the GuardMap agent into a guardmap namespace.' },
@@ -518,6 +690,43 @@ export function LandingPage() {
             </FadeIn>
           ))}
         </div>
+
+        {/* Terminal demo */}
+        <FadeIn delay={0.2}>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+            <div>
+              <div className="text-[11px] font-semibold text-violet-400 uppercase tracking-widest mb-3">One command install</div>
+              <h3 className="text-2xl font-bold mb-3" style={{ letterSpacing: '-0.015em' }}>
+                No Helm charts.<br />
+                <span style={{ background: 'linear-gradient(135deg, #a78bfa, #22d3ee)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+                  No complex config.
+                </span>
+              </h3>
+              <p className="text-slate-500 text-[14px] leading-relaxed mb-5">
+                A single <code className="text-violet-400 bg-violet-400/10 px-1.5 py-0.5 rounded-md text-[13px]">kubectl apply</code> deploys the agent as a CronJob. It uses your cluster's IRSA identity to authenticate — no API keys to manage.
+              </p>
+              <div className="space-y-2.5">
+                {[
+                  { t: 'Least-privilege RBAC', d: 'Read-only ClusterRole, no write permissions.' },
+                  { t: 'Air-gapped compatible', d: 'Agent pushes to GuardMap API, never pulls from internet.' },
+                  { t: 'Configurable interval', d: 'Default 6h, override with a single env var.' },
+                ].map(({ t, d }) => (
+                  <div key={t} className="flex items-start gap-2.5">
+                    <div className="w-4 h-4 rounded-full flex items-center justify-center shrink-0 mt-0.5"
+                      style={{ background: 'rgba(167,139,250,0.12)', border: '1px solid rgba(167,139,250,0.25)' }}>
+                      <Check size={9} className="text-violet-400" />
+                    </div>
+                    <div>
+                      <span className="text-[13px] font-semibold text-slate-200">{t} </span>
+                      <span className="text-[13px] text-slate-600">{d}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <TerminalBlock />
+          </div>
+        </FadeIn>
       </section>
 
       {/* ── Security checks ── */}
@@ -615,13 +824,100 @@ export function LandingPage() {
                 style={{ background: 'rgba(0,0,0,0.2)' }}>
                 <span className="text-[11px] font-mono text-slate-600">Scanned 44ms ago · 170 nodes</span>
                 <div className="flex items-center gap-1.5">
-                  <ScoreRing score={0} size={36} />
+                  <ScoreRing score={34} size={36} />
                   <span className="text-[10px] font-mono text-red-400">needs attention</span>
                 </div>
               </div>
             </div>
           </FadeIn>
         </div>
+      </section>
+
+      {/* ── Pricing ── */}
+      <section id="pricing" className="py-16 px-8 max-w-7xl mx-auto">
+        <FadeIn className="text-center mb-12">
+          <div className="text-[11px] font-semibold text-emerald-400 uppercase tracking-widest mb-3">Pricing</div>
+          <h2 className="text-3xl font-bold mb-4" style={{ letterSpacing: '-0.02em' }}>
+            Simple, transparent pricing
+          </h2>
+          <p className="text-slate-500 text-[15px] max-w-md mx-auto">
+            Start free. Upgrade when your team needs more clusters or advanced features.
+          </p>
+        </FadeIn>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 max-w-5xl mx-auto">
+          {PLANS.map((plan, i) => (
+            <FadeIn key={plan.name} delay={i * 0.1}>
+              <div
+                className="relative rounded-2xl p-6 flex flex-col h-full"
+                style={{
+                  background: plan.bg,
+                  border: `1px solid ${plan.border}`,
+                  boxShadow: plan.popular ? `0 0 40px ${plan.color}12` : undefined,
+                }}
+              >
+                {plan.popular && (
+                  <div
+                    className="absolute -top-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold whitespace-nowrap"
+                    style={{ background: plan.color, color: '#0a0f1a' }}
+                  >
+                    <Sparkles size={10} />
+                    Most popular
+                  </div>
+                )}
+
+                <div className="mb-5">
+                  <div className="text-[13px] font-semibold mb-1" style={{ color: plan.color }}>{plan.name}</div>
+                  <div className="flex items-end gap-1.5 mb-1">
+                    <span className="text-3xl font-bold text-slate-100">{plan.price}</span>
+                    {plan.period && (
+                      <span className="text-[13px] text-slate-500 mb-0.5">/ {plan.period}</span>
+                    )}
+                  </div>
+                  <div className="text-[11px] text-slate-600">{plan.sub}</div>
+                </div>
+
+                <div className="space-y-2 flex-1 mb-6">
+                  {plan.features.map(f => (
+                    <div key={f} className="flex items-center gap-2.5">
+                      <div className="w-4 h-4 rounded-full flex items-center justify-center shrink-0"
+                        style={{ background: plan.color + '15', border: `1px solid ${plan.color}30` }}>
+                        <Check size={9} style={{ color: plan.color }} />
+                      </div>
+                      <span className="text-[13px] text-slate-300">{f}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <button
+                  onClick={() => navigate('/login')}
+                  className="w-full py-2.5 rounded-xl text-[13px] font-bold transition-all hover:opacity-90"
+                  style={plan.ctaSecondary ? {
+                    background: 'rgba(255,255,255,0.04)',
+                    border: `1px solid ${plan.border}`,
+                    color: plan.color,
+                  } : {
+                    background: plan.popular
+                      ? `linear-gradient(135deg, ${plan.color}30, ${plan.color}18)`
+                      : 'rgba(255,255,255,0.05)',
+                    border: `1px solid ${plan.border}`,
+                    color: plan.popular ? plan.color : '#94a3b8',
+                    boxShadow: plan.popular ? `0 0 20px ${plan.color}15` : undefined,
+                  }}
+                >
+                  {plan.cta}
+                </button>
+              </div>
+            </FadeIn>
+          ))}
+        </div>
+
+        <FadeIn delay={0.2}>
+          <p className="text-center text-[12px] text-slate-700 mt-8">
+            All plans include SSO, audit log, and 99.9% uptime SLA.
+            Need more? <button onClick={() => navigate('/login')} className="text-cyan-600 hover:text-cyan-400 transition-colors">Contact us.</button>
+          </p>
+        </FadeIn>
       </section>
 
       {/* ── CTA ── */}
@@ -650,7 +946,7 @@ export function LandingPage() {
               <div className="flex items-center justify-center gap-3 flex-wrap">
                 <button
                   onClick={() => navigate('/login')}
-                  className="flex items-center gap-2 px-8 py-3.5 rounded-xl text-[15px] font-bold transition-all"
+                  className="flex items-center gap-2 px-8 py-3.5 rounded-xl text-[15px] font-bold transition-all hover:opacity-90"
                   style={{
                     background: 'linear-gradient(135deg, rgba(34,211,238,0.25), rgba(167,139,250,0.25))',
                     border: '1px solid rgba(34,211,238,0.4)',
@@ -675,16 +971,56 @@ export function LandingPage() {
       </FadeIn>
 
       {/* ── Footer ── */}
-      <footer className="border-t border-white/5 py-8 px-8">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Shield size={13} className="text-cyan-400" />
-            <span className="text-[13px] font-bold text-slate-500">
-              <span className="text-cyan-400/60">Guard</span>Map
-            </span>
+      <footer className="border-t border-white/5 py-10 px-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex flex-col md:flex-row items-start justify-between gap-8 mb-8">
+            {/* Brand */}
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <Shield size={14} className="text-cyan-400" />
+                <span className="text-[14px] font-bold">
+                  <span className="text-cyan-400">Guard</span>Map
+                </span>
+              </div>
+              <p className="text-[12px] text-slate-600 max-w-[200px] leading-relaxed">
+                IRSA security visualization for Kubernetes engineers.
+              </p>
+            </div>
+
+            {/* Links */}
+            <div className="flex gap-12">
+              <div>
+                <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-widest mb-3">Product</div>
+                <div className="space-y-2">
+                  {['Features', 'Pricing', 'Live demo', 'Changelog'].map(l => (
+                    <div key={l}>
+                      <a href="#" className="text-[13px] text-slate-600 hover:text-slate-300 transition-colors">{l}</a>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-widest mb-3">Company</div>
+                <div className="space-y-2">
+                  {['About', 'Blog', 'Security', 'Contact'].map(l => (
+                    <div key={l}>
+                      <a href="#" className="text-[13px] text-slate-600 hover:text-slate-300 transition-colors">{l}</a>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
-          <div className="text-[12px] text-slate-700">
-            Built for Kubernetes security engineers
+
+          <div className="border-t border-white/5 pt-6 flex flex-col md:flex-row items-center justify-between gap-3">
+            <div className="text-[12px] text-slate-700">
+              © 2025 GuardMap. Built for Kubernetes security engineers.
+            </div>
+            <div className="flex items-center gap-4">
+              {['Privacy', 'Terms', 'Security'].map(l => (
+                <a key={l} href="#" className="text-[12px] text-slate-700 hover:text-slate-400 transition-colors">{l}</a>
+              ))}
+            </div>
           </div>
         </div>
       </footer>

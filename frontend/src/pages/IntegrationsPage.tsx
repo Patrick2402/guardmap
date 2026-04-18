@@ -51,7 +51,9 @@ const REGIONS = [
 ]
 
 // ── Install manifest generator ────────────────────────────────────────────────
-function buildManifest(clusterName: string, apiKey: string, orgId: string): string {
+function buildManifest(clusterName: string, apiKey: string, _orgId: string): string {
+  const supabaseUrl  = import.meta.env.VITE_SUPABASE_URL  as string
+  const supabaseAnon = import.meta.env.VITE_SUPABASE_ANON_KEY as string
   return `apiVersion: v1
 kind: Namespace
 metadata:
@@ -70,16 +72,19 @@ metadata:
 rules:
   - apiGroups: [""]
     resources: ["pods","serviceaccounts","services","namespaces","nodes"]
-    verbs: ["get","list"]
+    verbs: ["get","list","watch"]
   - apiGroups: ["apps"]
     resources: ["deployments","statefulsets","daemonsets","replicasets"]
-    verbs: ["get","list"]
+    verbs: ["get","list","watch"]
   - apiGroups: ["networking.k8s.io"]
     resources: ["ingresses","networkpolicies"]
-    verbs: ["get","list"]
+    verbs: ["get","list","watch"]
+  - apiGroups: ["batch"]
+    resources: ["jobs","cronjobs"]
+    verbs: ["get","list","watch"]
   - apiGroups: ["rbac.authorization.k8s.io"]
     resources: ["roles","clusterroles","rolebindings","clusterrolebindings"]
-    verbs: ["get","list"]
+    verbs: ["get","list","watch"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -102,9 +107,9 @@ metadata:
 type: Opaque
 stringData:
   GUARDMAP_API_KEY: "${apiKey}"
-  GUARDMAP_ORG_ID: "${orgId}"
-  SUPABASE_URL: "${import.meta.env.VITE_SUPABASE_URL}"
-  SUPABASE_ANON_KEY: "${import.meta.env.VITE_SUPABASE_ANON_KEY}"
+  CLUSTER_NAME: "${clusterName}"
+  SUPABASE_URL: "${supabaseUrl}"
+  SUPABASE_ANON_KEY: "${supabaseAnon}"
 ---
 apiVersion: batch/v1
 kind: CronJob
@@ -115,9 +120,11 @@ spec:
   schedule: "0 */6 * * *"
   concurrencyPolicy: Forbid
   successfulJobsHistoryLimit: 3
-  failedJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
   jobTemplate:
     spec:
+      backoffLimit: 2
+      activeDeadlineSeconds: 600
       template:
         spec:
           serviceAccountName: guardmap-agent
@@ -125,20 +132,50 @@ spec:
           containers:
             - name: scanner
               image: patryk2402/guardmap-agent:latest
-              imagePullPolicy: Always
+              command: ["/guardmap-agent"]
               envFrom:
                 - secretRef:
                     name: guardmap-credentials
-              env:
-                - name: CLUSTER_NAME
-                  value: "${clusterName}"
               resources:
                 requests:
                   cpu: 100m
                   memory: 128Mi
                 limits:
                   cpu: 500m
-                  memory: 256Mi`
+                  memory: 512Mi
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: guardmap-heartbeat
+  namespace: guardmap
+spec:
+  schedule: "*/5 * * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 2
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      activeDeadlineSeconds: 30
+      template:
+        spec:
+          serviceAccountName: guardmap-agent
+          restartPolicy: OnFailure
+          containers:
+            - name: heartbeat
+              image: patryk2402/guardmap-agent:latest
+              command: ["/guardmap-heartbeat"]
+              envFrom:
+                - secretRef:
+                    name: guardmap-credentials
+              resources:
+                requests:
+                  cpu: 10m
+                  memory: 16Mi
+                limits:
+                  cpu: 50m
+                  memory: 32Mi`
 }
 
 // ── Copy button ───────────────────────────────────────────────────────────────
@@ -386,7 +423,8 @@ function AddClusterModal({ orgId, onClose, onCreated }: {
                   {[
                     { icon: <CheckCircle2 size={13} />, color: '#10b981', text: 'Creates a dedicated guardmap namespace' },
                     { icon: <CheckCircle2 size={13} />, color: '#10b981', text: 'ClusterRole with read-only permissions only' },
-                    { icon: <CheckCircle2 size={13} />, color: '#10b981', text: 'CronJob runs every 6h, no persistent footprint' },
+                    { icon: <CheckCircle2 size={13} />, color: '#10b981', text: 'Scanner CronJob runs every 6h — full scan' },
+                    { icon: <CheckCircle2 size={13} />, color: '#10b981', text: 'Heartbeat CronJob every 5 min — live status' },
                     { icon: <CheckCircle2 size={13} />, color: '#10b981', text: 'API key stored as K8s Secret, not in image' },
                   ].map((item, i) => (
                     <div key={i} className="flex items-center gap-2.5">
@@ -414,12 +452,30 @@ function AddClusterModal({ orgId, onClose, onCreated }: {
   )
 }
 
+// ── Agent connectivity derived from last_seen_at ──────────────────────────────
+type AgentStatus = 'live' | 'stale' | 'offline' | 'pending'
+
+function agentStatus(cluster: Cluster): AgentStatus {
+  if (!cluster.last_seen_at) return 'pending'
+  const ageMs = Date.now() - new Date(cluster.last_seen_at).getTime()
+  if (ageMs < 10 * 60 * 1000)  return 'live'
+  if (ageMs < 2 * 60 * 60 * 1000) return 'stale'
+  return 'offline'
+}
+
+const AGENT_STATUS_STYLE: Record<AgentStatus, { bg: string; color: string; dot: string; label: string }> = {
+  live:    { bg: 'rgba(16,185,129,0.1)',  color: '#34d399', dot: 'bg-emerald-400 animate-pulse', label: 'Live' },
+  stale:   { bg: 'rgba(245,212,15,0.1)', color: '#fbbf24', dot: 'bg-yellow-400',                label: 'Stale' },
+  offline: { bg: 'rgba(239,68,68,0.1)',  color: '#f87171', dot: 'bg-red-400',                   label: 'Offline' },
+  pending: { bg: 'rgba(100,116,139,0.1)', color: '#94a3b8', dot: 'bg-slate-500',                label: 'Pending' },
+}
+
 // ── Cluster Card ──────────────────────────────────────────────────────────────
 function ClusterCard({ cluster, onDelete }: { cluster: Cluster; onDelete: () => void }) {
-  const isOnline  = cluster.status === 'active'
-  const isPending = cluster.status === 'pending'
-  const score     = cluster.last_scan_score
-  const sColor    = scoreColor(score)
+  const status  = agentStatus(cluster)
+  const style   = AGENT_STATUS_STYLE[status]
+  const score   = cluster.last_scan_score
+  const sColor  = scoreColor(score)
 
   return (
     <motion.div
@@ -441,30 +497,27 @@ function ClusterCard({ cluster, onDelete }: { cluster: Cluster; onDelete: () => 
           </div>
           <div>
             <div className="text-sm font-sans font-semibold text-slate-100">{cluster.name}</div>
-            <div className="flex items-center gap-2 mt-0.5">
-              <span className="text-xs font-mono text-slate-500">{cluster.region ?? '—'}</span>
+            <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+              <span className="text-xs font-mono text-slate-500 whitespace-nowrap">{cluster.region ?? '—'}</span>
               {cluster.k8s_version && (
-                <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-md text-cyan-400"
+                <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-md text-cyan-400 whitespace-nowrap"
                   style={{ background: 'rgba(34,211,238,0.08)', border: '1px solid rgba(34,211,238,0.15)' }}>
                   {cluster.k8s_version}
                 </span>
               )}
               {cluster.node_count != null && (
-                <span className="text-[10px] font-mono text-slate-600">{cluster.node_count}n</span>
+                <span className="text-[10px] font-mono text-slate-600 whitespace-nowrap">
+                  {cluster.node_count} {cluster.node_count === 1 ? 'node' : 'nodes'}
+                </span>
               )}
             </div>
           </div>
         </div>
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs font-sans font-medium"
-            style={isOnline
-              ? { background: 'rgba(16,185,129,0.1)', color: '#34d399' }
-              : isPending
-                ? { background: 'rgba(245,212,15,0.1)', color: '#fbbf24' }
-                : { background: 'rgba(239,68,68,0.1)', color: '#f87171' }
-            }>
-            <div className={`w-1.5 h-1.5 rounded-full ${isOnline ? 'bg-emerald-400 animate-pulse' : isPending ? 'bg-yellow-400' : 'bg-red-400'}`} />
-            {isOnline ? 'Online' : isPending ? 'Pending' : 'Error'}
+            style={{ background: style.bg, color: style.color }}>
+            <div className={`w-1.5 h-1.5 rounded-full ${style.dot}`} />
+            {style.label}
           </div>
           <button onClick={onDelete}
             className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-700 hover:text-red-400 transition-colors"
@@ -500,12 +553,26 @@ function ClusterCard({ cluster, onDelete }: { cluster: Cluster; onDelete: () => 
         </div>
       </div>
 
-      {/* Pending hint */}
-      {isPending && (
+      {/* Status hints */}
+      {status === 'pending' && (
+        <div className="mt-3 flex items-center gap-2 p-2.5 rounded-xl text-xs font-sans text-slate-500"
+          style={{ background: 'rgba(100,116,139,0.06)', border: '1px solid rgba(100,116,139,0.12)' }}>
+          <Clock size={11} className="shrink-0" />
+          Waiting for first agent heartbeat — apply the manifest to your cluster
+        </div>
+      )}
+      {status === 'stale' && (
         <div className="mt-3 flex items-center gap-2 p-2.5 rounded-xl text-xs font-sans text-yellow-600"
           style={{ background: 'rgba(245,212,15,0.05)', border: '1px solid rgba(245,212,15,0.12)' }}>
-          <Clock size={11} className="shrink-0" />
-          Waiting for first agent scan — apply the manifest to your cluster
+          <AlertCircle size={11} className="shrink-0" />
+          Agent hasn't reported in {timeAgo(cluster.last_seen_at)} — check CronJob logs
+        </div>
+      )}
+      {status === 'offline' && (
+        <div className="mt-3 flex items-center gap-2 p-2.5 rounded-xl text-xs font-sans text-red-400"
+          style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.15)' }}>
+          <AlertCircle size={11} className="shrink-0" />
+          Agent offline since {timeAgo(cluster.last_seen_at)} — cluster may be down
         </div>
       )}
     </motion.div>
