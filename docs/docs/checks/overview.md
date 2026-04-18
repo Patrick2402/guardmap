@@ -6,16 +6,17 @@ sidebar_position: 1
 
 # Security checks overview
 
-GuardMap runs 30+ checks across four categories on every scan.
+GuardMap runs 40+ checks across five categories on every scan.
 
 ## Categories
 
 | Category | Checks | Description |
 |----------|--------|-------------|
-| [Pod Security](./pod-security) | 15 | Container-level checks — privileges, capabilities, root user, resource limits |
-| [RBAC](./rbac) | 5 | Role and binding checks — wildcards, cluster-admin, dangerous permissions |
-| [Network](./network) | 4 | NetworkPolicy coverage, allow-all policies, host networking |
-| [IAM / IRSA](./iam) | 2 | AWS IAM permission checks for EKS IRSA chains |
+| [Pod Security](./pod-security) | 21 | Container-level checks — privileges, capabilities, root user, resource limits, plaintext secrets, public images |
+| [RBAC](./rbac) | 12 | Role and binding checks — wildcards, cluster-admin, exec/attach, secrets access, node access |
+| [Network](./network) | 5 | NetworkPolicy coverage, allow-all policies, host networking, public load balancers |
+| [IAM / IRSA](./iam) | 6 | AWS IAM permission checks for EKS IRSA chains, unused IRSA bindings |
+| Batch / Workload | 3 | CronJob and Job hygiene — TTL, concurrency, missing deadline |
 
 ## Severity levels
 
@@ -43,7 +44,8 @@ This avoids noise from privileged system components you don't control.
 
 | Category | Critical | High | Medium | Low |
 |----------|----------|------|--------|-----|
-| Pod Security | 4 | 5 | 3 | 3 |
-| RBAC | 2 | 3 | — | — |
-| Network | — | 2 | 2 | — |
-| IAM / IRSA | 1 | 1 | — | — |
+| Pod Security | 4 | 7 | 4 | 6 |
+| RBAC | 3 | 4 | 3 | 2 |
+| Network | — | 2 | 2 | 1 |
+| IAM / IRSA | 2 | 1 | 2 | 1 |
+| Batch / Workload | — | — | 1 | 2 |

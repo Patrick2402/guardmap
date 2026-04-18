@@ -159,7 +159,7 @@ export function LoginPage() {
       if (mode === 'login') {
         const { error } = await supabase.auth.signInWithPassword({ email, password })
         if (error) throw error
-        navigate('/')
+        navigate('/overview')
       } else if (mode === 'signup') {
         const { error } = await supabase.auth.signUp({
           email, password,

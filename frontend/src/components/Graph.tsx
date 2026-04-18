@@ -8,6 +8,7 @@ import 'reactflow/dist/style.css'
 import { GraphData, GraphNode, GraphEdge, AccessLevel, WORKLOAD_TYPES } from '../types'
 import { BlastRadiusResult } from '../types'
 import { applyNamespacedLayout } from '../utils/layout'
+import { useFocusNode } from '../hooks/useFocusNode'
 import { PodNode }              from './NodeTypes/PodNode'
 import { ServiceAccountNode }   from './NodeTypes/ServiceAccountNode'
 import { IAMRoleNode }          from './NodeTypes/IAMRoleNode'
@@ -45,6 +46,12 @@ interface GraphProps {
   onFocusReady?: (fn: (nodeIds: string[]) => void) => void
   search?: string
   activeNs?: string | null
+  focusNodeId?: string | null
+}
+
+function FocusController({ nodeId }: { nodeId?: string | null }) {
+  useFocusNode(nodeId)
+  return null
 }
 
 function maxAccessForNode(nodeId: string, edges: GraphEdge[]): AccessLevel | null {
@@ -83,7 +90,7 @@ function buildConnectedSet(startId: string, edges: GraphEdge[]): Set<string> {
 
 const ALWAYS_HIDDEN = new Set(['pod', 'k8s_service', 'ingress', 'networkpolicy'])
 
-export function Graph({ data, blastRadius, onNodeClick, onFocusReady, search = '', activeNs = null }: GraphProps) {
+export function Graph({ data, blastRadius, onNodeClick, onFocusReady, search = '', activeNs = null, focusNodeId }: GraphProps) {
   const [selectedId, setSelectedId]   = useState<string | null>(null)
   const [hoveredId, setHoveredId]     = useState<string | null>(null)
   const [rfInstance, setRfInstance]   = useState<ReactFlowInstance | null>(null)
@@ -111,6 +118,14 @@ export function Graph({ data, blastRadius, onNodeClick, onFocusReady, search = '
       rfInstance.fitView({ nodes: nodeIds.map(id => ({ id })), duration: 600, padding: 0.25 })
     })
   }, [rfInstance, onFocusReady])
+
+  // Select + highlight node when navigating from Findings
+  useEffect(() => {
+    if (!focusNodeId) return
+    setSelectedId(focusNodeId)
+    const graphNode = data.nodes.find(n => n.id === focusNodeId) ?? null
+    onNodeClick(graphNode)
+  }, [focusNodeId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── 1. Filter nodes ───────────────────────────────────────────────────────
   const filteredNodes = useMemo(() => data.nodes.filter(n => {
@@ -361,6 +376,7 @@ export function Graph({ data, blastRadius, onNodeClick, onFocusReady, search = '
         maxZoom={2}
         proOptions={{ hideAttribution: true }}
       >
+        <FocusController nodeId={focusNodeId} />
         <Background variant={BackgroundVariant.Dots} gap={24} size={1} color="#1a2840" />
         <Controls className="!border-cyber-border !bg-cyber-panel/80 !rounded-xl overflow-hidden" showInteractive={false} />
         <MiniMap

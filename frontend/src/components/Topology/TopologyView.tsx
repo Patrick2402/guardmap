@@ -1,7 +1,7 @@
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
 import ReactFlow, {
   Node, Edge, Background, BackgroundVariant, Controls, MiniMap,
-  NodeMouseHandler,
+  NodeMouseHandler, ReactFlowInstance,
 } from 'reactflow'
 import 'reactflow/dist/style.css'
 import { Layers } from 'lucide-react'
@@ -16,7 +16,6 @@ import { RBACBindingNode }                  from '../NodeTypes/RBACBindingNode'
 import { RBACGroupNode }                    from '../NodeTypes/RBACGroupNode'
 import { TopologyEdge }                     from '../EdgeTypes/TopologyEdge'
 import { TopologyDetails }                  from './TopologyDetails'
-import { useFocusNode }                     from '../../hooks/useFocusNode'
 
 // ── React Flow registries ────────────────────────────────────────────────────
 
@@ -202,13 +201,6 @@ function bfsAll(startId: string, edges: GraphEdge[]): Set<string> {
   return visited
 }
 
-// ── FocusController ──────────────────────────────────────────────────────────
-
-function FocusController({ nodeId }: { nodeId?: string | null }) {
-  useFocusNode(nodeId)
-  return null
-}
-
 // ── Component ────────────────────────────────────────────────────────────────
 
 interface TopologyViewProps {
@@ -217,8 +209,35 @@ interface TopologyViewProps {
 }
 
 export function TopologyView({ data, focusNodeId }: TopologyViewProps) {
-  const [showPods,     setShowPods]     = useState(false)
-  const [selectedNode, setSelectedNode] = useState<GraphNode | null>(null)
+  const [showPods,       setShowPods]       = useState(false)
+  const [selectedNode,   setSelectedNode]   = useState<GraphNode | null>(null)
+  const [rfReady,        setRfReady]        = useState(false)
+  const rfRef = useRef<ReactFlowInstance | null>(null)
+
+  // Select node when navigating from Findings
+  useEffect(() => {
+    if (!focusNodeId) return
+    const node = data.nodes.find(n => n.id === focusNodeId) ?? null
+    if (node) setSelectedNode(node)
+  }, [focusNodeId]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Focus + zoom to node after ReactFlow is ready
+  useEffect(() => {
+    if (!focusNodeId || !rfReady) return
+    let cancelled = false
+    const inst = rfRef.current!
+    const tryFocus = (attempt = 0) => {
+      if (cancelled) return
+      const node = inst.getNodes().find(n => n.id === focusNodeId)
+      if (node) {
+        inst.fitView({ nodes: [{ id: focusNodeId }], duration: 600, padding: 0.4, maxZoom: 1.8 })
+      } else if (attempt < 20) {
+        setTimeout(() => tryFocus(attempt + 1), 100)
+      }
+    }
+    const t = setTimeout(() => tryFocus(0), 150)
+    return () => { cancelled = true; clearTimeout(t) }
+  }, [focusNodeId, rfReady])
 
   // ── Filter to topology-relevant resources ──────────────────────────────────
   const filteredNodes = useMemo(() =>
@@ -395,6 +414,7 @@ export function TopologyView({ data, focusNodeId }: TopologyViewProps) {
           edgeTypes={edgeTypes}
           onNodeClick={handleNodeClick}
           onPaneClick={() => setSelectedNode(null)}
+          onInit={(instance) => { rfRef.current = instance; setRfReady(true) }}
           fitView
           fitViewOptions={{ padding: 0.05 }}
           minZoom={0.03}
@@ -402,7 +422,6 @@ export function TopologyView({ data, focusNodeId }: TopologyViewProps) {
           proOptions={{ hideAttribution: true }}
           elevateEdgesOnSelect
         >
-          <FocusController nodeId={focusNodeId} />
           <Background variant={BackgroundVariant.Dots} gap={24} size={1} color="#1a2840" />
           <Controls
             className="!border-cyber-border !bg-cyber-panel/80 !rounded-xl overflow-hidden"

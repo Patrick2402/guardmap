@@ -21,14 +21,14 @@ export function useFocusNode(nodeId?: string | null) {
       const node = getNodes().find(n => n.id === nodeId)
       if (node) {
         firedFor.current = nodeId
-        fitView({ nodes: [{ id: nodeId }], duration: 600, padding: 1.4, maxZoom: 1.6 })
+        fitView({ nodes: [{ id: nodeId }], duration: 600, padding: 0.4, maxZoom: 1.8 })
         return
       }
       if (attempts < MAX) setTimeout(tryFocus, INTERVAL)
     }
 
     // Small initial delay to let React Flow start rendering
-    const t = setTimeout(tryFocus, 60)
+    const t = setTimeout(tryFocus, 150)
     return () => clearTimeout(t)
   }, [nodeId, fitView, getNodes])
 }

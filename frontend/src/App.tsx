@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo, useRef, useEffect } from 'react'
-import { useNavigate, useParams, Routes, Route, Navigate } from 'react-router-dom'
+import { useNavigate, useParams, useLocation, Routes, Route, Navigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Shield, Zap, RefreshCw, AlertCircle, ChevronDown, Cloud, BookOpen, Activity, Plus } from 'lucide-react'
 
@@ -16,6 +16,7 @@ import { ExplorerView }    from './components/Explorer/ExplorerView'
 import { TopologyView }    from './components/Topology/TopologyView'
 import { RBACView }        from './components/RBAC/RBACView'
 import { FindingsView, countCriticalFindings } from './components/Findings/FindingsView'
+import { BenchmarksView } from './components/Benchmarks/BenchmarksView'
 import { OverviewView }    from './components/Overview/OverviewView'
 import { HistoryView }     from './components/History/HistoryView'
 import { LoginPage }          from './pages/LoginPage'
@@ -27,12 +28,12 @@ import { InvitePage }         from './pages/InvitePage'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import { OrgSwitcher }        from './components/OrgSwitcher'
 
-const VALID_TABS = new Set<TabId>(['overview', 'graph', 'topology', 'rbac', 'findings', 'explorer', 'history'])
+const VALID_TABS = new Set<TabId>(['overview', 'graph', 'topology', 'rbac', 'findings', 'benchmarks', 'explorer', 'history'])
 
 // ── Redirect logged-in users away from auth pages ────────────────────────────
 function RedirectIfAuth({ children }: { children: React.ReactNode }) {
-  const { user, orgs, initialLoading } = useAuth()
-  if (initialLoading) return null
+  const { user, orgs, initialLoading, loading } = useAuth()
+  if (initialLoading || loading) return null   // wait for orgs to settle
   if (user) return <Navigate to={orgs.length === 0 ? '/onboarding' : '/overview'} replace />
   return <>{children}</>
 }
@@ -47,9 +48,9 @@ function RequireAuthOnly({ children }: { children: React.ReactNode }) {
 
 // ── Protected route wrapper ───────────────────────────────────────────────────
 function RequireAuth({ children }: { children: React.ReactNode }) {
-  const { user, orgs, initialLoading } = useAuth()
+  const { user, orgs, initialLoading, loading } = useAuth()
 
-  if (initialLoading) {
+  if (initialLoading || loading) {
     return (
       <div className="h-screen w-screen flex items-center justify-center"
         style={{ background: '#080c14' }}>
@@ -218,8 +219,9 @@ function NoClustersState() {
 
 // ── Main cluster view ─────────────────────────────────────────────────────────
 function ClusterView() {
-  const { tab = 'overview', focusId } = useParams<{ tab: string; focusId?: string }>()
+  const { tab = 'overview' } = useParams<{ tab: string }>()
   const navigate  = useNavigate()
+  const location  = useLocation()
   const { activeOrg } = useAuth()
   const { clusters, loading: clustersLoading } = useClusters(activeOrg?.organization_id ?? null)
 
@@ -281,8 +283,7 @@ function ClusterView() {
 
   const handleNavigate = useCallback((newTab: TabId, nodeId?: string) => {
     setSelectedNode(null); setBlastStartId(null); setSearch('')
-    if (nodeId) navigate(`/${newTab}/focus/${encodeURIComponent(nodeId)}`)
-    else navigate(`/${newTab}`)
+    navigate(`/${newTab}`, { state: { focusNodeId: nodeId ?? null } })
   }, [navigate])
 
   const handleNodeClick = useCallback((node: GraphNode | null) => {
@@ -298,7 +299,7 @@ function ClusterView() {
     setSelectedNode(null); setBlastStartId(null)
   }, [])
 
-  const pendingFocusNodeId = focusId ? decodeURIComponent(focusId) : null
+  const pendingFocusNodeId = (location.state as { focusNodeId?: string } | null)?.focusNodeId ?? null
 
   return (
     <div
@@ -430,6 +431,7 @@ function ClusterView() {
                     <Graph
                       data={data} blastRadius={blastRadius} onNodeClick={handleNodeClick}
                       onFocusReady={fn => { focusFnRef.current = fn }} search={search} activeNs={activeNs}
+                      focusNodeId={activeTab === 'graph' ? pendingFocusNodeId : null}
                     />
                   </div>
                   <Legend />
@@ -440,10 +442,11 @@ function ClusterView() {
                 </>
               )}
 
-              {activeTab === 'topology'  && <TopologyView data={data} focusNodeId={pendingFocusNodeId} />}
-              {activeTab === 'rbac'      && <RBACView     data={data} focusNodeId={pendingFocusNodeId} />}
-              {activeTab === 'findings'  && <FindingsView data={data} dbFindings={scanMeta?.findings} onNavigate={handleNavigate} />}
-              {activeTab === 'explorer'  && <ExplorerView  data={data} clusterName={clusterName} />}
+              {activeTab === 'topology'   && <TopologyView   data={data} focusNodeId={pendingFocusNodeId} />}
+              {activeTab === 'rbac'       && <RBACView       data={data} focusNodeId={pendingFocusNodeId} />}
+              {activeTab === 'findings'   && <FindingsView   data={data} dbFindings={scanMeta?.findings} onNavigate={handleNavigate} />}
+              {activeTab === 'benchmarks' && <BenchmarksView data={data} dbFindings={scanMeta?.findings} onNavigate={handleNavigate} />}
+              {activeTab === 'explorer'   && <ExplorerView   data={data} clusterName={clusterName} />}
 
             </motion.div>
           )}

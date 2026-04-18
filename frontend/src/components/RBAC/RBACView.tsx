@@ -1,9 +1,8 @@
-import { useMemo, useCallback, useState } from 'react'
+import { useMemo, useCallback, useState, useEffect, useRef } from 'react'
 import ReactFlow, {
   Background, BackgroundVariant, Controls, MiniMap,
-  Node, Edge, NodeMouseHandler,
+  Node, Edge, NodeMouseHandler, ReactFlowInstance,
 } from 'reactflow'
-import { useFocusNode } from '../../hooks/useFocusNode'
 import 'reactflow/dist/style.css'
 
 import { GraphData, GraphNode } from '../../types'
@@ -62,16 +61,38 @@ const DANGER_COLOR: Record<string, string> = {
   low:      '#64748b',
 }
 
-function FocusController({ nodeId }: { nodeId?: string | null }) {
-  useFocusNode(nodeId)
-  return null
-}
-
 interface RBACViewProps { data: GraphData; focusNodeId?: string | null }
 
 export function RBACView({ data, focusNodeId }: RBACViewProps) {
   const [selectedNode, setSelectedNode] = useState<GraphNode | null>(null)
   const [hoveredId, setHoveredId]       = useState<string | null>(null)
+  const [rfReady,   setRfReady]         = useState(false)
+  const rfRef = useRef<ReactFlowInstance | null>(null)
+
+  // Select node when navigating from Findings
+  useEffect(() => {
+    if (!focusNodeId) return
+    const node = data.nodes.find(n => n.id === focusNodeId) ?? null
+    if (node) setSelectedNode(node)
+  }, [focusNodeId]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Focus + zoom to node after ReactFlow is ready
+  useEffect(() => {
+    if (!focusNodeId || !rfReady) return
+    let cancelled = false
+    const inst = rfRef.current!
+    const tryFocus = (attempt = 0) => {
+      if (cancelled) return
+      const node = inst.getNodes().find(n => n.id === focusNodeId)
+      if (node) {
+        inst.fitView({ nodes: [{ id: focusNodeId }], duration: 600, padding: 0.4, maxZoom: 1.8 })
+      } else if (attempt < 20) {
+        setTimeout(() => tryFocus(attempt + 1), 100)
+      }
+    }
+    const t = setTimeout(() => tryFocus(0), 150)
+    return () => { cancelled = true; clearTimeout(t) }
+  }, [focusNodeId, rfReady])
 
   const rbacNodes = useMemo(() =>
     data.nodes.filter(n =>
@@ -220,6 +241,7 @@ export function RBACView({ data, focusNodeId }: RBACViewProps) {
           onNodeMouseEnter={handleMouseEnter}
           onNodeMouseLeave={handleMouseLeave}
           onPaneClick={() => { setSelectedNode(null); setHoveredId(null) }}
+          onInit={(instance) => { rfRef.current = instance; setRfReady(true) }}
           fitView
           fitViewOptions={{ padding: 0.08 }}
           minZoom={0.03}
@@ -227,7 +249,6 @@ export function RBACView({ data, focusNodeId }: RBACViewProps) {
           proOptions={{ hideAttribution: true }}
           elevateEdgesOnSelect
         >
-          <FocusController nodeId={focusNodeId} />
           <Background variant={BackgroundVariant.Dots} gap={24} size={1} color="#1a2840" />
           <Controls className="!border-cyber-border !bg-cyber-panel/80 !rounded-xl overflow-hidden" showInteractive={false} />
           <MiniMap

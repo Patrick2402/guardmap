@@ -212,7 +212,7 @@ const FEATURES = [
   },
   {
     icon: <ShieldAlert size={18} />, color: '#d13212', title: 'Security Findings',
-    desc: '30+ checks: privileged containers, wildcard IAM, missing network policies, unpinned images, host namespace access and more.',
+    desc: '40+ checks: privileged containers, wildcard IAM, missing network policies, unpinned images, host namespace access and more.',
   },
   {
     icon: <Zap size={18} />, color: '#f59e0b', title: 'Blast Radius',
@@ -316,7 +316,7 @@ const PLANS = [
     features: [
       '1 cluster',
       'Unlimited scans',
-      '30+ security checks',
+      '40+ security checks',
       '7-day scan history',
       'IRSA graph & topology',
       'Blast radius analysis',
@@ -735,7 +735,7 @@ export function LandingPage() {
           <FadeIn>
             <div className="text-[11px] font-semibold text-red-400 uppercase tracking-widest mb-3">Security checks</div>
             <h2 className="text-3xl font-bold mb-4" style={{ letterSpacing: '-0.02em' }}>
-              30+ checks across<br />
+              40+ checks across<br />
               <span style={{ background: 'linear-gradient(135deg, #ef4444, #f59e0b)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
                 K8s, RBAC and IAM
               </span>

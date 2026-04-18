@@ -1,16 +1,17 @@
 import { motion } from 'framer-motion'
-import { GitGraph, Network, ShieldCheck, ShieldAlert, LayoutDashboard, FolderSearch, History } from 'lucide-react'
+import { GitGraph, Network, ShieldCheck, ShieldAlert, LayoutDashboard, FolderSearch, History, BookMarked } from 'lucide-react'
 
-export type TabId = 'overview' | 'graph' | 'topology' | 'rbac' | 'findings' | 'explorer' | 'history'
+export type TabId = 'overview' | 'graph' | 'topology' | 'rbac' | 'findings' | 'benchmarks' | 'explorer' | 'history'
 
 const TABS: { id: TabId; label: string; icon: React.ReactNode }[] = [
-  { id: 'overview',  label: 'Overview',    icon: <LayoutDashboard size={13} /> },
-  { id: 'graph',     label: 'IRSA Graph',  icon: <GitGraph        size={13} /> },
-  { id: 'topology',  label: 'Topology',    icon: <Network         size={13} /> },
-  { id: 'rbac',      label: 'RBAC',        icon: <ShieldCheck     size={13} /> },
-  { id: 'findings',  label: 'Findings',    icon: <ShieldAlert     size={13} /> },
-  { id: 'history',   label: 'History',     icon: <History         size={13} /> },
-  { id: 'explorer',  label: 'Explorer',    icon: <FolderSearch    size={13} /> },
+  { id: 'overview',    label: 'Overview',    icon: <LayoutDashboard size={13} /> },
+  { id: 'graph',       label: 'IRSA Graph',  icon: <GitGraph        size={13} /> },
+  { id: 'topology',    label: 'Topology',    icon: <Network         size={13} /> },
+  { id: 'rbac',        label: 'RBAC',        icon: <ShieldCheck     size={13} /> },
+  { id: 'findings',    label: 'Findings',    icon: <ShieldAlert     size={13} /> },
+  { id: 'benchmarks',  label: 'Benchmarks',  icon: <BookMarked      size={13} /> },
+  { id: 'history',     label: 'History',     icon: <History         size={13} /> },
+  { id: 'explorer',    label: 'Explorer',    icon: <FolderSearch    size={13} /> },
 ]
 
 interface NavProps {
