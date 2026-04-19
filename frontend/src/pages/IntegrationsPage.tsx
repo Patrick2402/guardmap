@@ -71,7 +71,7 @@ metadata:
   name: guardmap-agent
 rules:
   - apiGroups: [""]
-    resources: ["pods","serviceaccounts","services","namespaces","nodes"]
+    resources: ["pods","serviceaccounts","services","namespaces","nodes","secrets","configmaps"]
     verbs: ["get","list","watch"]
   - apiGroups: ["apps"]
     resources: ["deployments","statefulsets","daemonsets","replicasets"]

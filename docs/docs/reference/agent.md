@@ -31,13 +31,16 @@ The agent needs read-only access to:
 ```yaml
 rules:
 - apiGroups: [""]
-  resources: [pods, serviceaccounts, services, endpoints, nodes, namespaces]
+  resources: [pods, serviceaccounts, services, endpoints, nodes, namespaces, secrets, configmaps]
   verbs: [get, list, watch]
 - apiGroups: ["apps"]
   resources: [deployments, statefulsets, daemonsets, replicasets]
   verbs: [get, list, watch]
 - apiGroups: ["networking.k8s.io"]
   resources: [ingresses, networkpolicies]
+  verbs: [get, list, watch]
+- apiGroups: ["batch"]
+  resources: [jobs, cronjobs]
   verbs: [get, list, watch]
 - apiGroups: ["rbac.authorization.k8s.io"]
   resources: [roles, clusterroles, rolebindings, clusterrolebindings]
