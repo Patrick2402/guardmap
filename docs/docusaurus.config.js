@@ -7,8 +7,8 @@ const config = {
   tagline: 'Security visibility for your Kubernetes clusters',
   favicon: 'img/favicon.ico',
 
-  url: 'https://Patrick2402.github.io',
-  baseUrl: '/guardmap/',
+  url: 'https://guardmap-docs.pages.dev',
+  baseUrl: '/',
 
   organizationName: 'Patrick2402',
   projectName: 'guardmap',
