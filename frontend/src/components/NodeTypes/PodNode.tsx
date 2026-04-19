@@ -11,6 +11,11 @@ interface PodData {
   phase?: string
   restartCount?: string
   ready?: string
+  privileged?: string
+  runAsRoot?: string
+  hostNetwork?: string
+  hostPID?: string
+  hostPath?: string
 }
 
 const PHASE_STYLE: Record<string, string> = {
@@ -22,16 +27,29 @@ const PHASE_STYLE: Record<string, string> = {
 }
 
 export const PodNode = memo(({ data }: NodeProps<PodData>) => {
-  const { label, namespace, selected, dimmed, phase, restartCount, ready } = data
+  const { label, namespace, selected, dimmed, phase, restartCount, ready,
+          privileged, runAsRoot, hostNetwork, hostPID, hostPath } = data
   const restarts = parseInt(restartCount ?? '0', 10)
   const hasCrash = restarts > 0
   const isNotRunning = phase && phase !== 'Running' && phase !== ''
 
+  const secBadges = [
+    privileged  === 'true' && { label: 'PRIV',  cls: 'bg-red-900/60 text-red-300 border-red-600/40' },
+    runAsRoot   === 'true' && { label: 'ROOT',  cls: 'bg-orange-900/60 text-orange-300 border-orange-600/40' },
+    hostNetwork === 'true' && { label: 'hNet',  cls: 'bg-orange-900/50 text-orange-300 border-orange-600/40' },
+    hostPID     === 'true' && { label: 'hPID',  cls: 'bg-orange-900/50 text-orange-300 border-orange-600/40' },
+    hostPath    === 'true' && { label: 'hPath', cls: 'bg-yellow-900/50 text-yellow-300 border-yellow-600/40' },
+  ].filter(Boolean) as { label: string; cls: string }[]
+
+  const hasSecIssue = secBadges.some(b => b.label === 'PRIV' || b.label === 'ROOT')
+
   const borderCls = selected
     ? 'border-cyan-400 shadow-[0_0_20px_#00d4ff55]'
-    : hasCrash || isNotRunning
+    : hasSecIssue
       ? 'border-red-500/50 hover:border-red-400/70'
-      : 'border-cyan-500/30 hover:border-cyan-400/60 hover:shadow-[0_0_10px_#00d4ff22]'
+      : hasCrash || isNotRunning
+        ? 'border-red-500/50 hover:border-red-400/70'
+        : 'border-cyan-500/30 hover:border-cyan-400/60 hover:shadow-[0_0_10px_#00d4ff22]'
 
   const phaseCls = phase ? (PHASE_STYLE[phase] ?? PHASE_STYLE.Unknown) : null
 
@@ -45,7 +63,12 @@ export const PodNode = memo(({ data }: NodeProps<PodData>) => {
         style={{ background: 'rgba(6,182,212,0.08)' }}>
         <Container size={9} className="text-cyan-500" />
         <span className="text-[9px] font-mono font-bold text-cyan-500 tracking-widest uppercase">Pod</span>
-        <div className="ml-auto flex items-center gap-1.5">
+        <div className="ml-auto flex items-center gap-1">
+          {secBadges.map(b => (
+            <span key={b.label} className={`text-[7px] font-mono font-bold px-1 py-px rounded border ${b.cls}`}>
+              {b.label}
+            </span>
+          ))}
           {hasCrash && (
             <span className="text-[8px] font-mono text-red-400 bg-red-900/40 px-1 rounded border border-red-600/30">
               ↺{restarts}

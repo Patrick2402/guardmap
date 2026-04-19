@@ -16,7 +16,8 @@
         "cpuLimit": "500m",
         "memRequest": "1Gi",
         "memLimit": "2Gi",
-        "labels": "app=payments-api,env=production"
+        "labels": "app=payments-api,env=production",
+        "privileged": "true"
       }
     },
     {
@@ -130,7 +131,8 @@
         "cpuLimit": "4000m",
         "memRequest": "512Mi",
         "memLimit": "1Gi",
-        "labels": "app=auth-service,env=production"
+        "labels": "app=auth-service,env=production",
+        "runAsRoot": "true"
       }
     },
     {
@@ -339,7 +341,8 @@
         "cpuLimit": "500m",
         "memRequest": "1Gi",
         "memLimit": "2Gi",
-        "labels": "app=airflow-worker,env=data-platform"
+        "labels": "app=airflow-worker,env=data-platform",
+        "runAsRoot": "true"
       }
     },
     {
@@ -415,7 +418,8 @@
         "cpuLimit": "1000m",
         "memRequest": "64Mi",
         "memLimit": "128Mi",
-        "labels": "app=grafana,env=monitoring"
+        "labels": "app=grafana,env=monitoring",
+        "runAsRoot": "true"
       }
     },
     {
@@ -586,7 +590,9 @@
         "cpuLimit": "4000m",
         "memRequest": "512Mi",
         "memLimit": "1Gi",
-        "labels": "app=model-serving-api,env=ml-platform"
+        "labels": "app=model-serving-api,env=ml-platform",
+        "privileged": "true",
+        "runAsRoot": "true"
       }
     },
     {
@@ -1585,13 +1591,14 @@
         "replicas": "3",
         "image": "company/payments-worker:v2.4.1",
         "strategy": "RollingUpdate",
-        "available": "3",
+        "available": "1",
         "cpuRequest": "250m",
         "cpuLimit": "1000m",
         "memRequest": "64Mi",
         "memLimit": "128Mi",
         "selector": "app=payments-worker",
-        "labels": "app=payments-worker,env=production,managed-by=helm"
+        "labels": "app=payments-worker,env=production,managed-by=helm",
+        "privileged": "false"
       }
     },
     {
@@ -1600,10 +1607,10 @@
       "label": "user-service",
       "namespace": "production",
       "metadata": {
-        "replicas": "2",
+        "replicas": "3",
         "image": "company/user-service:v1.8.3",
         "strategy": "RollingUpdate",
-        "available": "2",
+        "available": "3",
         "cpuRequest": "500m",
         "cpuLimit": "2000m",
         "memRequest": "2Gi",
@@ -1663,7 +1670,8 @@
         "memRequest": "512Mi",
         "memLimit": "1Gi",
         "selector": "app=auth-service",
-        "labels": "app=auth-service,env=production,managed-by=helm"
+        "labels": "app=auth-service,env=production,managed-by=helm",
+        "runAsRoot": "true"
       }
     },
     {
@@ -1672,10 +1680,10 @@
       "label": "inventory-service",
       "namespace": "production",
       "metadata": {
-        "replicas": "1",
+        "replicas": "2",
         "image": "company/inventory-service:v1.5.0",
         "strategy": "RollingUpdate",
-        "available": "1",
+        "available": "2",
         "cpuRequest": "50m",
         "cpuLimit": "200m",
         "memRequest": "128Mi",
@@ -1711,7 +1719,7 @@
         "replicas": "2",
         "image": "company/product-service:v2.2.0",
         "strategy": "RollingUpdate",
-        "available": "2",
+        "available": "1",
         "cpuRequest": "100m",
         "cpuLimit": "500m",
         "memRequest": "1Gi",
@@ -1726,12 +1734,12 @@
       "label": "payments-api-staging",
       "namespace": "staging",
       "metadata": {
-        "replicas": "1",
+        "replicas": "2",
         "image": "company/payments-api:v2.5.0-rc1",
         "strategy": "Recreate",
         "runAsRoot": "true",
         "hostPath": "true",
-        "available": "1",
+        "available": "0",
         "cpuRequest": "250m",
         "cpuLimit": "1000m",
         "memRequest": "64Mi",
@@ -1790,7 +1798,8 @@
         "cpuLimit": "1000m",
         "memRequest": "64Mi",
         "memLimit": "128Mi",
-        "labels": "app=prometheus,env=monitoring,managed-by=helm"
+        "labels": "app=prometheus,env=monitoring,managed-by=helm",
+        "available": "1"
       }
     },
     {
@@ -1807,7 +1816,8 @@
         "cpuLimit": "500m",
         "memRequest": "1Gi",
         "memLimit": "2Gi",
-        "labels": "app=loki,env=monitoring,managed-by=helm"
+        "labels": "app=loki,env=monitoring,managed-by=helm",
+        "available": "1"
       }
     },
     {
@@ -1824,7 +1834,8 @@
         "cpuLimit": "800m",
         "memRequest": "256Mi",
         "memLimit": "512Mi",
-        "labels": "app=alertmanager,env=monitoring,managed-by=helm"
+        "labels": "app=alertmanager,env=monitoring,managed-by=helm",
+        "available": "1"
       }
     },
     {
@@ -1842,7 +1853,8 @@
         "memRequest": "256Mi",
         "memLimit": "512Mi",
         "selector": "app=grafana",
-        "labels": "app=grafana,env=monitoring,managed-by=helm"
+        "labels": "app=grafana,env=monitoring,managed-by=helm",
+        "runAsRoot": "true"
       }
     },
     {
@@ -1859,7 +1871,10 @@
         "cpuLimit": "2000m",
         "memRequest": "2Gi",
         "memLimit": "4Gi",
-        "labels": "app=node-exporter,env=monitoring"
+        "labels": "app=node-exporter,env=monitoring",
+        "privileged": "true",
+        "hostPID": "true",
+        "hostNetwork": "true"
       }
     },
     {
@@ -1876,7 +1891,10 @@
         "cpuLimit": "200m",
         "memRequest": "128Mi",
         "memLimit": "256Mi",
-        "labels": "app=falco,env=security"
+        "labels": "app=falco,env=security",
+        "privileged": "true",
+        "hostPID": "true",
+        "hostNetwork": "true"
       }
     },
     {
@@ -1893,7 +1911,8 @@
         "cpuLimit": "4000m",
         "memRequest": "512Mi",
         "memLimit": "1Gi",
-        "labels": "app=fluentbit,env=data-platform"
+        "labels": "app=fluentbit,env=data-platform",
+        "hostPath": "true"
       }
     },
     {
@@ -1929,7 +1948,8 @@
         "memRequest": "512Mi",
         "memLimit": "1Gi",
         "selector": "app=airflow-worker",
-        "labels": "app=airflow-worker,env=data-platform,managed-by=helm"
+        "labels": "app=airflow-worker,env=data-platform,managed-by=helm",
+        "runAsRoot": "true"
       }
     },
     {
@@ -1959,7 +1979,7 @@
         "replicas": "1",
         "image": "company/dbt-runner:v1.7.3",
         "strategy": "Recreate",
-        "available": "1",
+        "available": "0",
         "cpuRequest": "50m",
         "cpuLimit": "200m",
         "memRequest": "128Mi",
@@ -1992,10 +2012,10 @@
       "label": "aws-load-balancer-ctrl",
       "namespace": "ingress",
       "metadata": {
-        "replicas": "2",
+        "replicas": "1",
         "image": "amazon/aws-load-balancer-controller:v2.7.2",
         "strategy": "RollingUpdate",
-        "available": "2",
+        "available": "1",
         "cpuRequest": "200m",
         "cpuLimit": "800m",
         "memRequest": "256Mi",
@@ -2028,18 +2048,20 @@
       "label": "model-serving-api",
       "namespace": "ml-platform",
       "metadata": {
-        "replicas": "2",
+        "replicas": "3",
         "image": "company/model-serving:v0.3.1",
         "strategy": "RollingUpdate",
         "hostNetwork": "true",
         "hostPID": "true",
-        "available": "2",
+        "available": "3",
         "cpuRequest": "250m",
         "cpuLimit": "1000m",
         "memRequest": "64Mi",
         "memLimit": "128Mi",
         "selector": "app=model-serving-api",
-        "labels": "app=model-serving-api,env=ml-platform,managed-by=helm"
+        "labels": "app=model-serving-api,env=ml-platform,managed-by=helm",
+        "privileged": "true",
+        "runAsRoot": "true"
       }
     },
     {

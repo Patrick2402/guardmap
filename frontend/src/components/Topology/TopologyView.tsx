@@ -282,6 +282,8 @@ export function TopologyView({ data, focusNodeId }: TopologyViewProps) {
         namespace:    n.namespace ?? '',
         nodeType:     n.type,
         replicas:     n.metadata?.replicas,
+        available:    n.metadata?.available,
+        desired:      n.metadata?.desired,
         schedule:     n.metadata?.schedule,
         succeeded:    n.metadata?.succeeded,
         completions:  n.metadata?.completions,

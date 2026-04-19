@@ -8,6 +8,9 @@ interface WorkloadData {
   namespace: string
   nodeType: NodeType
   replicas?: string
+  available?: string
+  desired?: string
+  ready?: string
   // job/cronjob extras
   schedule?: string
   succeeded?: string
@@ -30,7 +33,7 @@ const config = {
 }
 
 export const WorkloadNode = memo(({ data }: NodeProps<WorkloadData>) => {
-  const { label, namespace, nodeType, replicas, schedule, succeeded, completions, activeJobs,
+  const { label, namespace, nodeType, replicas, available, desired, ready, schedule, succeeded, completions, activeJobs,
           dimmed, privileged, runAsRoot, hostNetwork, hostPID, hostPath } = data
   const cfg = config[nodeType as keyof typeof config] ?? config.deployment
   const Icon = cfg.icon
@@ -45,14 +48,28 @@ export const WorkloadNode = memo(({ data }: NodeProps<WorkloadData>) => {
 
   // Header right-side indicator
   let headerRight: React.ReactNode = null
-  if (!secBadges.length) {
-    if (nodeType === 'cronjob' && schedule) {
-      headerRight = <span className={`text-[8px] font-mono ${cfg.headerText} opacity-70`}>{schedule}</span>
-    } else if (nodeType === 'job' && succeeded != null && completions != null) {
-      headerRight = <span className={`text-[9px] font-mono ${cfg.headerText} opacity-70`}>{succeeded}/{completions}</span>
-    } else if (replicas) {
-      headerRight = <span className={`text-[9px] font-mono ${cfg.headerText} opacity-70`}>{replicas}×</span>
-    }
+  if (nodeType === 'cronjob' && schedule) {
+    headerRight = <span className={`text-[8px] font-mono ${cfg.headerText} opacity-70`}>{schedule}</span>
+  } else if (nodeType === 'job' && succeeded != null && completions != null) {
+    headerRight = <span className={`text-[9px] font-mono ${cfg.headerText} opacity-70`}>{succeeded}/{completions}</span>
+  } else if (nodeType === 'daemonset' && desired) {
+    const readyN  = parseInt(ready  ?? desired, 10)
+    const desiredN = parseInt(desired, 10)
+    const degraded = readyN < desiredN
+    headerRight = (
+      <span className={`text-[9px] font-mono font-semibold ${degraded ? 'text-red-400' : cfg.headerText} opacity-90`}>
+        {ready ?? desired}/{desired}
+      </span>
+    )
+  } else if (replicas) {
+    const avail    = parseInt(available ?? replicas, 10)
+    const total    = parseInt(replicas, 10)
+    const degraded = avail < total
+    headerRight = (
+      <span className={`text-[9px] font-mono font-semibold ${degraded ? 'text-red-400' : cfg.headerText} opacity-90`}>
+        {available ?? replicas}/{replicas}
+      </span>
+    )
   }
 
   // Sub-label for cronjob active jobs count

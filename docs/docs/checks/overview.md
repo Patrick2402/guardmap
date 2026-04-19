@@ -6,7 +6,7 @@ sidebar_position: 1
 
 # Security checks overview
 
-GuardMap runs 40+ checks across five categories on every scan.
+GuardMap runs 48 checks across six categories on every scan.
 
 ## Categories
 
@@ -16,7 +16,8 @@ GuardMap runs 40+ checks across five categories on every scan.
 | [RBAC](./rbac) | 12 | Role and binding checks — wildcards, cluster-admin, exec/attach, secrets access, node access |
 | [Network](./network) | 5 | NetworkPolicy coverage, allow-all policies, host networking, public load balancers |
 | [IAM / IRSA](./iam) | 6 | AWS IAM permission checks for EKS IRSA chains, unused IRSA bindings |
-| Batch / Workload | 3 | CronJob and Job hygiene — TTL, concurrency, missing deadline |
+| [Batch / Workload](./batch) | 3 | CronJob and Job hygiene — TTL, concurrency, missing deadline |
+| Secrets / Config | 1 | Orphaned Secrets (exist but are unreferenced by any workload) |
 
 ## Severity levels
 
@@ -49,3 +50,4 @@ This avoids noise from privileged system components you don't control.
 | Network | — | 2 | 2 | 1 |
 | IAM / IRSA | 2 | 1 | 2 | 1 |
 | Batch / Workload | — | — | 1 | 2 |
+| Secrets / Config | — | — | — | 1 |

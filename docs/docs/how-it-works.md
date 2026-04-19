@@ -20,7 +20,7 @@ CronJob (every 6h)
   ├─ Builds IRSA graph
   │  (SA → IAM Role → AWS Resource)
   │
-  ├─ Runs 45+ security checks
+  ├─ Runs 48 security checks
   │
   └─ HTTP POST /rpc/submit_scan ──►  Supabase (submit_scan RPC)
                                        │
@@ -48,6 +48,7 @@ It needs only **read** permissions on cluster resources — it never modifies an
 - Pods, Deployments, StatefulSets, DaemonSets, ReplicaSets
 - Services, Ingresses, Endpoints, NetworkPolicies
 - ServiceAccounts, Roles, ClusterRoles, RoleBindings, ClusterRoleBindings
+- Secrets and ConfigMaps (user-managed; auto-generated types filtered out)
 - Nodes (for K8s version and node count)
 - AWS IAM roles via IRSA annotations (on EKS)
 

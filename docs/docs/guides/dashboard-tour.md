@@ -38,7 +38,21 @@ IRSA graph nodes (IAM Roles, AWS Resources) only appear for EKS clusters with IR
 
 ## Topology
 
-Shows the K8s network topology — workloads, pods, services, ingresses, and network policies — without IAM nodes.
+Shows the K8s network topology — workloads, pods, services, ingresses, network policies, and optionally Secrets/ConfigMaps — without IAM nodes.
+
+**At-a-glance security badges** appear directly on workload and pod cards:
+
+| Badge | Meaning |
+|-------|---------|
+| `PRIV` | Container runs in privileged mode |
+| `ROOT` | Container may run as UID 0 |
+| `hNet` | Pod shares the host network namespace |
+| `hPID` | Pod shares the host PID namespace |
+| `hPath` | Pod mounts a host filesystem path |
+
+**Replica health** is shown as `available/desired` in the node header (turns red when degraded). DaemonSets show `ready/desired`.
+
+**Secrets and ConfigMaps** are hidden by default — toggle them on with the **Secrets OFF/ON** button in the toolbar. Amber cards are Secrets, sky-blue cards are ConfigMaps. An orange **orphaned** badge appears on Secrets that no workload references.
 
 Click a namespace group header to fit-view that namespace. Click any node to see its details in the sidebar.
 
