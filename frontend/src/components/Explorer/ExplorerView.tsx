@@ -611,7 +611,7 @@ export function ExplorerView({ data, clusterName = 'mock-cluster' }: ExplorerVie
 
         {/* Type tiles */}
         <div className="flex flex-wrap gap-1.5">
-          {groupCounts.map(g => (
+          {groupCounts.filter(g => g.count > 0).map(g => (
             <button
               key={g.label}
               onClick={() => handleGroupClick(g)}
