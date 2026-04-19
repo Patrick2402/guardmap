@@ -93,6 +93,8 @@ const TYPE_GROUPS: { label: string; types: NodeType[]; color: string; icon: Reac
   { label: 'IAM Roles',      types: ['iam_role'],        color: 'text-amber-400',  icon: <ShieldCheck size={12} /> },
   { label: 'AWS Resources',  types: ['aws_service'],     color: 'text-slate-400',  icon: <HardDrive size={12} /> },
   { label: 'RBAC',           types: ['k8s_role','k8s_clusterrole','k8s_rolebinding','k8s_clusterrolebinding'], color: 'text-red-400', icon: <ShieldCheck size={12} /> },
+  { label: 'Secrets',        types: ['secret'],          color: 'text-amber-400', icon: <KeyRound size={12} /> },
+  { label: 'ConfigMaps',     types: ['configmap'],       color: 'text-sky-400',   icon: <MessageSquare size={12} /> },
 ]
 
 // ── Helpers ───────────────────────────────────────────────────────────────────

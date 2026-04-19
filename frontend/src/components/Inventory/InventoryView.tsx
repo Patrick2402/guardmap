@@ -26,6 +26,8 @@ const TYPE_TABS: { id: NodeType | 'all'; label: string; icon: React.ReactNode }[
   { id: 'k8s_service',    label: 'Services',         icon: <Network size={11} /> },
   { id: 'ingress',        label: 'Ingresses',        icon: <Globe size={11} /> },
   { id: 'networkpolicy',  label: 'NetworkPolicies',  icon: <ShieldOff size={11} /> },
+  { id: 'secret',         label: 'Secrets',          icon: <KeyRound size={11} /> },
+  { id: 'configmap',      label: 'ConfigMaps',       icon: <FileText size={11} /> },
 ]
 
 const TYPE_COLOR: Record<NodeType, string> = {

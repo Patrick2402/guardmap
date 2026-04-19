@@ -2507,6 +2507,226 @@
         "restarts": "0",
         "serviceAccount": "training-sa"
       }
+    },
+    {
+      "id": "secret:production/payments-api-credentials",
+      "type": "secret",
+      "label": "payments-api-credentials",
+      "namespace": "production",
+      "metadata": {
+        "secretType": "Opaque",
+        "keyCount": "3",
+        "referenced": "true",
+        "immutable": "false"
+      }
+    },
+    {
+      "id": "secret:production/jwt-signing-key",
+      "type": "secret",
+      "label": "jwt-signing-key",
+      "namespace": "production",
+      "metadata": {
+        "secretType": "Opaque",
+        "keyCount": "2",
+        "referenced": "true",
+        "immutable": "false"
+      }
+    },
+    {
+      "id": "secret:production/tls-cert",
+      "type": "secret",
+      "label": "tls-cert",
+      "namespace": "production",
+      "metadata": {
+        "secretType": "kubernetes.io/tls",
+        "keyCount": "2",
+        "referenced": "true",
+        "immutable": "false"
+      }
+    },
+    {
+      "id": "secret:production/db-master-password",
+      "type": "secret",
+      "label": "db-master-password",
+      "namespace": "production",
+      "metadata": {
+        "secretType": "Opaque",
+        "keyCount": "1",
+        "referenced": "true",
+        "immutable": "false"
+      }
+    },
+    {
+      "id": "secret:staging/staging-db-credentials",
+      "type": "secret",
+      "label": "staging-db-credentials",
+      "namespace": "staging",
+      "metadata": {
+        "secretType": "Opaque",
+        "keyCount": "3",
+        "referenced": "true",
+        "immutable": "false"
+      }
+    },
+    {
+      "id": "secret:staging/old-api-key",
+      "type": "secret",
+      "label": "old-api-key",
+      "namespace": "staging",
+      "metadata": {
+        "secretType": "Opaque",
+        "keyCount": "1",
+        "referenced": "false",
+        "immutable": "false"
+      }
+    },
+    {
+      "id": "secret:monitoring/grafana-admin-credentials",
+      "type": "secret",
+      "label": "grafana-admin-credentials",
+      "namespace": "monitoring",
+      "metadata": {
+        "secretType": "Opaque",
+        "keyCount": "2",
+        "referenced": "true",
+        "immutable": "false"
+      }
+    },
+    {
+      "id": "secret:data-platform/kafka-sasl-credentials",
+      "type": "secret",
+      "label": "kafka-sasl-credentials",
+      "namespace": "data-platform",
+      "metadata": {
+        "secretType": "Opaque",
+        "keyCount": "4",
+        "referenced": "true",
+        "immutable": "false"
+      }
+    },
+    {
+      "id": "secret:data-platform/airflow-db-password",
+      "type": "secret",
+      "label": "airflow-db-password",
+      "namespace": "data-platform",
+      "metadata": {
+        "secretType": "Opaque",
+        "keyCount": "1",
+        "referenced": "true",
+        "immutable": "false"
+      }
+    },
+    {
+      "id": "secret:ml-platform/model-api-keys",
+      "type": "secret",
+      "label": "model-api-keys",
+      "namespace": "ml-platform",
+      "metadata": {
+        "secretType": "Opaque",
+        "keyCount": "3",
+        "referenced": "true",
+        "immutable": "false"
+      }
+    },
+    {
+      "id": "secret:security/falco-reporting-token",
+      "type": "secret",
+      "label": "falco-reporting-token",
+      "namespace": "security",
+      "metadata": {
+        "secretType": "Opaque",
+        "keyCount": "1",
+        "referenced": "true",
+        "immutable": "false"
+      }
+    },
+    {
+      "id": "cm:production/payments-api-config",
+      "type": "configmap",
+      "label": "payments-api-config",
+      "namespace": "production",
+      "metadata": {
+        "keyCount": "8",
+        "referenced": "true",
+        "immutable": "false"
+      }
+    },
+    {
+      "id": "cm:production/app-feature-flags",
+      "type": "configmap",
+      "label": "app-feature-flags",
+      "namespace": "production",
+      "metadata": {
+        "keyCount": "12",
+        "referenced": "true",
+        "immutable": "true"
+      }
+    },
+    {
+      "id": "cm:production/nginx-config",
+      "type": "configmap",
+      "label": "nginx-config",
+      "namespace": "production",
+      "metadata": {
+        "keyCount": "3",
+        "referenced": "true",
+        "immutable": "false"
+      }
+    },
+    {
+      "id": "cm:staging/staging-app-config",
+      "type": "configmap",
+      "label": "staging-app-config",
+      "namespace": "staging",
+      "metadata": {
+        "keyCount": "6",
+        "referenced": "true",
+        "immutable": "false"
+      }
+    },
+    {
+      "id": "cm:monitoring/prometheus-config",
+      "type": "configmap",
+      "label": "prometheus-config",
+      "namespace": "monitoring",
+      "metadata": {
+        "keyCount": "5",
+        "referenced": "true",
+        "immutable": "false"
+      }
+    },
+    {
+      "id": "cm:monitoring/grafana-dashboards",
+      "type": "configmap",
+      "label": "grafana-dashboards",
+      "namespace": "monitoring",
+      "metadata": {
+        "keyCount": "14",
+        "referenced": "true",
+        "immutable": "false"
+      }
+    },
+    {
+      "id": "cm:data-platform/airflow-config",
+      "type": "configmap",
+      "label": "airflow-config",
+      "namespace": "data-platform",
+      "metadata": {
+        "keyCount": "9",
+        "referenced": "true",
+        "immutable": "false"
+      }
+    },
+    {
+      "id": "cm:ml-platform/model-serving-config",
+      "type": "configmap",
+      "label": "model-serving-config",
+      "namespace": "ml-platform",
+      "metadata": {
+        "keyCount": "7",
+        "referenced": "true",
+        "immutable": "false"
+      }
     }
   ],
   "edges": [
@@ -3746,6 +3966,162 @@
       "source": "pod:staging/schema-migration-v4-zx9vq",
       "target": "sa:staging/payments-staging-sa",
       "label": "uses"
+    },
+    {
+      "id": "e166",
+      "source": "deploy:production/payments-api",
+      "target": "secret:production/payments-api-credentials",
+      "label": "uses secret \u2192"
+    },
+    {
+      "id": "e167",
+      "source": "deploy:production/payments-api",
+      "target": "cm:production/payments-api-config",
+      "label": "uses config \u2192"
+    },
+    {
+      "id": "e168",
+      "source": "deploy:production/auth-service",
+      "target": "secret:production/jwt-signing-key",
+      "label": "uses secret \u2192"
+    },
+    {
+      "id": "e169",
+      "source": "deploy:production/user-service",
+      "target": "secret:production/jwt-signing-key",
+      "label": "uses secret \u2192"
+    },
+    {
+      "id": "e170",
+      "source": "deploy:production/user-service",
+      "target": "secret:production/db-master-password",
+      "label": "uses secret \u2192"
+    },
+    {
+      "id": "e171",
+      "source": "deploy:production/order-service",
+      "target": "secret:production/db-master-password",
+      "label": "uses secret \u2192"
+    },
+    {
+      "id": "e172",
+      "source": "deploy:production/checkout-service",
+      "target": "secret:production/payments-api-credentials",
+      "label": "uses secret \u2192"
+    },
+    {
+      "id": "e173",
+      "source": "deploy:production/payments-api",
+      "target": "secret:production/tls-cert",
+      "label": "uses secret \u2192"
+    },
+    {
+      "id": "e174",
+      "source": "deploy:production/user-service",
+      "target": "cm:production/app-feature-flags",
+      "label": "uses config \u2192"
+    },
+    {
+      "id": "e175",
+      "source": "deploy:production/order-service",
+      "target": "cm:production/app-feature-flags",
+      "label": "uses config \u2192"
+    },
+    {
+      "id": "e176",
+      "source": "deploy:production/checkout-service",
+      "target": "cm:production/app-feature-flags",
+      "label": "uses config \u2192"
+    },
+    {
+      "id": "e177",
+      "source": "deploy:ingress/nginx-ingress",
+      "target": "cm:production/nginx-config",
+      "label": "uses config \u2192"
+    },
+    {
+      "id": "e178",
+      "source": "deploy:staging/payments-api-staging",
+      "target": "secret:staging/staging-db-credentials",
+      "label": "uses secret \u2192"
+    },
+    {
+      "id": "e179",
+      "source": "deploy:staging/user-service-staging",
+      "target": "secret:staging/staging-db-credentials",
+      "label": "uses secret \u2192"
+    },
+    {
+      "id": "e180",
+      "source": "deploy:staging/payments-api-staging",
+      "target": "cm:staging/staging-app-config",
+      "label": "uses config \u2192"
+    },
+    {
+      "id": "e181",
+      "source": "ss:monitoring/grafana",
+      "target": "secret:monitoring/grafana-admin-credentials",
+      "label": "uses secret \u2192"
+    },
+    {
+      "id": "e182",
+      "source": "ss:monitoring/prometheus",
+      "target": "cm:monitoring/prometheus-config",
+      "label": "uses config \u2192"
+    },
+    {
+      "id": "e183",
+      "source": "deploy:monitoring/grafana",
+      "target": "cm:monitoring/grafana-dashboards",
+      "label": "uses config \u2192"
+    },
+    {
+      "id": "e184",
+      "source": "deploy:data-platform/kafka-connect",
+      "target": "secret:data-platform/kafka-sasl-credentials",
+      "label": "uses secret \u2192"
+    },
+    {
+      "id": "e185",
+      "source": "deploy:data-platform/airflow-scheduler",
+      "target": "secret:data-platform/airflow-db-password",
+      "label": "uses secret \u2192"
+    },
+    {
+      "id": "e186",
+      "source": "deploy:data-platform/airflow-worker",
+      "target": "secret:data-platform/airflow-db-password",
+      "label": "uses secret \u2192"
+    },
+    {
+      "id": "e187",
+      "source": "deploy:data-platform/airflow-scheduler",
+      "target": "cm:data-platform/airflow-config",
+      "label": "uses config \u2192"
+    },
+    {
+      "id": "e188",
+      "source": "deploy:data-platform/airflow-worker",
+      "target": "cm:data-platform/airflow-config",
+      "label": "uses config \u2192"
+    },
+    {
+      "id": "e189",
+      "source": "deploy:ml-platform/model-serving",
+      "target": "secret:ml-platform/model-api-keys",
+      "label": "uses secret \u2192"
+    },
+    {
+      "id": "e190",
+      "source": "deploy:ml-platform/model-serving",
+      "target": "cm:ml-platform/model-serving-config",
+      "label": "uses config \u2192"
+    },
+    {
+      "id": "e191",
+      "source": "ds:security/falco",
+      "target": "secret:security/falco-reporting-token",
+      "label": "uses secret \u2192"
     }
   ]
 }
