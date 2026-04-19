@@ -4,10 +4,11 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   ShieldAlert, ShieldCheck, Network, Key, Lock,
   ArrowRight, AlertTriangle, XCircle, Info, X,
-  Wrench, FileText, Target, ChevronRight, ChevronLeft, Search,
+  Wrench, FileText, Target, ChevronRight, ChevronLeft, Search, GitGraph,
 } from 'lucide-react'
 import { GraphData } from '../../types'
 import { TabId } from '../Nav'
+import { AttackPathModal } from './AttackPathModal'
 
 type Severity = 'critical' | 'high' | 'medium' | 'low'
 type Category = 'rbac' | 'pod-security' | 'network' | 'irsa'
@@ -433,10 +434,11 @@ const PAGE_SIZE = 25
 
 // ── Finding Detail Sheet ──────────────────────────────────────────────────────
 
-function FindingSheet({ finding, onClose, onNavigate }: {
+function FindingSheet({ finding, onClose, onNavigate, onAttackPath }: {
   finding: Finding
   onClose: () => void
   onNavigate?: (tab: TabId, nodeId?: string) => void
+  onAttackPath?: (f: Finding) => void
 }) {
   const sev = SEV_CFG[finding.severity]
   const cat = CAT_CFG[finding.category]
@@ -506,6 +508,16 @@ function FindingSheet({ finding, onClose, onNavigate }: {
             <div className="text-lg font-sans font-bold text-slate-100 mt-1">{finding.title}</div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
+            {onAttackPath && (finding.category === 'pod-security' || finding.category === 'irsa') && (
+              <button
+                onClick={() => { onAttackPath(finding); onClose() }}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-sans font-semibold transition-all hover:opacity-80"
+                style={{ background: 'rgba(99,102,241,0.12)', color: '#818cf8', border: '1px solid rgba(99,102,241,0.25)' }}
+              >
+                <GitGraph size={14} />
+                Attack Path
+              </button>
+            )}
             {onNavigate && (
               <button
                 onClick={() => { onNavigate(finding.navTab, finding.navNodeId); onClose() }}
@@ -682,6 +694,7 @@ export function FindingsView({ data, dbFindings, onNavigate }: FindingsViewProps
   const [search, setSearch]         = useState('')
   const [nsFilter, setNsFilter]     = useState('all')
   const [selected, setSelected]     = useState<Finding | null>(null)
+  const [attackPath, setAttackPath] = useState<Finding | null>(null)
   const [page, setPage]             = useState(1)
 
   const namespaces = useMemo(() =>
@@ -929,9 +942,21 @@ export function FindingsView({ data, dbFindings, onNavigate }: FindingsViewProps
                         </span>
                       </div>
                     </div>
-                    <div className="flex items-center gap-1.5 shrink-0 text-xs font-sans text-slate-500">
-                      <span className="hidden sm:block">Details</span>
-                      <ChevronRight size={14} className="text-slate-700" />
+                    <div className="flex items-center gap-2 shrink-0">
+                      {(f.category === 'pod-security' || f.category === 'irsa') && (
+                        <button
+                          onClick={e => { e.stopPropagation(); setAttackPath(f) }}
+                          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-sans font-semibold transition-all hover:opacity-90"
+                          style={{ background: `${sev.color}12`, color: sev.color, border: `1px solid ${sev.color}25` }}
+                        >
+                          <GitGraph size={11} />
+                          Attack Path
+                        </button>
+                      )}
+                      <div className="flex items-center gap-1 text-xs font-sans text-slate-500">
+                        <span className="hidden sm:block">Details</span>
+                        <ChevronRight size={14} className="text-slate-700" />
+                      </div>
                     </div>
                   </div>
                   <p className="text-sm font-sans text-slate-400 mt-2 leading-relaxed line-clamp-2">{f.description}</p>
@@ -1014,9 +1039,19 @@ export function FindingsView({ data, dbFindings, onNavigate }: FindingsViewProps
             finding={selected}
             onClose={() => setSelected(null)}
             onNavigate={onNavigate}
+            onAttackPath={f => { setSelected(null); setAttackPath(f) }}
           />
         )}
       </AnimatePresence>
+
+      {/* ── Attack Path modal ── */}
+      {attackPath && (
+        <AttackPathModal
+          finding={attackPath}
+          data={data}
+          onClose={() => setAttackPath(null)}
+        />
+      )}
 
     </div>
   )

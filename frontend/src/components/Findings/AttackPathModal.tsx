@@ -1,0 +1,357 @@
+import { useMemo } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { X, Globe, Layers, Container, Shield, KeyRound, HardDrive,
+  Database, MessageSquare, Lock, BarChart2, Box, ChevronRight, AlertTriangle } from 'lucide-react'
+import { GraphData, GraphNode } from '../../types'
+import type { Finding } from './FindingsView'
+
+// ── Types ──────────────────────────────────────────────────────────────────────
+
+interface PathStep {
+  node: GraphNode | VirtualNode
+  edgeLabel?: string
+  accessLevel?: string
+}
+
+interface VirtualNode {
+  id: string
+  type: string
+  label: string
+  namespace?: string
+}
+
+// ── Icons ─────────────────────────────────────────────────────────────────────
+
+const STEP_CFG: Record<string, { color: string; label: string; icon: React.ReactNode }> = {
+  internet:       { color: '#ef4444', label: 'Internet',       icon: <Globe size={14} /> },
+  ingress:        { color: '#f97316', label: 'Ingress',        icon: <Globe size={14} /> },
+  k8s_service:    { color: '#3b82f6', label: 'Service',        icon: <Layers size={14} /> },
+  deployment:     { color: '#6366f1', label: 'Deployment',     icon: <Layers size={14} /> },
+  statefulset:    { color: '#8b5cf6', label: 'StatefulSet',    icon: <Layers size={14} /> },
+  daemonset:      { color: '#a78bfa', label: 'DaemonSet',      icon: <Layers size={14} /> },
+  pod:            { color: '#06b6d4', label: 'Pod',            icon: <Container size={14} /> },
+  serviceaccount: { color: '#22d3ee', label: 'ServiceAccount', icon: <Shield size={14} /> },
+  iam_role:       { color: '#f59e0b', label: 'IAM Role',       icon: <KeyRound size={14} /> },
+  aws_service:    { color: '#10b981', label: 'AWS Resource',   icon: <HardDrive size={14} /> },
+}
+
+function nodeIcon(type: string, label: string) {
+  const l = label.toLowerCase()
+  if (type === 'aws_service') {
+    if (l.includes('s3'))          return <HardDrive size={14} />
+    if (l.includes('rds') || l.includes('dynamodb')) return <Database size={14} />
+    if (l.includes('sqs') || l.includes('sns'))      return <MessageSquare size={14} />
+    if (l.includes('secret') || l.includes('kms'))   return <Lock size={14} />
+    if (l.includes('cloudwatch'))  return <BarChart2 size={14} />
+    return <Box size={14} />
+  }
+  return STEP_CFG[type]?.icon ?? <Box size={14} />
+}
+
+const ACCESS_BADGE: Record<string, { bg: string; color: string; label: string }> = {
+  full:  { bg: 'rgba(239,68,68,0.15)',   color: '#ef4444', label: 'FULL ACCESS'  },
+  write: { bg: 'rgba(249,115,22,0.15)',  color: '#f97316', label: 'WRITE ACCESS' },
+  read:  { bg: 'rgba(16,185,129,0.12)',  color: '#10b981', label: 'READ ACCESS'  },
+}
+
+// ── Path builder ──────────────────────────────────────────────────────────────
+
+const WORKLOAD_TYPES = new Set(['deployment', 'statefulset', 'daemonset', 'job', 'cronjob'])
+
+function buildAttackPath(finding: Finding, data: GraphData): PathStep[] {
+  const { nodes, edges } = data
+
+  const outEdges = new Map<string, typeof edges[0][]>()
+  const inEdges  = new Map<string, typeof edges[0][]>()
+  edges.forEach(e => {
+    if (!outEdges.has(e.source)) outEdges.set(e.source, [])
+    outEdges.get(e.source)!.push(e)
+    if (!inEdges.has(e.target)) inEdges.set(e.target, [])
+    inEdges.get(e.target)!.push(e)
+  })
+  const nodeMap = new Map(nodes.map(n => [n.id, n]))
+
+  // Find anchor workload or pod node
+  const anchor = nodes.find(n =>
+    (WORKLOAD_TYPES.has(n.type) || n.type === 'pod') &&
+    (n.label === finding.nodeLabel || n.id.endsWith(`/${finding.nodeLabel}`)) &&
+    (!finding.namespace || n.namespace === finding.namespace)
+  )
+  if (!anchor) return []
+
+  // ── Forward: workload → pod → SA → IAM Role → AWS Resources ────────────────
+  const forward: PathStep[] = [{ node: anchor }]
+
+  let cur: GraphNode | undefined = anchor
+
+  // If anchor is workload, step into one representative pod
+  if (WORKLOAD_TYPES.has(cur.type)) {
+    const podEdge = outEdges.get(cur.id)?.find(e => e.label === 'manages')
+    if (podEdge) {
+      const pod = nodeMap.get(podEdge.target)
+      if (pod) { forward.push({ node: pod, edgeLabel: 'manages' }); cur = pod }
+    }
+  }
+
+  // pod → SA
+  if (cur?.type === 'pod') {
+    const saEdge = outEdges.get(cur.id)?.find(e => e.label === 'uses')
+    if (saEdge) {
+      const sa = nodeMap.get(saEdge.target)
+      if (sa) { forward.push({ node: sa, edgeLabel: 'uses' }); cur = sa }
+    }
+  }
+
+  // SA → IAM Role
+  if (cur?.type === 'serviceaccount') {
+    const roleEdge = outEdges.get(cur.id)?.find(e => e.label === 'IRSA →')
+    if (roleEdge) {
+      const role = nodeMap.get(roleEdge.target)
+      if (role) { forward.push({ node: role, edgeLabel: 'IRSA →' }); cur = role }
+    }
+  }
+
+  // IAM Role → AWS Resources (take worst first)
+  if (cur?.type === 'iam_role') {
+    const awsEdges = (outEdges.get(cur.id) ?? [])
+      .filter(e => e.target.startsWith('svc:'))
+      .sort((a, b) => {
+        const order = { full: 0, write: 1, read: 2 }
+        return (order[a.accessLevel as keyof typeof order] ?? 3) - (order[b.accessLevel as keyof typeof order] ?? 3)
+      })
+    awsEdges.slice(0, 3).forEach(e => {
+      const aws = nodeMap.get(e.target)
+      if (aws) forward.push({ node: aws, edgeLabel: e.label, accessLevel: e.accessLevel })
+    })
+  }
+
+  // ── Backward: Ingress → Service → Workload ──────────────────────────────────
+  const backward: PathStep[] = []
+
+  // Find service(s) that select the workload anchor
+  const workloadNode = WORKLOAD_TYPES.has(anchor.type) ? anchor : nodes.find(n =>
+    WORKLOAD_TYPES.has(n.type) && (inEdges.get(anchor.id) ?? []).some(e => e.source === n.id && e.label === 'manages')
+  )
+
+  if (workloadNode) {
+    const svcEdges = (inEdges.get(workloadNode.id) ?? []).filter(e => e.label === 'selects')
+    if (svcEdges.length > 0) {
+      const svc = nodeMap.get(svcEdges[0].source)
+      if (svc) {
+        backward.unshift({ node: svc, edgeLabel: 'selects' })
+
+        const ingressEdges = (inEdges.get(svc.id) ?? []).filter(e => e.label === 'routes →')
+        if (ingressEdges.length > 0) {
+          const ing = nodeMap.get(ingressEdges[0].source)
+          if (ing) {
+            backward.unshift({ node: ing, edgeLabel: 'routes →' })
+            const virtual: VirtualNode = { id: '__internet__', type: 'internet', label: 'Internet' }
+            backward.unshift({ node: virtual as unknown as GraphNode })
+          }
+        }
+      }
+    }
+  }
+
+  // Merge: backward path connects to anchor (already first in forward)
+  // Remove duplicate anchor from forward if backward ends there
+  const merged = backward.length > 0
+    ? [...backward, ...forward]
+    : forward
+
+  return merged
+}
+
+// ── Step Card ─────────────────────────────────────────────────────────────────
+
+function StepCard({ step, isLast }: { step: PathStep; isLast: boolean }) {
+  const n = step.node
+  const cfg = STEP_CFG[n.type] ?? { color: '#94a3b8', label: n.type, icon: <Box size={14} /> }
+  const accessBadge = step.accessLevel ? ACCESS_BADGE[step.accessLevel] : null
+
+  const shortLabel = n.label.length > 28 ? n.label.slice(0, 25) + '…' : n.label
+
+  return (
+    <div className="flex items-center gap-2 shrink-0">
+      {/* Arrow + edge label */}
+      {step.edgeLabel !== undefined && (
+        <div className="flex flex-col items-center gap-0.5 shrink-0 mx-1">
+          <div className="flex items-center gap-1">
+            <div className="w-8 h-px" style={{ background: `${cfg.color}40` }} />
+            <ChevronRight size={10} style={{ color: cfg.color }} />
+          </div>
+          <span className="text-[9px] font-mono text-slate-600 whitespace-nowrap">{step.edgeLabel}</span>
+        </div>
+      )}
+
+      {/* Node card */}
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex flex-col gap-1.5 p-3 rounded-xl shrink-0"
+        style={{
+          background: n.type === 'internet' ? 'rgba(239,68,68,0.08)' : 'rgba(255,255,255,0.04)',
+          border: `1px solid ${cfg.color}25`,
+          minWidth: 120,
+          maxWidth: 180,
+          boxShadow: `0 0 20px ${cfg.color}12`,
+        }}
+      >
+        {/* Type badge */}
+        <div className="flex items-center gap-1.5">
+          <span style={{ color: cfg.color }}>{nodeIcon(n.type, n.label)}</span>
+          <span className="text-[9px] font-mono font-bold uppercase tracking-widest" style={{ color: cfg.color }}>
+            {cfg.label}
+          </span>
+        </div>
+
+        {/* Name */}
+        <div className="text-[12px] font-mono font-semibold text-slate-200 leading-tight break-all">
+          {shortLabel}
+        </div>
+
+        {/* Namespace */}
+        {n.namespace && (
+          <div className="text-[10px] font-mono text-slate-600">{n.namespace}</div>
+        )}
+
+        {/* Access level badge on AWS resource */}
+        {accessBadge && (
+          <div className="flex items-center gap-1 mt-0.5">
+            <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded-md"
+              style={{ background: accessBadge.bg, color: accessBadge.color }}>
+              {accessBadge.label}
+            </span>
+          </div>
+        )}
+      </motion.div>
+    </div>
+  )
+}
+
+// ── Modal ─────────────────────────────────────────────────────────────────────
+
+interface AttackPathModalProps {
+  finding: Finding
+  data: GraphData
+  onClose: () => void
+}
+
+export function AttackPathModal({ finding, data, onClose }: AttackPathModalProps) {
+  const path = useMemo(() => buildAttackPath(finding, data), [finding, data])
+  const sev = {
+    critical: { color: '#ef4444', label: 'Critical' },
+    high:     { color: '#f97316', label: 'High'     },
+    medium:   { color: '#eab308', label: 'Medium'   },
+    low:      { color: '#64748b', label: 'Low'      },
+  }[finding.severity]
+
+  const hasIAM = path.some(s => s.node.type === 'iam_role' || s.node.type === 'aws_service')
+  const hasIngress = path.some(s => s.node.type === 'internet' || s.node.type === 'ingress')
+
+  return (
+    <AnimatePresence>
+      {/* Backdrop */}
+      <motion.div
+        key="backdrop"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 z-50"
+        style={{ background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(6px)' }}
+        onClick={onClose}
+      />
+
+      {/* Modal */}
+      <motion.div
+        key="modal"
+        initial={{ opacity: 0, scale: 0.97, y: 16 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.97, y: 16 }}
+        transition={{ type: 'spring', damping: 28, stiffness: 320 }}
+        className="fixed inset-x-4 top-16 bottom-16 z-50 rounded-2xl flex flex-col overflow-hidden max-w-5xl mx-auto"
+        style={{
+          background: 'rgba(8,12,20,0.97)',
+          backdropFilter: 'blur(32px)',
+          WebkitBackdropFilter: 'blur(32px)',
+          border: `1px solid ${sev.color}25`,
+          boxShadow: `0 24px 80px rgba(0,0,0,0.7), 0 0 60px ${sev.color}12`,
+        }}
+        onClick={e => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-start gap-4 px-6 py-4 shrink-0"
+          style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2.5 mb-1">
+              <AlertTriangle size={13} style={{ color: sev.color }} />
+              <span className="text-[11px] font-mono font-bold uppercase tracking-widest" style={{ color: sev.color }}>
+                {sev.label} · Attack Path
+              </span>
+            </div>
+            <div className="text-[17px] font-sans font-bold text-slate-100">{finding.title}</div>
+            <div className="text-sm font-sans text-slate-400 mt-1 leading-relaxed line-clamp-2">{finding.description}</div>
+          </div>
+          <button
+            onClick={onClose}
+            className="w-8 h-8 rounded-xl flex items-center justify-center text-slate-500 hover:text-slate-200 transition-colors shrink-0"
+            style={{ background: 'rgba(255,255,255,0.05)' }}
+          >
+            <X size={15} />
+          </button>
+        </div>
+
+        {/* Context badges */}
+        <div className="flex items-center gap-2 px-6 py-3 shrink-0"
+          style={{ borderBottom: '1px solid rgba(255,255,255,0.04)', background: 'rgba(255,255,255,0.015)' }}>
+          {hasIngress && (
+            <span className="flex items-center gap-1.5 text-[11px] font-sans px-2.5 py-1 rounded-lg"
+              style={{ background: 'rgba(239,68,68,0.1)', color: '#fca5a5', border: '1px solid rgba(239,68,68,0.2)' }}>
+              <Globe size={10} /> Externally reachable
+            </span>
+          )}
+          {hasIAM && (
+            <span className="flex items-center gap-1.5 text-[11px] font-sans px-2.5 py-1 rounded-lg"
+              style={{ background: 'rgba(245,158,11,0.1)', color: '#fcd34d', border: '1px solid rgba(245,158,11,0.2)' }}>
+              <KeyRound size={10} /> IAM access exposed
+            </span>
+          )}
+          <span className="text-[11px] font-mono text-slate-600 ml-auto">
+            {path.length} steps in attack chain
+          </span>
+        </div>
+
+        {/* Path visualization */}
+        <div className="flex-1 overflow-auto flex items-center px-6 py-8">
+          {path.length === 0 ? (
+            <div className="flex flex-col items-center justify-center w-full gap-3 text-slate-600">
+              <AlertTriangle size={28} />
+              <p className="text-sm font-sans">Could not resolve attack path — workload not found in graph data</p>
+            </div>
+          ) : (
+            <div className="flex items-start gap-0 min-w-max">
+              {path.map((step, i) => (
+                <StepCard key={step.node.id + i} step={step} isLast={i === path.length - 1} />
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="flex items-center justify-between px-6 py-3 shrink-0"
+          style={{ borderTop: '1px solid rgba(255,255,255,0.05)', background: 'rgba(255,255,255,0.015)' }}>
+          <p className="text-[11px] font-mono text-slate-600">
+            Path reconstructed from live graph data · Scroll horizontally to see full chain
+          </p>
+          <button
+            onClick={onClose}
+            className="text-xs font-sans text-slate-500 hover:text-slate-300 transition-colors px-3 py-1.5 rounded-lg"
+            style={{ background: 'rgba(255,255,255,0.04)' }}
+          >
+            Close
+          </button>
+        </div>
+      </motion.div>
+    </AnimatePresence>
+  )
+}
