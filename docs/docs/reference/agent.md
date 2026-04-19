@@ -23,6 +23,7 @@ Public image on Docker Hub. Built from `gcr.io/distroless/static-debian12:nonroo
 | `SUPABASE_ANON_KEY` | ✓ | GuardMap Supabase anon key |
 | `CLUSTER_NAME` | ✓ | Must match the cluster name in the dashboard exactly |
 | `KUBECONFIG` | | Path to kubeconfig. Leave empty for in-cluster config (recommended) |
+| `GUARDMAP_URL` | | Dashboard URL (e.g. `https://app.guardmap.io`). When set, Slack notifications include a **View in GuardMap** button linking to the Findings page. |
 
 ## Required RBAC permissions
 
@@ -31,7 +32,7 @@ The agent needs read-only access to:
 ```yaml
 rules:
 - apiGroups: [""]
-  resources: [pods, serviceaccounts, services, endpoints, nodes, namespaces, secrets, configmaps]
+  resources: [pods, serviceaccounts, services, nodes, namespaces, secrets, configmaps]
   verbs: [get, list, watch]
 - apiGroups: ["apps"]
   resources: [deployments, statefulsets, daemonsets, replicasets]

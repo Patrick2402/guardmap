@@ -408,6 +408,47 @@ export type Database = {
           },
         ]
       }
+      notification_channels: {
+        Row: {
+          id: string
+          organization_id: string
+          type: string
+          webhook_url: string
+          channel_name: string | null
+          enabled: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          type?: string
+          webhook_url: string
+          channel_name?: string | null
+          enabled?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          organization_id?: string
+          type?: string
+          webhook_url?: string
+          channel_name?: string | null
+          enabled?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_channels_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_profiles: {
         Row: {
           avatar_url: string | null
@@ -494,10 +535,18 @@ export type Database = {
       }
       has_org_role: {
         Args: {
-          p_min_role: Database["public"]["Enums"]["org_role"]
           p_org_id: string
+          p_min_role: Database["public"]["Enums"]["org_role"]
         }
         Returns: boolean
+      }
+      get_notification_config: {
+        Args: { p_api_key: string; p_cluster_name: string }
+        Returns: { webhook_url: string | null; last_findings: Json; last_score: number }
+      }
+      test_slack_notification: {
+        Args: { p_org_id: string; p_webhook_url: string }
+        Returns: { ok: boolean; error?: string }
       }
       submit_scan:
         | {
@@ -707,4 +756,5 @@ export type ApiKey           = Tables<"api_keys">
 export type AuditLog         = Tables<"audit_logs">
 export type Invitation       = Tables<"invitations">
 export type UserProfile      = Tables<"user_profiles">
-export type OrgPermissions   = Database["public"]["Views"]["my_org_permissions"]["Row"]
+export type OrgPermissions          = Database["public"]["Views"]["my_org_permissions"]["Row"]
+export type NotificationChannel     = Tables<"notification_channels">

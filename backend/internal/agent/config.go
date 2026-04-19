@@ -7,5 +7,6 @@ type Config struct {
 	SupabaseURL string
 	AnonKey     string
 	ClusterName string
-	Kubeconfig  string // empty → in-cluster
+	Kubeconfig   string // empty → in-cluster
+	DashboardURL string // optional — shown as button in Slack alerts
 }

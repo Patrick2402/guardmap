@@ -3,7 +3,8 @@ import { motion } from 'framer-motion'
 import {
   ShieldAlert, ShieldCheck, Network, Lock, Server,
   Layers, ArrowRight, Globe, Container, GitGraph,
-  AlertTriangle, CheckCircle, XCircle, Boxes,
+  AlertTriangle, CheckCircle, XCircle, Boxes, BookMarked,
+  KeyRound, FileText,
 } from 'lucide-react'
 import { GraphData } from '../../types'
 import { TabId } from '../Nav'
@@ -13,24 +14,23 @@ import type { ScanMeta } from '../../hooks/useGraphData'
 const SKIP_NS    = new Set(['kube-system', 'kube-public', 'kube-node-lease', 'ingress-nginx', 'cert-manager'])
 const WORKLOAD_T = new Set(['deployment', 'statefulset', 'daemonset'])
 
+function scoreToGrade(score: number) {
+  if (score >= 90) return { score, color: '#1d8348', trackColor: 'rgba(29,131,72,0.18)',  glow: 'rgba(29,131,72,0.2)',   label: 'Passed',      sub: 'No significant issues — cluster is well hardened' }
+  if (score >= 70) return { score, color: '#f5d40f', trackColor: 'rgba(245,212,15,0.15)', glow: 'rgba(245,212,15,0.18)', label: 'Low Risk',    sub: 'Minor issues found, no immediate action required' }
+  if (score >= 50) return { score, color: '#ff9900', trackColor: 'rgba(255,153,0,0.15)',  glow: 'rgba(255,153,0,0.18)',  label: 'Medium Risk', sub: 'Several issues detected — review recommended soon' }
+  if (score >= 30) return { score, color: '#ff7043', trackColor: 'rgba(255,112,67,0.15)', glow: 'rgba(255,112,67,0.18)', label: 'High Risk',   sub: 'Significant vulnerabilities found — action required' }
+  return             { score, color: '#d13212', trackColor: 'rgba(209,50,18,0.18)',  glow: 'rgba(209,50,18,0.22)',  label: 'Critical',    sub: 'Cluster has critical security issues — act immediately' }
+}
+
 function securityGrade(critical: number, high: number, medium = 0, low = 0) {
   const deduct = (count: number, perIssue: number, cap: number) =>
     count === 0 ? 0 : Math.min(cap, perIssue * (1 - Math.pow(0.75, count)) / (1 - 0.75))
-
   const penalty =
     deduct(critical, 18, 42) +
     deduct(high,     10, 28) +
     deduct(medium,    4, 14) +
     deduct(low,       1,  6)
-
-  const score = Math.max(0, Math.round(100 - penalty))
-
-  // AWS Security Hub color palette
-  if (score >= 90) return { score, color: '#1d8348', trackColor: 'rgba(29,131,72,0.18)',  glow: 'rgba(29,131,72,0.2)',   label: 'Passed',       sub: 'No significant issues — cluster is well hardened' }
-  if (score >= 70) return { score, color: '#f5d40f', trackColor: 'rgba(245,212,15,0.15)', glow: 'rgba(245,212,15,0.18)', label: 'Low Risk',     sub: 'Minor issues found, no immediate action required' }
-  if (score >= 50) return { score, color: '#ff9900', trackColor: 'rgba(255,153,0,0.15)',  glow: 'rgba(255,153,0,0.18)',  label: 'Medium Risk',  sub: 'Several issues detected — review recommended soon' }
-  if (score >= 30) return { score, color: '#ff7043', trackColor: 'rgba(255,112,67,0.15)', glow: 'rgba(255,112,67,0.18)', label: 'High Risk',    sub: 'Significant vulnerabilities found — action required' }
-  return             { score, color: '#d13212', trackColor: 'rgba(209,50,18,0.18)',  glow: 'rgba(209,50,18,0.22)',  label: 'Critical',     sub: 'Cluster has critical security issues — act immediately' }
+  return scoreToGrade(Math.max(0, Math.round(100 - penalty)))
 }
 
 // Circular progress ring (SVG-based, like Security Hub)
@@ -82,11 +82,13 @@ function useClusterStats(data: GraphData) {
       nodes.filter(n => n.namespace && !SKIP_NS.has(n.namespace)).map(n => n.namespace!)
     )]
 
-    const workloads = nodes.filter(n => WORKLOAD_T.has(n.type) && !SKIP_NS.has(n.namespace ?? '')).length
-    const pods      = nodes.filter(n => n.type === 'pod'        && !SKIP_NS.has(n.namespace ?? '')).length
-    const services  = nodes.filter(n => n.type === 'k8s_service').length
-    const ingresses = nodes.filter(n => n.type === 'ingress').length
-    const rbacRoles = nodes.filter(n => (n.type === 'k8s_role' || n.type === 'k8s_clusterrole') && !SKIP_NS.has(n.namespace ?? '')).length
+    const workloads  = nodes.filter(n => WORKLOAD_T.has(n.type) && !SKIP_NS.has(n.namespace ?? '')).length
+    const pods       = nodes.filter(n => n.type === 'pod'        && !SKIP_NS.has(n.namespace ?? '')).length
+    const services   = nodes.filter(n => n.type === 'k8s_service').length
+    const ingresses  = nodes.filter(n => n.type === 'ingress').length
+    const rbacRoles  = nodes.filter(n => (n.type === 'k8s_role' || n.type === 'k8s_clusterrole') && !SKIP_NS.has(n.namespace ?? '')).length
+    const secrets    = nodes.filter(n => n.type === 'secret'    && !SKIP_NS.has(n.namespace ?? '')).length
+    const configmaps = nodes.filter(n => n.type === 'configmap' && !SKIP_NS.has(n.namespace ?? '')).length
 
     let critical = 0, high = 0, medium = 0, low = 0
     nodes.forEach(n => {
@@ -134,7 +136,7 @@ function useClusterStats(data: GraphData) {
         return (o[a.danger] ?? 4) - (o[b.danger] ?? 4)
       })
 
-    return { namespaces: userNs.length, workloads, pods, services, ingresses, rbacRoles, nsHealth, sev: { critical, high, medium, low } }
+    return { namespaces: userNs.length, workloads, pods, services, ingresses, rbacRoles, secrets, configmaps, nsHealth, sev: { critical, high, medium, low } }
   }, [data])
 }
 
@@ -290,14 +292,7 @@ export function OverviewView({ data, onNavigate, scanMeta }: OverviewViewProps) 
     : graphSev
 
   const grade = scanMeta
-    ? (() => {
-        const s = scanMeta.securityScore
-        if (s >= 90) return { score: s, color: '#1d8348', trackColor: 'rgba(29,131,72,0.18)',  glow: 'rgba(29,131,72,0.2)',   label: 'Passed',       sub: 'No significant issues — cluster is well hardened' }
-        if (s >= 70) return { score: s, color: '#f5d40f', trackColor: 'rgba(245,212,15,0.15)', glow: 'rgba(245,212,15,0.18)', label: 'Low Risk',     sub: 'Minor issues found, no immediate action required' }
-        if (s >= 50) return { score: s, color: '#ff9900', trackColor: 'rgba(255,153,0,0.15)',  glow: 'rgba(255,153,0,0.18)',  label: 'Medium Risk',  sub: 'Several issues detected — review recommended soon' }
-        if (s >= 30) return { score: s, color: '#ff7043', trackColor: 'rgba(255,112,67,0.15)', glow: 'rgba(255,112,67,0.18)', label: 'High Risk',    sub: 'Significant vulnerabilities found — action required' }
-        return          { score: s, color: '#d13212', trackColor: 'rgba(209,50,18,0.18)',  glow: 'rgba(209,50,18,0.22)',  label: 'Critical',     sub: 'Cluster has critical security issues — act immediately' }
-      })()
+    ? scoreToGrade(scanMeta.securityScore)
     : securityGrade(graphSev.critical, graphSev.high, graphSev.medium, graphSev.low)
 
   const totalFindings = scanMeta
@@ -372,14 +367,16 @@ export function OverviewView({ data, onNavigate, scanMeta }: OverviewViewProps) 
         </motion.div>
 
         {/* ── Cluster Stats ── */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
           {[
-            { icon: <Server size={15} />,    value: stats.namespaces, label: 'Namespaces', color: '#a78bfa' },
-            { icon: <Layers size={15} />,    value: stats.workloads,  label: 'Workloads',  color: '#3b82f6' },
-            { icon: <Container size={15} />, value: stats.pods,       label: 'Pods',       color: '#06b6d4' },
-            { icon: <Network size={15} />,   value: stats.services,   label: 'Services',   color: '#14b8a6' },
-            { icon: <Globe size={15} />,     value: stats.ingresses,  label: 'Ingresses',  color: '#22c55e' },
-            { icon: <Lock size={15} />,      value: stats.rbacRoles,  label: 'RBAC Roles', color: '#8b5cf6' },
+            { icon: <Server    size={15} />, value: stats.namespaces,  label: 'Namespaces',  color: '#a78bfa' },
+            { icon: <Layers    size={15} />, value: stats.workloads,   label: 'Workloads',   color: '#3b82f6' },
+            { icon: <Container size={15} />, value: stats.pods,        label: 'Pods',        color: '#06b6d4' },
+            { icon: <Network   size={15} />, value: stats.services,    label: 'Services',    color: '#14b8a6' },
+            { icon: <Globe     size={15} />, value: stats.ingresses,   label: 'Ingresses',   color: '#22c55e' },
+            { icon: <Lock      size={15} />, value: stats.rbacRoles,   label: 'RBAC Roles',  color: '#8b5cf6' },
+            { icon: <KeyRound  size={15} />, value: stats.secrets,     label: 'Secrets',     color: '#f59e0b' },
+            { icon: <FileText  size={15} />, value: stats.configmaps,  label: 'ConfigMaps',  color: '#6366f1' },
           ].map(({ icon, value, label, color }, i) => (
             <motion.div
               key={label}
@@ -462,12 +459,13 @@ export function OverviewView({ data, onNavigate, scanMeta }: OverviewViewProps) 
         </div>
 
         {/* ── Quick Navigation ── */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pb-2">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 pb-2">
           {[
-            { tab: 'topology' as TabId, icon: <Network size={18} />,     label: 'Topology',         desc: 'Workloads, pods, services and how they connect', color: '#3b82f6' },
-            { tab: 'rbac'     as TabId, icon: <Lock size={18} />,        label: 'RBAC / Permissions',desc: 'Visualize who can do what across the cluster',    color: '#8b5cf6' },
-            { tab: 'findings' as TabId, icon: <ShieldAlert size={18} />, label: 'Security Findings', desc: `${sev.critical + sev.high} active risks to review`, color: sev.critical > 0 ? '#ef4444' : sev.high > 0 ? '#f97316' : '#10b981' },
-            { tab: 'graph'    as TabId, icon: <GitGraph size={18} />,    label: 'IRSA / IAM Graph',  desc: 'AWS permission chains from pods to S3, RDS etc.',  color: '#f59e0b' },
+            { tab: 'topology'   as TabId, icon: <Network     size={18} />, label: 'Topology',          desc: 'Workloads, pods, services and how they connect',      color: '#3b82f6' },
+            { tab: 'rbac'       as TabId, icon: <Lock        size={18} />, label: 'RBAC / Permissions', desc: 'Visualize who can do what across the cluster',         color: '#8b5cf6' },
+            { tab: 'findings'   as TabId, icon: <ShieldAlert size={18} />, label: 'Security Findings',  desc: `${sev.critical + sev.high} active risks to review`,   color: sev.critical > 0 ? '#ef4444' : sev.high > 0 ? '#f97316' : '#10b981' },
+            { tab: 'graph'      as TabId, icon: <GitGraph    size={18} />, label: 'IRSA / IAM Graph',   desc: 'AWS permission chains from pods to S3, RDS etc.',      color: '#f59e0b' },
+            { tab: 'benchmarks' as TabId, icon: <BookMarked  size={18} />, label: 'Benchmarks',         desc: 'CIS, MITRE, NSA/CISA, OWASP K10 compliance coverage', color: '#22d3ee' },
           ].map(({ tab, icon, label, desc, color }) => (
             <motion.button
               key={tab}

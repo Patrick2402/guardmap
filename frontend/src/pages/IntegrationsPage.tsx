@@ -6,11 +6,12 @@ import {
   RefreshCw, Trash2, Key, AlertCircle, CheckCircle2,
   Clock, ShieldCheck, Activity, Cloud, Loader2,
   ExternalLink, Eye, EyeOff, Shield, ArrowLeft,
+  Bell, Send, Slack,
 } from 'lucide-react'
 import { supabase, db } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import { OrgSwitcher } from '../components/OrgSwitcher'
-import type { Cluster, ApiKey } from '../lib/database.types'
+import type { Cluster, ApiKey, NotificationChannel } from '../lib/database.types'
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
@@ -470,8 +471,148 @@ const AGENT_STATUS_STYLE: Record<AgentStatus, { bg: string; color: string; dot: 
   pending: { bg: 'rgba(100,116,139,0.1)', color: '#94a3b8', dot: 'bg-slate-500',                label: 'Pending' },
 }
 
+// ── New API Key Modal ─────────────────────────────────────────────────────────
+function NewKeyModal({ cluster, orgId, onClose }: {
+  cluster: Cluster
+  orgId: string
+  onClose: () => void
+}) {
+  const { user } = useAuth()
+  const [step, setStep]       = useState<'generating' | 'done'>('generating')
+  const [plainKey, setPlainKey] = useState('')
+  const [manifest, setManifest] = useState('')
+  const [error, setError]     = useState<string | null>(null)
+
+  useEffect(() => {
+    async function generate() {
+      try {
+        const key    = generateApiKey()
+        const hash   = await sha256hex(key)
+        const prefix = key.slice(0, 16) + '...'
+        const { error: err } = await db.apiKeys().insert({
+          organization_id: orgId,
+          name: `${cluster.name} agent`,
+          key_hash: hash,
+          key_prefix: prefix,
+          created_by: user?.id,
+        })
+        if (err) throw err
+        setPlainKey(key)
+        setManifest(buildManifest(cluster.name, key, orgId))
+        setStep('done')
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : 'Failed to generate key')
+      }
+    }
+    generate()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <motion.div
+        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+        className="absolute inset-0"
+        style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)' }}
+        onClick={onClose}
+      />
+      <motion.div
+        initial={{ opacity: 0, scale: 0.96, y: 12 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.96, y: 12 }}
+        transition={{ type: 'spring', damping: 28, stiffness: 320 }}
+        className="relative w-full max-w-2xl rounded-2xl flex flex-col"
+        style={{
+          background: 'rgba(10,15,26,0.98)',
+          backdropFilter: 'blur(32px)',
+          border: '1px solid rgba(255,255,255,0.07)',
+          boxShadow: '0 24px 64px rgba(0,0,0,0.6)',
+          maxHeight: '90vh',
+        }}
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between px-6 py-4"
+          style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+          <div className="flex items-center gap-2">
+            <Key size={14} className="text-cyan-400" />
+            <span className="text-sm font-sans font-semibold text-slate-100">New API Key — {cluster.name}</span>
+          </div>
+          <button onClick={onClose}
+            className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-600 hover:text-slate-300 transition-colors"
+            style={{ background: 'rgba(255,255,255,0.04)' }}>
+            <X size={14} />
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
+          {step === 'generating' && !error && (
+            <div className="flex items-center justify-center py-10 gap-3 text-slate-500">
+              <Loader2 size={16} className="animate-spin" />
+              <span className="text-sm font-sans">Generating key…</span>
+            </div>
+          )}
+          {error && (
+            <div className="flex items-start gap-2 p-3 rounded-xl text-sm"
+              style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', color: '#fca5a5' }}>
+              <AlertCircle size={14} className="shrink-0 mt-0.5" />{error}
+            </div>
+          )}
+          {step === 'done' && (
+            <>
+              <div className="flex items-start gap-3 p-4 rounded-xl"
+                style={{ background: 'rgba(245,212,15,0.07)', border: '1px solid rgba(245,212,15,0.2)' }}>
+                <AlertCircle size={15} className="text-yellow-400 shrink-0 mt-0.5" />
+                <div>
+                  <div className="text-sm font-sans font-semibold text-yellow-300">Save this key now</div>
+                  <div className="text-xs font-sans text-yellow-600 mt-0.5">Shown only once. Already embedded in the manifest below.</div>
+                </div>
+              </div>
+              <div>
+                <div className="text-xs font-sans text-slate-400 mb-1.5">API Key</div>
+                <div className="flex items-center gap-2 p-3 rounded-xl font-mono text-sm text-cyan-300 break-all"
+                  style={{ background: 'rgba(0,212,255,0.05)', border: '1px solid rgba(0,212,255,0.15)' }}>
+                  <span className="flex-1">{plainKey}</span>
+                  <CopyButton text={plainKey} className="text-slate-500 hover:text-cyan-400 shrink-0" />
+                </div>
+              </div>
+              <div>
+                <div className="text-xs font-sans text-slate-400 mb-1.5">Install manifest</div>
+                <div className="rounded-xl overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.07)' }}>
+                  <div className="flex items-center justify-between px-4 py-2.5"
+                    style={{ background: 'rgba(255,255,255,0.04)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                    <span className="text-xs font-mono text-slate-500">kubectl apply</span>
+                    <CopyButton
+                      text={`kubectl apply -f - <<'EOF'\n${manifest}\nEOF`}
+                      className="text-slate-500 hover:text-slate-200"
+                    />
+                  </div>
+                  <pre className="px-4 py-3 text-xs font-mono text-slate-300 overflow-x-auto leading-relaxed max-h-64 overflow-y-auto"
+                    style={{ background: 'rgba(0,0,0,0.3)' }}>
+                    {`kubectl apply -f - <<'EOF'\n${manifest}\nEOF`}
+                  </pre>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+
+        {step === 'done' && (
+          <div className="px-6 pb-5 pt-3" style={{ borderTop: '1px solid rgba(255,255,255,0.04)' }}>
+            <button onClick={onClose}
+              className="w-full py-2.5 rounded-xl text-sm font-sans font-semibold flex items-center justify-center gap-2"
+              style={{ background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.25)', color: '#34d399' }}>
+              <CheckCircle2 size={14} />
+              Done
+            </button>
+          </div>
+        )}
+      </motion.div>
+    </div>
+  )
+}
+
 // ── Cluster Card ──────────────────────────────────────────────────────────────
-function ClusterCard({ cluster, onDelete }: { cluster: Cluster; onDelete: () => void }) {
+function ClusterCard({ cluster, orgId, onDelete, onNewKey }: { cluster: Cluster; orgId: string; onDelete: () => void; onNewKey: () => void }) {
   const status  = agentStatus(cluster)
   const style   = AGENT_STATUS_STYLE[status]
   const score   = cluster.last_scan_score
@@ -519,6 +660,12 @@ function ClusterCard({ cluster, onDelete }: { cluster: Cluster; onDelete: () => 
             <div className={`w-1.5 h-1.5 rounded-full ${style.dot}`} />
             {style.label}
           </div>
+          <button onClick={onNewKey}
+            title="Generate new API key"
+            className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-700 hover:text-cyan-400 transition-colors"
+            style={{ background: 'rgba(255,255,255,0.04)' }}>
+            <Key size={12} />
+          </button>
           <button onClick={onDelete}
             className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-700 hover:text-red-400 transition-colors"
             style={{ background: 'rgba(255,255,255,0.04)' }}>
@@ -575,6 +722,7 @@ function ClusterCard({ cluster, onDelete }: { cluster: Cluster; onDelete: () => 
           Agent offline since {timeAgo(cluster.last_seen_at)} — cluster may be down
         </div>
       )}
+
     </motion.div>
   )
 }
@@ -615,26 +763,258 @@ function ApiKeyRow({ apiKey, onRevoke }: { apiKey: ApiKey; onRevoke: () => void 
   )
 }
 
+// ── Slack Config Modal ────────────────────────────────────────────────────────
+function SlackConfigModal({ orgId, existing, onClose, onSaved }: {
+  orgId: string
+  existing: NotificationChannel | null
+  onClose: () => void
+  onSaved: () => void
+}) {
+  const [webhookUrl, setWebhookUrl]   = useState(existing?.webhook_url ?? '')
+  const [channelName, setChannelName] = useState(existing?.channel_name ?? '')
+  const [saving, setSaving]           = useState(false)
+  const [testing, setTesting]         = useState(false)
+  const [error, setError]             = useState<string | null>(null)
+  const [testMsg, setTestMsg]         = useState<{ ok: boolean; text: string } | null>(null)
+
+  const isValid = webhookUrl.trim().startsWith('https://hooks.slack.com/')
+
+  async function handleSave() {
+    if (!isValid) return
+    setError(null); setSaving(true)
+    try {
+      const { error: err } = await db.notificationChannels().upsert({
+        organization_id: orgId,
+        type: 'slack',
+        webhook_url: webhookUrl.trim(),
+        channel_name: channelName.trim() || null,
+        enabled: true,
+        updated_at: new Date().toISOString(),
+      }, { onConflict: 'organization_id,type' })
+      if (err) throw err
+      onSaved()
+      onClose()
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to save')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function handleTest() {
+    if (!isValid) return
+    setTesting(true); setTestMsg(null)
+    try {
+      const { data, error: err } = await supabase.rpc('test_slack_notification', {
+        p_org_id: orgId,
+        p_webhook_url: webhookUrl.trim(),
+      })
+      if (err) throw err
+      if ((data as { ok: boolean })?.ok) {
+        setTestMsg({ ok: true, text: 'Test message sent! Check your Slack channel.' })
+      } else {
+        setTestMsg({ ok: false, text: 'Test failed: ' + ((data as { error?: string })?.error ?? 'Unknown error') })
+      }
+    } catch (err: unknown) {
+      setTestMsg({ ok: false, text: 'Test failed: ' + (err instanceof Error ? err.message : 'Unknown error') })
+    } finally {
+      setTesting(false)
+    }
+  }
+
+  async function handleRemove() {
+    if (!existing || !confirm('Remove Slack integration? You will stop receiving notifications.')) return
+    setSaving(true)
+    await db.notificationChannels().delete().eq('id', existing.id)
+    onSaved(); onClose()
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <motion.div
+        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+        className="absolute inset-0"
+        style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)' }}
+        onClick={onClose}
+      />
+      <motion.div
+        initial={{ opacity: 0, scale: 0.96, y: 12 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.96, y: 12 }}
+        transition={{ type: 'spring', damping: 28, stiffness: 320 }}
+        className="relative w-full max-w-lg rounded-2xl flex flex-col"
+        style={{
+          background: 'rgba(10,15,26,0.98)',
+          backdropFilter: 'blur(32px)',
+          border: '1px solid rgba(255,255,255,0.07)',
+          boxShadow: '0 24px 64px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.05)',
+        }}
+        onClick={e => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4"
+          style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-xl flex items-center justify-center"
+              style={{ background: 'rgba(74,144,226,0.12)', border: '1px solid rgba(74,144,226,0.2)' }}>
+              <Slack size={14} style={{ color: '#4a90e2' }} />
+            </div>
+            <div>
+              <div className="text-sm font-sans font-semibold text-slate-100">
+                {existing ? 'Edit Slack Integration' : 'Connect Slack'}
+              </div>
+              <div className="text-xs font-sans text-slate-500 mt-0.5">
+                Get alerts when new findings are detected
+              </div>
+            </div>
+          </div>
+          <button onClick={onClose}
+            className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-600 hover:text-slate-300 transition-colors"
+            style={{ background: 'rgba(255,255,255,0.04)' }}>
+            <X size={14} />
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="px-6 py-5 space-y-4">
+          {/* Instructions */}
+          <div className="p-3 rounded-xl text-xs font-sans leading-relaxed"
+            style={{ background: 'rgba(74,144,226,0.06)', border: '1px solid rgba(74,144,226,0.12)', color: '#94a3b8' }}>
+            Create an{' '}
+            <span className="text-blue-400 font-medium">Incoming Webhook</span> in your Slack workspace
+            (Slack Apps → Your App → Incoming Webhooks) and paste the URL below.
+          </div>
+
+          {/* Webhook URL */}
+          <div>
+            <label className="text-xs font-sans text-slate-400 mb-1.5 block">Webhook URL *</label>
+            <input
+              type="url"
+              value={webhookUrl}
+              onChange={e => { setWebhookUrl(e.target.value); setTestMsg(null) }}
+              placeholder="https://hooks.slack.com/services/T.../B.../..."
+              className="w-full px-3.5 py-2.5 rounded-xl text-xs font-mono text-slate-200 placeholder-slate-600 outline-none"
+              style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}
+              onFocus={e => e.currentTarget.style.borderColor = 'rgba(74,144,226,0.4)'}
+              onBlur={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'}
+            />
+            {webhookUrl && !isValid && (
+              <div className="text-xs font-sans text-red-400 mt-1">
+                URL must start with https://hooks.slack.com/
+              </div>
+            )}
+          </div>
+
+          {/* Channel name (label only) */}
+          <div>
+            <label className="text-xs font-sans text-slate-400 mb-1.5 block">
+              Channel label <span className="text-slate-600">(optional — for your reference)</span>
+            </label>
+            <input
+              type="text"
+              value={channelName}
+              onChange={e => setChannelName(e.target.value)}
+              placeholder="#security-alerts"
+              className="w-full px-3.5 py-2.5 rounded-xl text-sm font-mono text-slate-200 placeholder-slate-600 outline-none"
+              style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}
+              onFocus={e => e.currentTarget.style.borderColor = 'rgba(74,144,226,0.4)'}
+              onBlur={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'}
+            />
+          </div>
+
+          {/* Feedback */}
+          {error && (
+            <div className="flex items-start gap-2 p-3 rounded-xl text-sm"
+              style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', color: '#fca5a5' }}>
+              <AlertCircle size={14} className="shrink-0 mt-0.5" />
+              {error}
+            </div>
+          )}
+          {testMsg && (
+            <div className="flex items-start gap-2 p-3 rounded-xl text-xs font-sans"
+              style={{
+                background: testMsg.ok ? 'rgba(16,185,129,0.08)' : 'rgba(239,68,68,0.08)',
+                border: `1px solid ${testMsg.ok ? 'rgba(16,185,129,0.2)' : 'rgba(239,68,68,0.2)'}`,
+                color: testMsg.ok ? '#34d399' : '#fca5a5',
+              }}>
+              {testMsg.ok ? <CheckCircle2 size={13} className="shrink-0 mt-0.5" /> : <AlertCircle size={13} className="shrink-0 mt-0.5" />}
+              {testMsg.text}
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="flex items-center gap-2 px-6 pb-5"
+          style={{ borderTop: '1px solid rgba(255,255,255,0.04)', paddingTop: 16 }}>
+          {existing && (
+            <button
+              onClick={handleRemove}
+              disabled={saving}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-sans font-medium transition-colors"
+              style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.15)', color: '#f87171' }}
+            >
+              <Trash2 size={12} />
+              Remove
+            </button>
+          )}
+          <div className="flex-1" />
+          <button
+            onClick={handleTest}
+            disabled={testing || !isValid}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-sans font-medium transition-all"
+            style={{
+              background: !isValid ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.06)',
+              border: '1px solid rgba(255,255,255,0.08)',
+              color: !isValid ? '#334155' : '#94a3b8',
+            }}
+          >
+            {testing ? <Loader2 size={12} className="animate-spin" /> : <Send size={12} />}
+            Send test
+          </button>
+          <button
+            onClick={handleSave}
+            disabled={saving || !isValid}
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-sans font-semibold transition-all"
+            style={{
+              background: !isValid ? 'rgba(255,255,255,0.04)' : 'rgba(74,144,226,0.12)',
+              border: `1px solid ${!isValid ? 'rgba(255,255,255,0.06)' : 'rgba(74,144,226,0.25)'}`,
+              color: !isValid ? '#334155' : '#60a5fa',
+            }}
+          >
+            {saving ? <Loader2 size={12} className="animate-spin" /> : <CheckCircle2 size={12} />}
+            {existing ? 'Save changes' : 'Connect'}
+          </button>
+        </div>
+      </motion.div>
+    </div>
+  )
+}
+
 // ── Main page ─────────────────────────────────────────────────────────────────
 export function IntegrationsPage() {
   const { activeOrg } = useAuth()
   const navigate = useNavigate()
   const orgId = activeOrg?.organization_id ?? null
 
-  const [clusters, setClusters]   = useState<Cluster[]>([])
-  const [apiKeys, setApiKeys]     = useState<ApiKey[]>([])
-  const [loading, setLoading]     = useState(true)
-  const [showAdd, setShowAdd]     = useState(false)
+  const [clusters, setClusters]               = useState<Cluster[]>([])
+  const [apiKeys, setApiKeys]                 = useState<ApiKey[]>([])
+  const [notificationChannel, setNotifChannel] = useState<NotificationChannel | null>(null)
+  const [loading, setLoading]                 = useState(true)
+  const [showAdd, setShowAdd]                 = useState(false)
+  const [showSlackModal, setShowSlackModal]   = useState(false)
+  const [newKeyCluster, setNewKeyCluster]     = useState<Cluster | null>(null)
 
   const load = useCallback(async () => {
     if (!orgId) return
     setLoading(true)
-    const [{ data: c }, { data: k }] = await Promise.all([
+    const [{ data: c }, { data: k }, { data: nc }] = await Promise.all([
       db.clusters().select('*').eq('organization_id', orgId).is('deleted_at', null).order('created_at', { ascending: false }),
       db.apiKeys().select('*').eq('organization_id', orgId).order('created_at', { ascending: false }),
+      db.notificationChannels().select('*').eq('organization_id', orgId).eq('type', 'slack').maybeSingle(),
     ])
     setClusters((c ?? []) as Cluster[])
     setApiKeys((k ?? []) as ApiKey[])
+    setNotifChannel((nc as NotificationChannel | null) ?? null)
     setLoading(false)
   }, [orgId])
 
@@ -784,7 +1164,7 @@ export function IntegrationsPage() {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {clusters.map(c => (
-                <ClusterCard key={c.id} cluster={c} onDelete={() => handleDeleteCluster(c.id)} />
+                <ClusterCard key={c.id} cluster={c} orgId={orgId} onDelete={() => handleDeleteCluster(c.id)} onNewKey={() => setNewKeyCluster(c)} />
               ))}
             </div>
           )}
@@ -821,6 +1201,75 @@ export function IntegrationsPage() {
           </div>
         </section>
 
+        {/* Notifications */}
+        <section>
+          <div className="flex items-center gap-2 mb-4">
+            <Bell size={14} className="text-emerald-400" />
+            <span className="text-sm font-sans font-semibold text-slate-300">Notifications</span>
+          </div>
+
+          {notificationChannel ? (
+            <div className="rounded-2xl p-5"
+              style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.05)' }}>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
+                    style={{ background: 'rgba(74,144,226,0.1)', border: '1px solid rgba(74,144,226,0.18)' }}>
+                    <Slack size={15} style={{ color: '#4a90e2' }} />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-sans font-semibold text-slate-100">Slack</span>
+                      <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-lg text-xs font-sans font-medium"
+                        style={{ background: notificationChannel.enabled ? 'rgba(16,185,129,0.1)' : 'rgba(100,116,139,0.1)', color: notificationChannel.enabled ? '#34d399' : '#64748b' }}>
+                        <div className={`w-1.5 h-1.5 rounded-full ${notificationChannel.enabled ? 'bg-emerald-400 animate-pulse' : 'bg-slate-600'}`} />
+                        {notificationChannel.enabled ? 'Active' : 'Disabled'}
+                      </div>
+                    </div>
+                    <div className="text-xs font-mono text-slate-500 mt-0.5">
+                      {notificationChannel.channel_name || 'hooks.slack.com/…'}
+                    </div>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowSlackModal(true)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-sans font-medium transition-colors"
+                  style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)', color: '#94a3b8' }}
+                >
+                  Edit
+                </button>
+              </div>
+              <div className="mt-3 flex items-center gap-2 p-2.5 rounded-xl text-xs font-sans text-slate-500"
+                style={{ background: 'rgba(16,185,129,0.05)', border: '1px solid rgba(16,185,129,0.1)' }}>
+                <CheckCircle2 size={11} className="text-emerald-400 shrink-0" />
+                New findings detected after each scan will be sent to this channel
+              </div>
+            </div>
+          ) : (
+            <div
+              className="flex flex-col items-center justify-center py-10 rounded-2xl gap-4"
+              style={{ background: 'rgba(255,255,255,0.02)', border: '1px dashed rgba(255,255,255,0.07)' }}
+            >
+              <div className="w-11 h-11 rounded-2xl flex items-center justify-center"
+                style={{ background: 'rgba(74,144,226,0.08)', border: '1px solid rgba(74,144,226,0.15)' }}>
+                <Slack size={18} style={{ color: '#4a90e2' }} />
+              </div>
+              <div className="text-center">
+                <div className="text-sm font-sans font-medium text-slate-400">No notifications configured</div>
+                <div className="text-xs font-sans text-slate-600 mt-1">Connect Slack to get alerted when new findings appear after a scan</div>
+              </div>
+              <button
+                onClick={() => setShowSlackModal(true)}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-sans font-semibold transition-all"
+                style={{ background: 'rgba(74,144,226,0.1)', border: '1px solid rgba(74,144,226,0.2)', color: '#60a5fa' }}
+              >
+                <Slack size={13} />
+                Connect Slack
+              </button>
+            </div>
+          )}
+        </section>
+
         {/* How it works */}
         <section>
           <div className="flex items-center gap-2 mb-4">
@@ -853,6 +1302,25 @@ export function IntegrationsPage() {
             orgId={orgId}
             onClose={() => setShowAdd(false)}
             onCreated={load}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* New API key modal */}
+      <AnimatePresence>
+        {newKeyCluster && (
+          <NewKeyModal cluster={newKeyCluster} orgId={orgId} onClose={() => setNewKeyCluster(null)} />
+        )}
+      </AnimatePresence>
+
+      {/* Slack config modal */}
+      <AnimatePresence>
+        {showSlackModal && (
+          <SlackConfigModal
+            orgId={orgId}
+            existing={notificationChannel}
+            onClose={() => setShowSlackModal(false)}
+            onSaved={load}
           />
         )}
       </AnimatePresence>

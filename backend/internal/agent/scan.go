@@ -64,6 +64,13 @@ func RunScan(ctx context.Context, cfg Config) error {
 		return fmt.Errorf("marshal findings: %w", err)
 	}
 
+	// Fetch notification config before submitting so we capture the PREVIOUS scan's findings.
+	notifCfg, notifErr := getNotificationConfig(ctx, cfg)
+	if notifErr != nil {
+		slog.Warn("failed to fetch notification config, skipping Slack", "err", notifErr)
+		notifCfg = notificationConfig{}
+	}
+
 	scanID, err := submitScan(ctx, cfg, graph, findingsJSON, score,
 		report.Critical, report.High, report.Medium, report.Low, durationMs,
 		clusterInfo.K8sVersion, clusterInfo.NodeCount, clusterInfo.Region)
@@ -72,7 +79,32 @@ func RunScan(ctx context.Context, cfg Config) error {
 	}
 
 	slog.Info("scan submitted", "scan_id", scanID)
+
+	if notifCfg.WebhookURL != "" {
+		newFindings := diffFindings(report.Findings, notifCfg.LastFindings)
+		if len(newFindings) > 0 {
+			if slackErr := sendSlackNotification(ctx, notifCfg.WebhookURL, cfg.ClusterName, newFindings, notifCfg.LastScore, score, cfg.DashboardURL); slackErr != nil {
+				slog.Warn("failed to send Slack notification", "err", slackErr)
+			} else {
+				slog.Info("Slack notification sent", "new_findings", len(newFindings))
+			}
+		}
+	}
+
 	return nil
+}
+
+type notificationConfig struct {
+	WebhookURL   string              `json:"webhook_url"`
+	LastFindings []discovery.Finding `json:"last_findings"`
+	LastScore    int                 `json:"last_score"`
+}
+
+func getNotificationConfig(ctx context.Context, cfg Config) (notificationConfig, error) {
+	return callRPC[notificationConfig](ctx, cfg, "get_notification_config", map[string]any{
+		"p_api_key":      cfg.APIKey,
+		"p_cluster_name": cfg.ClusterName,
+	})
 }
 
 func computeScore(critical, high, medium, low int) int {

@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   ShieldAlert, ShieldCheck, Network, Key, Lock,
   ArrowRight, AlertTriangle, XCircle, Info, X,
-  Wrench, FileText, Target, ChevronRight, Search,
+  Wrench, FileText, Target, ChevronRight, ChevronLeft, Search,
 } from 'lucide-react'
 import { GraphData } from '../../types'
 import { TabId } from '../Nav'
@@ -402,6 +402,17 @@ export function computeFindings(data: GraphData): Finding[] {
 
 // ── Visual config ─────────────────────────────────────────────────────────────
 
+const TAB_LABEL: Record<string, string> = {
+  topology:   'Topology',
+  graph:      'IRSA Graph',
+  rbac:       'RBAC',
+  findings:   'Findings',
+  overview:   'Overview',
+  benchmarks: 'Benchmarks',
+  explorer:   'Explorer',
+  history:    'History',
+}
+
 const SEV_CFG = {
   critical: { color: '#ef4444', glow: 'rgba(239,68,68,0.2)',  badgeBg: 'rgba(239,68,68,0.12)', label: 'Critical', icon: <XCircle size={14} /> },
   high:     { color: '#f97316', glow: 'rgba(249,115,22,0.15)',badgeBg: 'rgba(249,115,22,0.1)', label: 'High',     icon: <AlertTriangle size={14} /> },
@@ -418,6 +429,7 @@ const CAT_CFG: Record<Category, { icon: React.ReactNode; label: string; color: s
 
 const SEV_ORDER: Record<Severity, number> = { critical: 0, high: 1, medium: 2, low: 3 }
 type CatFilter = 'all' | Category
+const PAGE_SIZE = 25
 
 // ── Finding Detail Sheet ──────────────────────────────────────────────────────
 
@@ -500,7 +512,7 @@ function FindingSheet({ finding, onClose, onNavigate }: {
                 className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-sans font-semibold transition-all hover:opacity-80"
                 style={{ background: sev.badgeBg, color: sev.color, border: `1px solid ${sev.color}30` }}
               >
-                View in {finding.navTab}
+                View in {TAB_LABEL[finding.navTab] ?? finding.navTab}
                 <ArrowRight size={14} />
               </button>
             )}
@@ -670,6 +682,7 @@ export function FindingsView({ data, dbFindings, onNavigate }: FindingsViewProps
   const [search, setSearch]         = useState('')
   const [nsFilter, setNsFilter]     = useState('all')
   const [selected, setSelected]     = useState<Finding | null>(null)
+  const [page, setPage]             = useState(1)
 
   const namespaces = useMemo(() =>
     [...new Set(findings.map(f => f.namespace).filter((ns): ns is string => !!ns))].sort()
@@ -706,9 +719,15 @@ export function FindingsView({ data, dbFindings, onNavigate }: FindingsViewProps
       else next.add(s)
       return next
     })
+    setPage(1)
   }
 
   const hasActiveFilters = catFilter !== 'all' || sevFilter.size < 4 || nsFilter !== 'all' || search !== ''
+
+  const totalPages = Math.ceil(visible.length / PAGE_SIZE)
+  const paginated  = visible.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+  const fromIdx    = visible.length === 0 ? 0 : (page - 1) * PAGE_SIZE + 1
+  const toIdx      = Math.min(page * PAGE_SIZE, visible.length)
 
   return (
     <div className="absolute inset-0 overflow-auto">
@@ -755,7 +774,7 @@ export function FindingsView({ data, dbFindings, onNavigate }: FindingsViewProps
             const isActive = catFilter === f
             const cat      = f !== 'all' ? CAT_CFG[f as Category] : null
             return (
-              <button key={f} onClick={() => setCatFilter(f)}
+              <button key={f} onClick={() => { setCatFilter(f); setPage(1) }}
                 className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-sm font-sans font-medium transition-all whitespace-nowrap"
                 style={isActive ? {
                   background: cat ? `${cat.color}18` : 'rgba(255,255,255,0.08)',
@@ -806,7 +825,7 @@ export function FindingsView({ data, dbFindings, onNavigate }: FindingsViewProps
             <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-600 pointer-events-none" />
             <input
               value={search}
-              onChange={e => setSearch(e.target.value)}
+              onChange={e => { setSearch(e.target.value); setPage(1) }}
               placeholder="Search findings..."
               className="w-full pl-7 pr-3 py-1.5 rounded-lg text-xs font-sans text-slate-300 placeholder-slate-600 outline-none transition-all"
               style={{
@@ -819,7 +838,7 @@ export function FindingsView({ data, dbFindings, onNavigate }: FindingsViewProps
           {namespaces.length > 0 && (
             <select
               value={nsFilter}
-              onChange={e => setNsFilter(e.target.value)}
+              onChange={e => { setNsFilter(e.target.value); setPage(1) }}
               className="px-2.5 py-1.5 rounded-lg text-xs font-mono text-slate-400 outline-none transition-all cursor-pointer"
               style={{
                 background: 'rgba(255,255,255,0.04)',
@@ -834,7 +853,7 @@ export function FindingsView({ data, dbFindings, onNavigate }: FindingsViewProps
 
           {hasActiveFilters && (
             <button
-              onClick={() => { setCatFilter('all'); setSevFilter(new Set(['critical', 'high', 'medium', 'low'])); setNsFilter('all'); setSearch('') }}
+              onClick={() => { setCatFilter('all'); setSevFilter(new Set(['critical', 'high', 'medium', 'low'])); setNsFilter('all'); setSearch(''); setPage(1) }}
               className="text-xs font-sans text-slate-600 hover:text-slate-400 transition-colors whitespace-nowrap px-2 py-1 rounded-lg"
               style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)' }}
             >
@@ -855,15 +874,15 @@ export function FindingsView({ data, dbFindings, onNavigate }: FindingsViewProps
           </div>
         )}
 
-        {visible.map((f, i) => {
+        {paginated.map((f) => {
           const sev = SEV_CFG[f.severity]
           const cat = CAT_CFG[f.category]
           return (
             <motion.div
               key={f.id}
-              initial={{ opacity: 0, y: 8 }}
+              initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.02 }}
+              transition={{ duration: 0.15 }}
               onClick={() => setSelected(f)}
               className="rounded-2xl overflow-hidden cursor-pointer transition-all duration-200"
               style={{
@@ -934,6 +953,59 @@ export function FindingsView({ data, dbFindings, onNavigate }: FindingsViewProps
           )
         })}
       </div>
+
+      {/* ── Pagination ── */}
+      {totalPages > 1 && (
+        <div className="sticky bottom-0 flex items-center justify-between px-6 py-3 max-w-5xl mx-auto"
+          style={{ background: 'rgba(8,12,20,0.92)', backdropFilter: 'blur(16px)', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+          <span className="text-xs font-sans text-slate-500">
+            Showing <span className="text-slate-300 font-medium">{fromIdx}–{toIdx}</span> of <span className="text-slate-300 font-medium">{visible.length}</span> findings
+          </span>
+
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={() => { setPage(p => p - 1); window.scrollTo(0, 0) }}
+              disabled={page === 1}
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-sans font-medium transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+              style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', color: '#94a3b8' }}
+            >
+              <ChevronLeft size={13} /> Prev
+            </button>
+
+            <div className="flex items-center gap-1">
+              {Array.from({ length: totalPages }, (_, i) => i + 1)
+                .filter(p => p === 1 || p === totalPages || Math.abs(p - page) <= 1)
+                .reduce<(number | '...')[]>((acc, p, idx, arr) => {
+                  if (idx > 0 && typeof arr[idx - 1] === 'number' && (p as number) - (arr[idx - 1] as number) > 1) acc.push('...')
+                  acc.push(p)
+                  return acc
+                }, [])
+                .map((p, i) => p === '...'
+                  ? <span key={`e${i}`} className="text-xs text-slate-600 px-1">…</span>
+                  : <button
+                      key={p}
+                      onClick={() => { setPage(p as number); window.scrollTo(0, 0) }}
+                      className="w-7 h-7 rounded-lg text-xs font-mono font-bold transition-all"
+                      style={page === p
+                        ? { background: 'rgba(34,211,238,0.15)', border: '1px solid rgba(34,211,238,0.3)', color: '#22d3ee' }
+                        : { background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)', color: '#64748b' }
+                      }
+                    >{p}</button>
+                )
+              }
+            </div>
+
+            <button
+              onClick={() => { setPage(p => p + 1); window.scrollTo(0, 0) }}
+              disabled={page === totalPages}
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-sans font-medium transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+              style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', color: '#94a3b8' }}
+            >
+              Next <ChevronRight size={13} />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* ── Detail sheet ── */}
       <AnimatePresence>

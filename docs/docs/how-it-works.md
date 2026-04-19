@@ -46,7 +46,7 @@ It needs only **read** permissions on cluster resources — it never modifies an
 
 **What it discovers:**
 - Pods, Deployments, StatefulSets, DaemonSets, ReplicaSets
-- Services, Ingresses, Endpoints, NetworkPolicies
+- Services, Ingresses, NetworkPolicies
 - ServiceAccounts, Roles, ClusterRoles, RoleBindings, ClusterRoleBindings
 - Secrets and ConfigMaps (user-managed; auto-generated types filtered out)
 - Nodes (for K8s version and node count)
@@ -74,6 +74,23 @@ The `submit_scan` RPC is a `SECURITY DEFINER` Postgres function. The agent has n
 - Payload size limit: 8 MB for graph data, 2 MB for findings
 - Score validation: must be 0–100
 - Scan results are append-only — no deletes, no updates
+
+## Slack notifications
+
+GuardMap can send a Slack message after each scan when **new** findings are detected (findings that weren't present in the previous scan). Repeat findings are never re-notified.
+
+**How it works:**
+1. Before submitting a scan, the agent calls `get_notification_config` — this returns the Slack webhook URL and the previous scan's findings.
+2. After the scan is submitted, the agent diffs the new findings against the previous ones.
+3. If there are new findings, it POSTs a formatted message to your Slack webhook (3 retries with exponential backoff).
+
+**Setup:** Go to **Integrations → Notifications → Connect Slack**. Paste your [Incoming Webhook URL](https://api.slack.com/messaging/webhooks) and click **Send test** to verify.
+
+To include a **View in GuardMap** button in notifications, set `GUARDMAP_URL` in the agent's environment:
+```bash
+# In the guardmap-credentials Secret or as an env var:
+GUARDMAP_URL=https://app.guardmap.io
+```
 
 ## Data flow in the dashboard
 

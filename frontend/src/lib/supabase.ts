@@ -28,4 +28,5 @@ export const db = {
   invitations: () => supabase.from('invitations'),
   profiles: () => supabase.from('user_profiles'),
   myPermissions: () => supabase.from('my_org_permissions'),
+  notificationChannels: () => supabase.from('notification_channels'),
 }

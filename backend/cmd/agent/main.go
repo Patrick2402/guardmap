@@ -12,11 +12,12 @@ func main() {
 	slog.SetDefault(slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo})))
 
 	cfg := agent.Config{
-		APIKey:      mustEnv("GUARDMAP_API_KEY"),
-		SupabaseURL: mustEnv("SUPABASE_URL"),
-		AnonKey:     mustEnv("SUPABASE_ANON_KEY"),
-		ClusterName: mustEnv("CLUSTER_NAME"),
-		Kubeconfig:  os.Getenv("KUBECONFIG"),
+		APIKey:       mustEnv("GUARDMAP_API_KEY"),
+		SupabaseURL:  mustEnv("SUPABASE_URL"),
+		AnonKey:      mustEnv("SUPABASE_ANON_KEY"),
+		ClusterName:  mustEnv("CLUSTER_NAME"),
+		Kubeconfig:   os.Getenv("KUBECONFIG"),
+		DashboardURL: os.Getenv("GUARDMAP_URL"),
 	}
 
 	if err := agent.RunScan(context.Background(), cfg); err != nil {

@@ -30,7 +30,6 @@ type ClusterSnapshot struct {
 	Services        []corev1.Service
 	Ingresses       []networkingv1.Ingress
 	NetworkPolicies []networkingv1.NetworkPolicy
-	Endpoints       []corev1.Endpoints
 	Nodes           []corev1.Node
 
 	// Batch
@@ -149,10 +148,6 @@ func (d *K8sDiscovery) DiscoverCluster(ctx context.Context) (*ClusterSnapshot, e
 	if netpols, err := d.client.NetworkingV1().NetworkPolicies("").List(ctx, metav1.ListOptions{}); err == nil {
 		snap.NetworkPolicies = netpols.Items
 	}
-	if eps, err := d.client.CoreV1().Endpoints("").List(ctx, metav1.ListOptions{}); err == nil {
-		snap.Endpoints = eps.Items
-	}
-
 	// ── Nodes ─────────────────────────────────────────────────────────────────
 	if nodes, err := d.client.CoreV1().Nodes().List(ctx, metav1.ListOptions{}); err == nil {
 		snap.Nodes = nodes.Items
