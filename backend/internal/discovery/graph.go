@@ -863,6 +863,116 @@ func (g *GraphBuilder) Build(ctx context.Context) (*models.GraphData, error) {
 		}
 	}
 
+	// ── Secrets & ConfigMaps ────────────────────────────────────────────────
+
+	// System namespaces to skip (same list as RBAC)
+	configSkipNs := map[string]bool{
+		"kube-system": true, "kube-public": true, "kube-node-lease": true,
+		"ingress-nginx": true, "cert-manager": true, "guardmap": true,
+	}
+
+	// Types of secrets that are purely internal/auto-managed — hide from graph
+	skipSecretType := map[corev1.SecretType]bool{
+		corev1.SecretTypeServiceAccountToken: true,  // auto by K8s
+		"helm.sh/release.v1":                 true,  // Helm state
+		"bootstrap.kubernetes.io/token":       true,
+	}
+
+	// Collect pod → secret/configmap refs, aggregated to workload level
+	type refKey struct{ ns, name string }
+	wlSecrets  := make(map[string]map[refKey]bool)
+	wlConfigs  := make(map[string]map[refKey]bool)
+	referencedSecrets := make(map[string]bool)
+	referencedCMs     := make(map[string]bool)
+
+	addSecretRef := func(wlID, ns, name string) {
+		referencedSecrets[ns+"/"+name] = true
+		if wlID == "" { return }
+		if wlSecrets[wlID] == nil { wlSecrets[wlID] = make(map[refKey]bool) }
+		wlSecrets[wlID][refKey{ns, name}] = true
+	}
+	addCMRef := func(wlID, ns, name string) {
+		referencedCMs[ns+"/"+name] = true
+		if wlID == "" { return }
+		if wlConfigs[wlID] == nil { wlConfigs[wlID] = make(map[refKey]bool) }
+		wlConfigs[wlID][refKey{ns, name}] = true
+	}
+
+	for _, pod := range snap.Pods {
+		if configSkipNs[pod.Namespace] { continue }
+		podKey := pod.Namespace + "/" + pod.Name
+		wlID := ""
+		if wl, ok := podWorkload[podKey]; ok { wlID = wl.nodeID() }
+
+		for _, vol := range pod.Spec.Volumes {
+			if vol.Secret != nil    { addSecretRef(wlID, pod.Namespace, vol.Secret.SecretName) }
+			if vol.ConfigMap != nil { addCMRef(wlID, pod.Namespace, vol.ConfigMap.Name) }
+		}
+		for _, c := range append(pod.Spec.Containers, pod.Spec.InitContainers...) {
+			for _, ef := range c.EnvFrom {
+				if ef.SecretRef    != nil { addSecretRef(wlID, pod.Namespace, ef.SecretRef.Name) }
+				if ef.ConfigMapRef != nil { addCMRef(wlID, pod.Namespace, ef.ConfigMapRef.Name) }
+			}
+			for _, env := range c.Env {
+				if env.ValueFrom == nil { continue }
+				if env.ValueFrom.SecretKeyRef    != nil { addSecretRef(wlID, pod.Namespace, env.ValueFrom.SecretKeyRef.Name) }
+				if env.ValueFrom.ConfigMapKeyRef != nil { addCMRef(wlID, pod.Namespace, env.ValueFrom.ConfigMapKeyRef.Name) }
+			}
+		}
+	}
+
+	// Secret nodes
+	for _, sec := range snap.Secrets {
+		if configSkipNs[sec.Namespace] { continue }
+		if skipSecretType[sec.Type]    { continue }
+		id := fmt.Sprintf("secret:%s/%s", sec.Namespace, sec.Name)
+		nodeSet[id] = models.Node{
+			ID: id, Type: models.NodeTypeSecret,
+			Label: sec.Name, Namespace: sec.Namespace,
+			Metadata: map[string]string{
+				"secretType": string(sec.Type),
+				"keyCount":   fmt.Sprintf("%d", len(sec.Data)),
+				"referenced": fmt.Sprintf("%v", referencedSecrets[sec.Namespace+"/"+sec.Name]),
+			},
+		}
+	}
+
+	// ConfigMap nodes (skip kube-root-ca.crt which is injected in every namespace)
+	for _, cm := range snap.ConfigMaps {
+		if configSkipNs[cm.Namespace] { continue }
+		if cm.Name == "kube-root-ca.crt" { continue }
+		id := fmt.Sprintf("cm:%s/%s", cm.Namespace, cm.Name)
+		immutable := "false"
+		if cm.Immutable != nil && *cm.Immutable { immutable = "true" }
+		nodeSet[id] = models.Node{
+			ID: id, Type: models.NodeTypeConfigMap,
+			Label: cm.Name, Namespace: cm.Namespace,
+			Metadata: map[string]string{
+				"keyCount":   fmt.Sprintf("%d", len(cm.Data)+len(cm.BinaryData)),
+				"referenced": fmt.Sprintf("%v", referencedCMs[cm.Namespace+"/"+cm.Name]),
+				"immutable":  immutable,
+			},
+		}
+	}
+
+	// Workload → Secret / ConfigMap edges
+	for wlID, refs := range wlSecrets {
+		for ref := range refs {
+			secID := fmt.Sprintf("secret:%s/%s", ref.ns, ref.name)
+			if _, ok := nodeSet[secID]; ok {
+				newEdge(wlID, secID, "uses secret →", "", nil)
+			}
+		}
+	}
+	for wlID, refs := range wlConfigs {
+		for ref := range refs {
+			cmID := fmt.Sprintf("cm:%s/%s", ref.ns, ref.name)
+			if _, ok := nodeSet[cmID]; ok {
+				newEdge(wlID, cmID, "uses config →", "", nil)
+			}
+		}
+	}
+
 	// ── Assemble output ───────────────────────────────────────────────────────
 	graph := &models.GraphData{}
 	for _, n := range nodeSet {

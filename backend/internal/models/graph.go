@@ -26,6 +26,10 @@ const (
 	NodeTypeK8sClusterRole       NodeType = "k8s_clusterrole"
 	NodeTypeK8sRoleBinding       NodeType = "k8s_rolebinding"
 	NodeTypeK8sClusterRoleBinding NodeType = "k8s_clusterrolebinding"
+
+	// K8s config resources
+	NodeTypeSecret    NodeType = "secret"
+	NodeTypeConfigMap NodeType = "configmap"
 )
 
 type AccessLevel string

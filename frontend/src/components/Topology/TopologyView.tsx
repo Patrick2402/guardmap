@@ -4,7 +4,7 @@ import ReactFlow, {
   NodeMouseHandler, ReactFlowInstance,
 } from 'reactflow'
 import 'reactflow/dist/style.css'
-import { Layers } from 'lucide-react'
+import { Layers, KeyRound } from 'lucide-react'
 
 import { GraphData, GraphNode, GraphEdge }  from '../../types'
 import { PodNode }                          from '../NodeTypes/PodNode'
@@ -14,6 +14,7 @@ import { NamespaceGroupNode }               from '../NodeTypes/NamespaceGroupNod
 import { RBACRoleNode }                     from '../NodeTypes/RBACRoleNode'
 import { RBACBindingNode }                  from '../NodeTypes/RBACBindingNode'
 import { RBACGroupNode }                    from '../NodeTypes/RBACGroupNode'
+import { ConfigSecretNode }                 from '../NodeTypes/ConfigSecretNode'
 import { TopologyEdge }                     from '../EdgeTypes/TopologyEdge'
 import { TopologyDetails }                  from './TopologyDetails'
 
@@ -35,6 +36,8 @@ const nodeTypes = {
   k8s_rolebinding:        RBACBindingNode,
   k8s_clusterrolebinding: RBACBindingNode,
   rbacGroup:              RBACGroupNode,
+  secret:                 ConfigSecretNode,
+  configmap:              ConfigSecretNode,
 }
 
 const edgeTypes = { topology: TopologyEdge }
@@ -45,19 +48,23 @@ const TOPO_TYPES = new Set([
   'pod', 'deployment', 'statefulset', 'daemonset', 'job', 'cronjob',
   'k8s_service', 'ingress', 'networkpolicy',
   'k8s_role', 'k8s_clusterrole', 'k8s_rolebinding', 'k8s_clusterrolebinding',
+  'secret', 'configmap',
 ])
 
 const TOPO_EDGE_LABELS = new Set([
   'manages', 'selects', 'routes →', 'grants →', 'bound →', 'schedules',
+  'uses secret →', 'uses config →',
 ])
 
 const EDGE_COLOR: Record<string, string> = {
-  'manages':   '#3b82f6',
-  'selects':   '#14b8a6',
-  'routes →':  '#22c55e',
-  'grants →':  '#8b5cf6',
-  'bound →':   '#8b5cf6',
-  'schedules': '#2dd4bf',
+  'manages':       '#3b82f6',
+  'selects':       '#14b8a6',
+  'routes →':      '#22c55e',
+  'grants →':      '#8b5cf6',
+  'bound →':       '#8b5cf6',
+  'schedules':     '#2dd4bf',
+  'uses secret →': '#f59e0b',
+  'uses config →': '#38bdf8',
 }
 
 // ── Layout engine ────────────────────────────────────────────────────────────
@@ -76,12 +83,13 @@ const NS_VGAP = 24                // gap between namespace rows in same column
 const MAX_PER_ROW = 3             // max nodes per row within a category
 
 const CAT_DEFS: { key: string; types: Set<string> }[] = [
-  { key: 'wl',   types: new Set(['deployment','statefulset','daemonset']) },
-  { key: 'bat',  types: new Set(['cronjob','job']) },
-  { key: 'pod',  types: new Set(['pod']) },
-  { key: 'svc',  types: new Set(['k8s_service']) },
-  { key: 'net',  types: new Set(['ingress','networkpolicy']) },
-  { key: 'rbac', types: new Set(['k8s_role','k8s_clusterrole','k8s_rolebinding','k8s_clusterrolebinding']) },
+  { key: 'wl',     types: new Set(['deployment','statefulset','daemonset']) },
+  { key: 'bat',    types: new Set(['cronjob','job']) },
+  { key: 'pod',    types: new Set(['pod']) },
+  { key: 'svc',    types: new Set(['k8s_service']) },
+  { key: 'net',    types: new Set(['ingress','networkpolicy']) },
+  { key: 'rbac',   types: new Set(['k8s_role','k8s_clusterrole','k8s_rolebinding','k8s_clusterrolebinding']) },
+  { key: 'config', types: new Set(['secret','configmap']) },
 ]
 
 function rowsFor(n: number) { return Math.ceil(n / MAX_PER_ROW) }
@@ -104,8 +112,12 @@ function nsHeight(cats: Node[][]): number {
   return NS_HDR + 2 * NS_PY + inner
 }
 
-function buildLayout(nodes: Node[], showPods: boolean) {
-  const visible = showPods ? nodes : nodes.filter(n => n.type !== 'pod')
+function buildLayout(nodes: Node[], showPods: boolean, showConfigs: boolean) {
+  const visible = nodes.filter(n => {
+    if (n.type === 'pod' && !showPods) return false
+    if ((n.type === 'secret' || n.type === 'configmap') && !showConfigs) return false
+    return true
+  })
 
   // Group nodes by namespace
   const byNs = new Map<string, Node[]>()
@@ -210,6 +222,7 @@ interface TopologyViewProps {
 
 export function TopologyView({ data, focusNodeId }: TopologyViewProps) {
   const [showPods,       setShowPods]       = useState(false)
+  const [showConfigs,    setShowConfigs]    = useState(false)
   const [selectedNode,   setSelectedNode]   = useState<GraphNode | null>(null)
   const [rfReady,        setRfReady]        = useState(false)
   const rfRef = useRef<ReactFlowInstance | null>(null)
@@ -287,6 +300,11 @@ export function TopologyView({ data, focusNodeId }: TopologyViewProps) {
         hostNetwork:  n.metadata?.hostNetwork,
         hostPID:      n.metadata?.hostPID,
         hostPath:     n.metadata?.hostPath,
+        // Secret / ConfigMap
+        secretType:   n.metadata?.secretType,
+        keyCount:     n.metadata?.keyCount,
+        referenced:   n.metadata?.referenced,
+        immutable:    n.metadata?.immutable,
         dimmed:       false,
         selected:     false,
       },
@@ -294,8 +312,8 @@ export function TopologyView({ data, focusNodeId }: TopologyViewProps) {
 
   // ── Layout ─────────────────────────────────────────────────────────────────
   const { groupNodes, positionedNodes } = useMemo(
-    () => buildLayout(baseNodes, showPods),
-    [baseNodes, showPods])
+    () => buildLayout(baseNodes, showPods, showConfigs),
+    [baseNodes, showPods, showConfigs])
 
   // ── Merge dimming + selection into final nodes ─────────────────────────────
   const allNodes: Node[] = useMemo(() => [
@@ -349,6 +367,8 @@ export function TopologyView({ data, focusNodeId }: TopologyViewProps) {
     services:   filteredNodes.filter(n => n.type === 'k8s_service').length,
     ingresses:  filteredNodes.filter(n => n.type === 'ingress').length,
     netpols:    filteredNodes.filter(n => n.type === 'networkpolicy').length,
+    secrets:    filteredNodes.filter(n => n.type === 'secret').length,
+    configmaps: filteredNodes.filter(n => n.type === 'configmap').length,
   }), [filteredNodes])
 
   // ── Render ─────────────────────────────────────────────────────────────────
@@ -364,6 +384,8 @@ export function TopologyView({ data, focusNodeId }: TopologyViewProps) {
           { label: 'services',   value: stats.services,   color: 'text-teal-400'   },
           { label: 'ingresses',  value: stats.ingresses,  color: 'text-green-400'  },
           { label: 'netpols',    value: stats.netpols,    color: 'text-rose-400'   },
+          { label: 'secrets',    value: stats.secrets,    color: 'text-amber-400'  },
+          { label: 'configmaps', value: stats.configmaps, color: 'text-sky-400'    },
         ] as const).map(({ label, value, color }) => (
           <div key={label} className="flex items-center gap-1.5">
             <span className={`text-sm font-mono font-bold ${color}`}>{value}</span>
@@ -389,6 +411,19 @@ export function TopologyView({ data, focusNodeId }: TopologyViewProps) {
         >
           <Layers size={10} />
           Pods {showPods ? 'ON' : 'OFF'}
+        </button>
+
+        {/* Secrets/Configs toggle */}
+        <button
+          onClick={() => setShowConfigs(p => !p)}
+          className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-[10px] font-mono transition-all ${
+            showConfigs
+              ? 'border-amber-500/50 bg-amber-950/40 text-amber-300'
+              : 'border-cyber-border bg-cyber-panel text-slate-500 hover:text-slate-300'
+          }`}
+        >
+          <KeyRound size={10} />
+          Secrets {showConfigs ? 'ON' : 'OFF'}
         </button>
       </div>
 
@@ -441,6 +476,8 @@ export function TopologyView({ data, focusNodeId }: TopologyViewProps) {
               if (t === 'networkpolicy')          return '#e11d48'
               if (t === 'k8s_rolebinding' || t === 'k8s_clusterrolebinding') return '#7c3aed'
               if (t === 'k8s_role' || t === 'k8s_clusterrole')               return '#ef4444'
+              if (t === 'secret')                 return '#d97706'
+              if (t === 'configmap')              return '#0284c7'
               return '#1e293b'
             }}
             className="!border-cyber-border !bg-cyber-panel/90 !rounded-xl"

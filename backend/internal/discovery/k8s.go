@@ -37,6 +37,10 @@ type ClusterSnapshot struct {
 	Jobs     []batchv1.Job
 	CronJobs []batchv1.CronJob
 
+	// Config resources
+	Secrets    []corev1.Secret
+	ConfigMaps []corev1.ConfigMap
+
 	// RBAC
 	Roles                []rbacv1.Role
 	ClusterRoles         []rbacv1.ClusterRole
@@ -160,6 +164,14 @@ func (d *K8sDiscovery) DiscoverCluster(ctx context.Context) (*ClusterSnapshot, e
 	}
 	if cjs, err := d.client.BatchV1().CronJobs("").List(ctx, metav1.ListOptions{}); err == nil {
 		snap.CronJobs = cjs.Items
+	}
+
+	// ── Config resources ─────────────────────────────────────────────────────
+	if secrets, err := d.client.CoreV1().Secrets("").List(ctx, metav1.ListOptions{}); err == nil {
+		snap.Secrets = secrets.Items
+	}
+	if cms, err := d.client.CoreV1().ConfigMaps("").List(ctx, metav1.ListOptions{}); err == nil {
+		snap.ConfigMaps = cms.Items
 	}
 
 	// ── RBAC ─────────────────────────────────────────────────────────────────

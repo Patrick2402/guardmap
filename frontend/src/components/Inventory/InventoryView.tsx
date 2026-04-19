@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   Search, X, Container, KeyRound, ShieldCheck, HardDrive,
   ChevronUp, ChevronDown, ExternalLink, Layers, Database,
-  Cpu, Network, Globe, ShieldOff, PlayCircle, Clock,
+  Cpu, Network, Globe, ShieldOff, PlayCircle, Clock, FileText,
 } from 'lucide-react'
 import { GraphData, GraphNode, NodeType, AccessLevel } from '../../types'
 
@@ -45,6 +45,8 @@ const TYPE_COLOR: Record<NodeType, string> = {
   k8s_clusterrole:        'text-orange-400 bg-orange-950/30 border-orange-500/30',
   k8s_rolebinding:        'text-violet-400 bg-violet-950/30 border-violet-500/30',
   k8s_clusterrolebinding: 'text-violet-300 bg-violet-950/25 border-violet-400/25',
+  secret:                 'text-amber-400  bg-amber-950/35  border-amber-500/30',
+  configmap:              'text-sky-400    bg-sky-950/35    border-sky-500/30',
 }
 
 const TYPE_LABEL: Record<NodeType, string> = {
@@ -55,6 +57,7 @@ const TYPE_LABEL: Record<NodeType, string> = {
   networkpolicy: 'NetworkPolicy',
   k8s_role: 'Role', k8s_clusterrole: 'ClusterRole',
   k8s_rolebinding: 'RoleBinding', k8s_clusterrolebinding: 'ClusterRoleBinding',
+  secret: 'Secret', configmap: 'ConfigMap',
 }
 
 const TYPE_ICON: Record<NodeType, React.ReactNode> = {
@@ -74,6 +77,8 @@ const TYPE_ICON: Record<NodeType, React.ReactNode> = {
   k8s_clusterrole:        <ShieldCheck size={9} />,
   k8s_rolebinding:        <ShieldCheck size={9} />,
   k8s_clusterrolebinding: <ShieldCheck size={9} />,
+  secret:                 <KeyRound size={9} />,
+  configmap:              <FileText size={9} />,
 }
 
 const ACCESS_BADGE: Record<AccessLevel, string> = {

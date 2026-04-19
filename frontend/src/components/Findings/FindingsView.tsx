@@ -91,6 +91,7 @@ export const BENCHMARK_MAP: Record<string, string[]> = {
   rbac_get_secrets:               ['CIS 5.1.2', 'MITRE T1552'],
   rbac_exec_pods:                 ['CIS 5.1.1', 'MITRE T1609'],
   rbac_nodes_access:              ['CIS 5.1.1', 'MITRE T1613'],
+  orphaned_secret:                ['NSA/CISA'],
 }
 
 export function computeFindings(data: GraphData): Finding[] {
@@ -623,6 +624,7 @@ const TYPE_META: Record<string, { category: Category; title: string; remediation
   rbac_get_secrets:            { category: 'rbac',         title: 'ClusterRole can read secrets',     navTab: 'rbac',     remediation: ['Restrict access to only specific secrets using resourceNames', 'Replace cluster-scoped access with a namespace-scoped Role', 'Use a secrets manager (Vault, AWS SM) to avoid storing secrets in etcd'] },
   rbac_exec_pods:              { category: 'rbac',         title: 'ClusterRole allows pod exec',      navTab: 'rbac',     remediation: ['Remove pods/exec and pods/attach from ClusterRole rules', 'For debugging, use a time-limited break-glass ServiceAccount', 'Log and alert on any exec/attach events via Kubernetes audit policy'] },
   rbac_nodes_access:           { category: 'rbac',         title: 'ClusterRole has node access',      navTab: 'rbac',     remediation: ['Remove node resource access unless the workload is a system agent (e.g. DaemonSet CNI)', 'Replace ClusterRole with a narrower Role if namespace-scoped access is sufficient', 'Audit subjects bound to this role — node access enables host enumeration'] },
+  orphaned_secret:             { category: 'pod-security', title: 'Orphaned Secret (unreferenced)',    navTab: 'topology', remediation: ['Delete the Secret if no longer needed: kubectl delete secret <name> -n <ns>', 'If still needed, ensure it is referenced by the correct workload', 'Rotate the credentials in the Secret before deleting to prevent reuse'] },
 }
 
 export function convertDbFindings(dbFindings: DbFinding[]): Finding[] {

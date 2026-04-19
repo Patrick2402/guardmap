@@ -89,6 +89,7 @@ func ScanSecurity(snap *ClusterSnapshot, graph *models.GraphData) *SecurityRepor
 	scanServices(snap, r)
 	scanIAMGraph(graph, r)
 	scanBatchResources(snap, r)
+	scanConfigResources(snap, r)
 
 	return r
 }
@@ -735,6 +736,42 @@ func scanBatchResources(snap *ClusterSnapshot, r *SecurityReport) {
 		if cj.Spec.StartingDeadlineSeconds == nil {
 			r.add(SevLow, "cj_missing_deadline", cj.Namespace+"/"+cj.Name,
 				"CronJob has no startingDeadlineSeconds — if the controller misses >100 schedules, Kubernetes permanently stops creating new jobs for this CronJob")
+		}
+	}
+}
+
+func scanConfigResources(snap *ClusterSnapshot, r *SecurityReport) {
+	// Build set of secrets actually referenced by pods
+	referenced := make(map[string]bool) // "ns/name"
+	for _, pod := range snap.Pods {
+		if isSystemSubject(pod.Namespace) { continue }
+		for _, vol := range pod.Spec.Volumes {
+			if vol.Secret != nil { referenced[pod.Namespace+"/"+vol.Secret.SecretName] = true }
+		}
+		for _, c := range append(pod.Spec.Containers, pod.Spec.InitContainers...) {
+			for _, ef := range c.EnvFrom {
+				if ef.SecretRef != nil { referenced[pod.Namespace+"/"+ef.SecretRef.Name] = true }
+			}
+			for _, env := range c.Env {
+				if env.ValueFrom != nil && env.ValueFrom.SecretKeyRef != nil {
+					referenced[pod.Namespace+"/"+env.ValueFrom.SecretKeyRef.Name] = true
+				}
+			}
+		}
+	}
+
+	skipType := map[corev1.SecretType]bool{
+		corev1.SecretTypeServiceAccountToken: true,
+		"helm.sh/release.v1":                 true,
+		"bootstrap.kubernetes.io/token":       true,
+	}
+
+	for _, sec := range snap.Secrets {
+		if isSystemSubject(sec.Namespace) { continue }
+		if skipType[sec.Type]             { continue }
+		if !referenced[sec.Namespace+"/"+sec.Name] {
+			r.add(SevLow, "orphaned_secret", sec.Namespace+"/"+sec.Name,
+				"Secret exists but no pod mounts it or references it via envFrom/env — likely a forgotten credential that should be cleaned up or rotated")
 		}
 	}
 }
