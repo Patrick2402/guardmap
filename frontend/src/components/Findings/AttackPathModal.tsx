@@ -57,6 +57,7 @@ const ACCESS_BADGE: Record<string, { bg: string; color: string; label: string }>
 // ── Path builder ──────────────────────────────────────────────────────────────
 
 const WORKLOAD_TYPES = new Set(['deployment', 'statefulset', 'daemonset', 'job', 'cronjob'])
+const IRSA_LABELS   = new Set(['IRSA →', 'assumes (IRSA)', 'irsa', 'IRSA'])
 
 function buildAttackPath(finding: Finding, data: GraphData): PathStep[] {
   const { nodes, edges } = data
@@ -71,7 +72,7 @@ function buildAttackPath(finding: Finding, data: GraphData): PathStep[] {
   })
   const nodeMap = new Map(nodes.map(n => [n.id, n]))
 
-  // Find anchor workload or pod node
+  // ── 1. Find anchor (workload or pod) ─────────────────────────────────────────
   const anchor = nodes.find(n =>
     (WORKLOAD_TYPES.has(n.type) || n.type === 'pod') &&
     (n.label === finding.nodeLabel || n.id.endsWith(`/${finding.nodeLabel}`)) &&
@@ -79,87 +80,86 @@ function buildAttackPath(finding: Finding, data: GraphData): PathStep[] {
   )
   if (!anchor) return []
 
-  // ── Forward: workload → pod → SA → IAM Role → AWS Resources ────────────────
-  const forward: PathStep[] = [{ node: anchor }]
-
-  let cur: GraphNode | undefined = anchor
-
-  // If anchor is workload, step into one representative pod
-  if (WORKLOAD_TYPES.has(cur.type)) {
-    const podEdge = outEdges.get(cur.id)?.find(e => e.label === 'manages')
-    if (podEdge) {
-      const pod = nodeMap.get(podEdge.target)
-      if (pod) { forward.push({ node: pod, edgeLabel: 'manages' }); cur = pod }
-    }
+  // ── 2. Resolve workload (if anchor is pod, walk up to parent) ────────────────
+  let workload: GraphNode = anchor
+  if (anchor.type === 'pod') {
+    const parentEdge = (inEdges.get(anchor.id) ?? []).find(e => e.label === 'manages')
+    if (parentEdge) workload = nodeMap.get(parentEdge.source) ?? anchor
   }
 
-  // pod → SA
-  if (cur?.type === 'pod') {
-    const saEdge = outEdges.get(cur.id)?.find(e => e.label === 'uses')
-    if (saEdge) {
-      const sa = nodeMap.get(saEdge.target)
-      if (sa) { forward.push({ node: sa, edgeLabel: 'uses' }); cur = sa }
-    }
+  // ── 3. Build forward chain: workload → pod → SA → IAM → AWS ─────────────────
+  const path: PathStep[] = []
+  let cur: GraphNode = workload
+
+  // Workload will be added after backward path — hold off for now, track cur
+  // Find pod
+  let pod: GraphNode | undefined
+  if (cur.type === 'pod') {
+    pod = cur
+  } else {
+    const podEdge = (outEdges.get(cur.id) ?? []).find(e => e.label === 'manages')
+    if (podEdge) pod = nodeMap.get(podEdge.target)
   }
 
-  // SA → IAM Role
-  if (cur?.type === 'serviceaccount') {
-    const roleEdge = outEdges.get(cur.id)?.find(e => e.label === 'IRSA →')
-    if (roleEdge) {
-      const role = nodeMap.get(roleEdge.target)
-      if (role) { forward.push({ node: role, edgeLabel: 'IRSA →' }); cur = role }
-    }
+  // Find SA
+  let sa: GraphNode | undefined
+  if (pod) {
+    const saEdge = (outEdges.get(pod.id) ?? []).find(e => e.label === 'uses')
+    if (saEdge) sa = nodeMap.get(saEdge.target)
   }
 
-  // IAM Role → AWS Resources (take worst first)
-  if (cur?.type === 'iam_role') {
-    const awsEdges = (outEdges.get(cur.id) ?? [])
+  // Find IAM Role (handle multiple IRSA label variants)
+  let role: GraphNode | undefined
+  if (sa) {
+    const roleEdge = (outEdges.get(sa.id) ?? []).find(e => IRSA_LABELS.has(e.label ?? ''))
+    if (roleEdge) role = nodeMap.get(roleEdge.target)
+  }
+
+  // Find AWS resources (sorted worst-first)
+  const awsSteps: PathStep[] = []
+  if (role) {
+    const awsEdges = (outEdges.get(role.id) ?? [])
       .filter(e => e.target.startsWith('svc:'))
       .sort((a, b) => {
-        const order = { full: 0, write: 1, read: 2 }
-        return (order[a.accessLevel as keyof typeof order] ?? 3) - (order[b.accessLevel as keyof typeof order] ?? 3)
+        const o: Record<string, number> = { full: 0, write: 1, read: 2 }
+        return (o[a.accessLevel ?? ''] ?? 3) - (o[b.accessLevel ?? ''] ?? 3)
       })
     awsEdges.slice(0, 3).forEach(e => {
       const aws = nodeMap.get(e.target)
-      if (aws) forward.push({ node: aws, edgeLabel: e.label, accessLevel: e.accessLevel })
+      if (aws) awsSteps.push({ node: aws, edgeLabel: e.label, accessLevel: e.accessLevel })
     })
   }
 
-  // ── Backward: Ingress → Service → Workload ──────────────────────────────────
-  const backward: PathStep[] = []
+  // ── 4. Build backward chain: Internet → Ingress → Service ────────────────────
+  const svcEdges = (inEdges.get(workload.id) ?? []).filter(e => e.label === 'selects')
+  const svc      = svcEdges.length > 0 ? nodeMap.get(svcEdges[0].source) : undefined
 
-  // Find service(s) that select the workload anchor
-  const workloadNode = WORKLOAD_TYPES.has(anchor.type) ? anchor : nodes.find(n =>
-    WORKLOAD_TYPES.has(n.type) && (inEdges.get(anchor.id) ?? []).some(e => e.source === n.id && e.label === 'manages')
-  )
-
-  if (workloadNode) {
-    const svcEdges = (inEdges.get(workloadNode.id) ?? []).filter(e => e.label === 'selects')
-    if (svcEdges.length > 0) {
-      const svc = nodeMap.get(svcEdges[0].source)
-      if (svc) {
-        backward.unshift({ node: svc, edgeLabel: 'selects' })
-
-        const ingressEdges = (inEdges.get(svc.id) ?? []).filter(e => e.label === 'routes →')
-        if (ingressEdges.length > 0) {
-          const ing = nodeMap.get(ingressEdges[0].source)
-          if (ing) {
-            backward.unshift({ node: ing, edgeLabel: 'routes →' })
-            const virtual: VirtualNode = { id: '__internet__', type: 'internet', label: 'Internet' }
-            backward.unshift({ node: virtual as unknown as GraphNode })
-          }
-        }
-      }
-    }
+  let ing: GraphNode | undefined
+  if (svc) {
+    const ingressEdges = (inEdges.get(svc.id) ?? []).filter(e => e.label === 'routes →')
+    if (ingressEdges.length > 0) ing = nodeMap.get(ingressEdges[0].source)
   }
 
-  // Merge: backward path connects to anchor (already first in forward)
-  // Remove duplicate anchor from forward if backward ends there
-  const merged = backward.length > 0
-    ? [...backward, ...forward]
-    : forward
+  // ── 5. Assemble final path (correct edgeLabel placement: on the TARGET node) ──
+  if (ing && svc) {
+    const internet: VirtualNode = { id: '__internet__', type: 'internet', label: 'Internet' }
+    path.push({ node: internet as unknown as GraphNode })          // entry — no arrow
+    path.push({ node: ing,  edgeLabel: '→' })                     // internet → ingress
+    path.push({ node: svc,  edgeLabel: 'routes →' })              // ingress → service
+    path.push({ node: workload, edgeLabel: 'selects' })           // service → workload
+  } else if (svc) {
+    path.push({ node: svc })                                       // no ingress — svc is entry
+    path.push({ node: workload, edgeLabel: 'selects' })
+  } else {
+    path.push({ node: workload })                                  // no exposure info
+  }
 
-  return merged
+  if (pod && pod.id !== workload.id) path.push({ node: pod,  edgeLabel: 'manages' })
+  if (sa)                            path.push({ node: sa,   edgeLabel: 'uses' })
+  if (role)                          path.push({ node: role, edgeLabel: 'IRSA →' })
+  awsSteps.forEach(s => path.push(s))
+
+  return path
 }
 
 // ── Step Card ─────────────────────────────────────────────────────────────────
