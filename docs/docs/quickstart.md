@@ -14,6 +14,15 @@ Connect your EKS or Kubernetes cluster to GuardMap in under 5 minutes.
 - `kubectl` configured and pointing at your cluster
 - A GuardMap account
 
+## Step 0 — Sign in
+
+Go to [guardmap.pages.dev](https://guardmap.pages.dev) and sign in. You can use:
+
+- **Email + password** — sign up with any email address
+- **Continue with Google** — one-click sign-in via your Google account (recommended)
+
+After signing in you'll be redirected to the dashboard and prompted to create your organisation.
+
 ## Step 1 — Create an organisation
 
 After signing up, you'll be prompted to create an organisation. This is your tenant — all clusters, API keys, and scan history live under it.

@@ -21,6 +21,7 @@ GuardMap is a security monitoring platform for Kubernetes clusters. It continuou
 - **Topology view** — see workloads, services, ingresses, and network policies per namespace
 - **Scan history** — track your security posture over time with trend charts
 - **Multi-cluster** — manage multiple clusters across organisations from one dashboard
+- **Google SSO** — sign in with Google or email/password
 
 ## How the score works
 
