@@ -225,6 +225,14 @@ function ClusterView() {
 
   const activeTab = (VALID_TABS.has(tab as TabId) ? tab : 'overview') as TabId
 
+  const [graphHintDismissed, setGraphHintDismissed] = useState(
+    () => localStorage.getItem('gm_graph_hint_dismissed') === '1'
+  )
+  function dismissGraphHint() {
+    localStorage.setItem('gm_graph_hint_dismissed', '1')
+    setGraphHintDismissed(true)
+  }
+
   // Default: mock if no clusters, otherwise first live cluster
   const [dataSource, setDataSource] = useState<DataSource>('mock')
   const { data, loading, error, scanMeta } = useGraphData(dataSource)
@@ -408,13 +416,27 @@ function ClusterView() {
 
               {activeTab === 'graph' && (
                 <>
-                  <div className="absolute top-0 left-0 right-0 z-10 px-5 py-1.5 border-b border-cyber-border/30 bg-cyber-panel/20 backdrop-blur-sm pointer-events-none">
-                    <p className="text-[10px] font-mono text-slate-700">
-                      {blastRadius
-                        ? `Blast radius active — ${blastRadius.fullTargets.length} full-access + ${blastRadius.writeTargets.length} write targets exposed`
-                        : 'Click a Workload to see Blast Radius & IAM permissions  ·  Scroll to zoom  ·  Drag to pan'
-                      }
-                    </p>
+                  <div className="absolute top-0 left-0 right-0 z-10 border-b border-cyber-border/30 bg-cyber-panel/20 backdrop-blur-sm">
+                    {blastRadius ? (
+                      <p className="px-5 py-1.5 text-[10px] font-mono text-slate-700 pointer-events-none">
+                        Blast radius active — {blastRadius.fullTargets.length} full-access + {blastRadius.writeTargets.length} write targets exposed
+                      </p>
+                    ) : !graphHintDismissed ? (
+                      <div className="flex items-center justify-between px-5 py-2 gap-3"
+                        style={{ background: 'rgba(34,211,238,0.04)', borderBottom: '1px solid rgba(34,211,238,0.08)' }}>
+                        <p className="text-[11px] font-sans text-cyan-400/80">
+                          <span className="font-semibold text-cyan-400">Tip:</span> Click any workload node to inspect its IAM permissions and blast radius · Scroll to zoom · Drag to pan
+                        </p>
+                        <button onClick={dismissGraphHint}
+                          className="text-slate-600 hover:text-slate-400 transition-colors shrink-0 text-[11px] font-mono">
+                          Got it ✕
+                        </button>
+                      </div>
+                    ) : (
+                      <p className="px-5 py-1.5 text-[10px] font-mono text-slate-700 pointer-events-none">
+                        Click a Workload to see Blast Radius & IAM permissions · Scroll to zoom · Drag to pan
+                      </p>
+                    )}
                   </div>
                   <div className="absolute inset-0 pt-8">
                     <Toolbar search={search} onSearch={setSearch} namespaces={namespaces} activeNs={activeNs} onNsChange={setActiveNs} />
@@ -425,7 +447,7 @@ function ClusterView() {
                     />
                   </div>
                   <Legend />
-                  <Sidebar blastRadius={blastRadius} selectedNode={selectedNode} data={data} onClose={handleSidebarClose} onFocusNode={handleFocusNode} />
+                  <Sidebar blastRadius={blastRadius} selectedNode={selectedNode} data={data} onClose={handleSidebarClose} onFocusNode={handleFocusNode} dbFindings={scanMeta?.findings} onViewFindings={() => handleNavigate('findings')} />
                   <div className="pointer-events-none absolute inset-0 overflow-hidden">
                     <div className="absolute inset-x-0 h-px bg-gradient-to-r from-transparent via-cyan-500/8 to-transparent animate-scan" />
                   </div>

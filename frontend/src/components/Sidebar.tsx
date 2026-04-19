@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Zap, Shield, AlertTriangle, KeyRound, ShieldCheck, Search, Crosshair,
-  HardDrive, Database, MessageSquare, Lock, BarChart2, Box } from 'lucide-react'
+  HardDrive, Database, MessageSquare, Lock, BarChart2, Box, ShieldAlert } from 'lucide-react'
 import { BlastRadiusResult, GraphNode, GraphData, WORKLOAD_TYPES } from '../types'
+import type { DbFinding } from '../hooks/useGraphData'
 
 function ServiceIcon({ service }: { service: string }) {
   const s = service?.toLowerCase() ?? ''
@@ -20,6 +21,8 @@ interface SidebarProps {
   data: GraphData | null
   onClose: () => void
   onFocusNode?: (nodeId: string) => void
+  dbFindings?: DbFinding[]
+  onViewFindings?: () => void
 }
 
 const accessBadge = {
@@ -93,10 +96,21 @@ function usePermissions(node: GraphNode | null, data: GraphData | null): Permiss
   }, [node, data])
 }
 
-export function Sidebar({ blastRadius, selectedNode, data, onClose, onFocusNode }: SidebarProps) {
+const SEV_COLOR: Record<string, string> = {
+  critical: '#ef4444', high: '#f97316', medium: '#eab308', low: '#64748b',
+}
+
+export function Sidebar({ blastRadius, selectedNode, data, onClose, onFocusNode, dbFindings, onViewFindings }: SidebarProps) {
   const [permSearch, setPermSearch] = useState('')
   const isOpen = !!(blastRadius || selectedNode)
   const permissions = usePermissions(selectedNode, data)
+
+  const nodeFindings = useMemo(() => {
+    if (!selectedNode || !dbFindings?.length) return []
+    const name = selectedNode.label ?? ''
+    const nsName = `${selectedNode.namespace ?? ''}/${name}`
+    return dbFindings.filter(f => f.resource.includes(name) || f.resource.includes(nsName))
+  }, [selectedNode, dbFindings])
 
   const showPermissions = selectedNode &&
     (WORKLOAD_TYPES.includes(selectedNode.type) || selectedNode.type === 'serviceaccount' || selectedNode.type === 'iam_role')
@@ -280,6 +294,48 @@ export function Sidebar({ blastRadius, selectedNode, data, onClose, onFocusNode 
                         </button>
                       )
                     })}
+                  </div>
+                </section>
+              )}
+
+              {/* Security Findings for this node */}
+              {nodeFindings.length > 0 && (
+                <section>
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <ShieldAlert size={10} className="text-orange-400" />
+                      <h3 className="text-[10px] font-mono font-semibold text-slate-500 uppercase tracking-widest">
+                        Security Findings
+                      </h3>
+                      <span className="text-[9px] font-mono px-1.5 py-0.5 rounded-full bg-orange-500/15 text-orange-400">
+                        {nodeFindings.length}
+                      </span>
+                    </div>
+                    {onViewFindings && (
+                      <button onClick={onViewFindings}
+                        className="text-[10px] font-mono text-slate-600 hover:text-cyan-400 transition-colors">
+                        view all →
+                      </button>
+                    )}
+                  </div>
+                  <div className="space-y-1.5">
+                    {nodeFindings.slice(0, 5).map((f, i) => (
+                      <div key={i} className="rounded-lg border border-white/5 bg-white/3 px-3 py-2 space-y-0.5">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded"
+                            style={{ background: `${SEV_COLOR[f.severity]}18`, color: SEV_COLOR[f.severity] }}>
+                            {f.severity.toUpperCase()}
+                          </span>
+                          <span className="text-[10px] font-mono text-slate-500 truncate">{f.type}</span>
+                        </div>
+                        <p className="text-[11px] text-slate-300 leading-snug">{f.description}</p>
+                      </div>
+                    ))}
+                    {nodeFindings.length > 5 && (
+                      <div className="text-[11px] font-mono text-slate-600 pl-1">
+                        +{nodeFindings.length - 5} more findings
+                      </div>
+                    )}
                   </div>
                 </section>
               )}

@@ -4,12 +4,12 @@ import {
   ShieldAlert, ShieldCheck, Network, Lock, Server,
   Layers, ArrowRight, Globe, Container, GitGraph,
   AlertTriangle, CheckCircle, XCircle, Boxes, BookMarked,
-  KeyRound, FileText,
+  KeyRound, FileText, Flame,
 } from 'lucide-react'
 import { GraphData } from '../../types'
 import { TabId } from '../Nav'
 import { countCriticalFindings } from '../Findings/FindingsView'
-import type { ScanMeta } from '../../hooks/useGraphData'
+import type { ScanMeta, DbFinding } from '../../hooks/useGraphData'
 
 const SKIP_NS    = new Set(['kube-system', 'kube-public', 'kube-node-lease', 'ingress-nginx', 'cert-manager'])
 const WORKLOAD_T = new Set(['deployment', 'statefulset', 'daemonset'])
@@ -269,6 +269,108 @@ function NsTile({ ns, wls, ps, svcs, ings, hasNetpol, danger, issues, onNavigate
   )
 }
 
+// ── Top Risky Workloads ───────────────────────────────────────────────────────
+
+interface RiskyWorkload {
+  id: string
+  name: string
+  namespace: string
+  type: string
+  critical: number
+  high: number
+  medium: number
+  low: number
+  flags: string[]
+}
+
+function useTopRiskyWorkloads(data: GraphData, findings: DbFinding[]): RiskyWorkload[] {
+  return useMemo(() => {
+    const workloads = data.nodes.filter(n => WORKLOAD_T.has(n.type) && !SKIP_NS.has(n.namespace ?? ''))
+    return workloads.map(n => {
+      const key = `${n.namespace}/${n.label}`
+      const related = findings.filter(f => f.resource.includes(n.label ?? '') || f.resource.includes(key))
+      const counts = { critical: 0, high: 0, medium: 0, low: 0 }
+      related.forEach(f => { counts[f.severity] = (counts[f.severity] ?? 0) + 1 })
+      const flags: string[] = []
+      if (n.metadata?.privileged === 'true') flags.push('Privileged')
+      if (n.metadata?.runAsRoot === 'true') flags.push('Runs as root')
+      if (n.metadata?.hostNetwork === 'true') flags.push('Host network')
+      if (n.metadata?.hostPID === 'true') flags.push('Host PID')
+      return { id: n.id, name: n.label ?? '', namespace: n.namespace ?? '', type: n.type, ...counts, flags }
+    })
+    .filter(w => w.critical + w.high + w.medium + w.low + w.flags.length > 0)
+    .sort((a, b) => {
+      if (b.critical !== a.critical) return b.critical - a.critical
+      if (b.high !== a.high) return b.high - a.high
+      return b.flags.length - a.flags.length
+    })
+    .slice(0, 5)
+  }, [data, findings])
+}
+
+const SEV_COLOR: Record<string, string> = {
+  critical: '#ef4444', high: '#f97316', medium: '#eab308', low: '#64748b',
+}
+
+function RiskyWorkloadRow({ w, onNavigate, index }: {
+  w: RiskyWorkload
+  onNavigate: (tab: TabId, nodeId?: string) => void
+  index: number
+}) {
+  const topSev = w.critical > 0 ? 'critical' : w.high > 0 ? 'high' : w.medium > 0 ? 'medium' : 'low'
+  const color = SEV_COLOR[topSev]
+  const totalFindings = w.critical + w.high + w.medium + w.low
+
+  return (
+    <motion.button
+      initial={{ opacity: 0, x: -8 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ delay: index * 0.05 }}
+      whileHover={{ x: 2 }}
+      onClick={() => onNavigate('graph', w.id)}
+      className="w-full text-left flex items-center gap-4 px-4 py-3 rounded-xl group transition-colors"
+      style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.04)' }}
+    >
+      {/* Rank */}
+      <span className="text-[11px] font-mono text-slate-600 w-4 shrink-0">#{index + 1}</span>
+
+      {/* Name + namespace */}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2">
+          <span className="text-[13px] font-semibold text-slate-200 truncate">{w.name}</span>
+          <span className="text-[10px] font-mono text-slate-600 shrink-0">{w.type}</span>
+        </div>
+        <div className="flex items-center gap-2 mt-0.5">
+          <span className="text-[11px] text-slate-500">{w.namespace}</span>
+          {w.flags.map(f => (
+            <span key={f} className="text-[10px] px-1.5 py-0.5 rounded-md font-mono"
+              style={{ background: 'rgba(239,68,68,0.1)', color: '#fca5a5' }}>{f}</span>
+          ))}
+        </div>
+      </div>
+
+      {/* Severity pills */}
+      <div className="flex items-center gap-1.5 shrink-0">
+        {(['critical', 'high', 'medium', 'low'] as const).map(s => {
+          const count = w[s]
+          if (!count) return null
+          return (
+            <span key={s} className="text-[11px] font-mono font-bold px-2 py-0.5 rounded-full"
+              style={{ background: `${SEV_COLOR[s]}18`, color: SEV_COLOR[s] }}>
+              {count}
+            </span>
+          )
+        })}
+        <span className="text-[11px] text-slate-600 ml-1">
+          {totalFindings} finding{totalFindings !== 1 ? 's' : ''}
+        </span>
+      </div>
+
+      <ArrowRight size={12} className="text-slate-700 group-hover:text-slate-400 transition-colors shrink-0" />
+    </motion.button>
+  )
+}
+
 // ── Main ──────────────────────────────────────────────────────────────────────
 
 const EMPTY_GRAPH: GraphData = { nodes: [], edges: [] }
@@ -286,6 +388,7 @@ function fmtScanTime(iso: string): string {
 export function OverviewView({ data, onNavigate, scanMeta }: OverviewViewProps) {
   const stats = useClusterStats(data ?? EMPTY_GRAPH)
   const { sev: graphSev } = stats
+  const riskyWorkloads = useTopRiskyWorkloads(data ?? EMPTY_GRAPH, scanMeta?.findings ?? [])
 
   const sev = scanMeta
     ? { critical: scanMeta.criticalCount, high: scanMeta.highCount, medium: scanMeta.mediumCount, low: scanMeta.lowCount }
@@ -356,6 +459,13 @@ export function OverviewView({ data, onNavigate, scanMeta }: OverviewViewProps) 
                   {scanMeta.durationMs && <span>{scanMeta.durationMs}ms</span>}
                 </div>
               )}
+              <button
+                onClick={() => onNavigate('graph')}
+                className="mt-3 flex items-center gap-1.5 text-[11px] text-slate-600 hover:text-cyan-400 transition-colors"
+              >
+                <GitGraph size={11} />
+                Open IRSA graph → click any workload to inspect its IAM permissions
+              </button>
             </div>
 
             <div className="w-px h-24 shrink-0" style={{ background: 'rgba(255,255,255,0.06)' }} />
@@ -403,6 +513,44 @@ export function OverviewView({ data, onNavigate, scanMeta }: OverviewViewProps) 
             </motion.div>
           ))}
         </div>
+
+        {/* ── Top Risky Workloads ── */}
+        {riskyWorkloads.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="rounded-2xl overflow-hidden"
+            style={{
+              background: 'rgba(255,255,255,0.02)',
+              backdropFilter: 'blur(20px)',
+              WebkitBackdropFilter: 'blur(20px)',
+              boxShadow: '0 4px 30px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.04)',
+              border: '1px solid rgba(255,255,255,0.04)',
+            }}
+          >
+            <div className="flex items-center justify-between px-5 py-4"
+              style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+              <div>
+                <div className="flex items-center gap-2.5">
+                  <Flame size={15} className="text-orange-400" />
+                  <span className="text-base font-sans font-bold text-slate-100">Top Risky Workloads</span>
+                </div>
+                <div className="text-xs font-sans text-slate-600 mt-0.5">Click any workload to explore its IAM permissions in the graph</div>
+              </div>
+              <button
+                onClick={() => onNavigate('findings')}
+                className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-300 transition-colors"
+              >
+                View all findings <ArrowRight size={11} />
+              </button>
+            </div>
+            <div className="p-3 space-y-1.5">
+              {riskyWorkloads.map((w, i) => (
+                <RiskyWorkloadRow key={w.id} w={w} onNavigate={onNavigate} index={i} />
+              ))}
+            </div>
+          </motion.div>
+        )}
 
         {/* ── Namespace Health ── */}
         <div
@@ -461,12 +609,12 @@ export function OverviewView({ data, onNavigate, scanMeta }: OverviewViewProps) 
         {/* ── Quick Navigation ── */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 pb-2">
           {[
+            { tab: 'findings'   as TabId, icon: <ShieldAlert size={18} />, label: 'Security Findings',  desc: `${sev.critical + sev.high} active risks to review`,   color: sev.critical > 0 ? '#ef4444' : sev.high > 0 ? '#f97316' : '#10b981', badge: sev.critical > 0 || sev.high > 0 ? 'Start here' : undefined },
+            { tab: 'graph'      as TabId, icon: <GitGraph    size={18} />, label: 'IRSA / IAM Graph',   desc: 'Click a workload → see IAM permissions & blast radius', color: '#f59e0b', badge: 'IAM chains' },
             { tab: 'topology'   as TabId, icon: <Network     size={18} />, label: 'Topology',          desc: 'Workloads, pods, services and how they connect',      color: '#3b82f6' },
             { tab: 'rbac'       as TabId, icon: <Lock        size={18} />, label: 'RBAC / Permissions', desc: 'Visualize who can do what across the cluster',         color: '#8b5cf6' },
-            { tab: 'findings'   as TabId, icon: <ShieldAlert size={18} />, label: 'Security Findings',  desc: `${sev.critical + sev.high} active risks to review`,   color: sev.critical > 0 ? '#ef4444' : sev.high > 0 ? '#f97316' : '#10b981' },
-            { tab: 'graph'      as TabId, icon: <GitGraph    size={18} />, label: 'IRSA / IAM Graph',   desc: 'AWS permission chains from pods to S3, RDS etc.',      color: '#f59e0b' },
             { tab: 'benchmarks' as TabId, icon: <BookMarked  size={18} />, label: 'Benchmarks',         desc: 'CIS, MITRE, NSA/CISA, OWASP K10 compliance coverage', color: '#22d3ee' },
-          ].map(({ tab, icon, label, desc, color }) => (
+          ].map(({ tab, icon, label, desc, color, badge }) => (
             <motion.button
               key={tab}
               whileHover={{ scale: 1.02 }}
@@ -486,7 +634,15 @@ export function OverviewView({ data, onNavigate, scanMeta }: OverviewViewProps) 
                 <span style={{ color }}>{icon}</span>
               </div>
               <div className="flex-1 min-w-0">
-                <div className="text-sm font-sans font-semibold text-slate-200">{label}</div>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-sans font-semibold text-slate-200">{label}</span>
+                  {badge && (
+                    <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-md shrink-0"
+                      style={{ background: `${color}20`, color }}>
+                      {badge}
+                    </span>
+                  )}
+                </div>
                 <div className="text-xs font-sans text-slate-500 mt-1 leading-relaxed">{desc}</div>
               </div>
               <ArrowRight size={14} className="text-slate-700 group-hover:text-slate-400 transition-colors mt-1.5 shrink-0" />
