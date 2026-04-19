@@ -84,19 +84,18 @@ roleRef:
 
 ---
 
-# Edit this Secret before applying.
-# GUARDMAP_API_KEY: generate in GuardMap dashboard → Settings → API Keys
-apiVersion: v1
-kind: Secret
-metadata:
-  name: guardmap-credentials
-  namespace: guardmap
-type: Opaque
-stringData:
-  GUARDMAP_API_KEY: "<your-api-key>"
-  SUPABASE_URL: "<your-supabase-url>"
-  SUPABASE_ANON_KEY: "<your-supabase-anon-key>"
-  CLUSTER_NAME: "<your-cluster-name>"
+# ── Credentials Secret ────────────────────────────────────────────────────────
+# Create this ONCE with kubectl create (never kubectl apply — it overwrites).
+# Get your values from: GuardMap dashboard → Settings → API Keys
+#
+#   kubectl create secret generic guardmap-credentials -n guardmap \
+#     --from-literal=GUARDMAP_API_KEY="<your-api-key>" \
+#     --from-literal=SUPABASE_URL="<your-supabase-url>" \
+#     --from-literal=SUPABASE_ANON_KEY="<your-supabase-anon-key>" \
+#     --from-literal=CLUSTER_NAME="<your-cluster-name>"
+#
+# To update an existing secret use kubectl patch or kubectl create --dry-run.
+# ─────────────────────────────────────────────────────────────────────────────
 
 ---
 
