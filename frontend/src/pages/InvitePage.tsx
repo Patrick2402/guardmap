@@ -2,11 +2,12 @@ import { useState, useEffect, FormEvent } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
-  Shield, Building2, Loader2, AlertCircle, CheckCircle2,
+  Building2, Loader2, AlertCircle, CheckCircle2,
   ArrowRight, Lock, Eye, EyeOff, Mail, UserPlus,
 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
+import { GuardMapSymbol } from '../components/GuardMapLogo'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -134,10 +135,7 @@ export function InvitePage() {
     return (
       <div className="min-h-screen flex items-center justify-center"
         style={{ background: '#080c14' }}>
-        <div className="relative">
-          <Shield size={28} className="text-cyan-900" />
-          <Shield size={28} className="absolute inset-0 text-cyan-400 animate-ping opacity-30" />
-        </div>
+        <GuardMapSymbol size={28} />
       </div>
     )
   }
@@ -205,7 +203,7 @@ export function InvitePage() {
 
         {/* Logo */}
         <div className="flex items-center justify-center gap-2.5 mb-2">
-          <Shield size={18} className="text-cyan-400" />
+          <GuardMapSymbol size={20} />
           <div className="flex items-baseline">
             <span className="text-[16px] font-sans font-bold text-cyan-400">Guard</span>
             <span className="text-[16px] font-sans font-bold text-slate-100">Map</span>

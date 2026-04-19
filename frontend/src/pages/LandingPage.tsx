@@ -6,6 +6,7 @@ import {
   Zap, Activity, Lock, Eye, ChevronRight, Terminal,
   Cloud, Check, AlertTriangle, AlertCircle, Info, Sparkles,
 } from 'lucide-react'
+import { GuardMapSymbol } from '../components/GuardMapLogo'
 
 // ── Animated hero graph ───────────────────────────────────────────────────────
 
@@ -399,11 +400,8 @@ export function LandingPage() {
       {/* ── Navbar ── */}
       <nav className="sticky top-0 z-50 flex items-center justify-between px-8 h-14"
         style={{ background: 'rgba(8,12,20,0.85)', backdropFilter: 'blur(20px)', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-        <div className="flex items-center gap-2.5">
-          <div className="relative">
-            <Shield size={16} className="text-cyan-400" />
-            <div className="absolute inset-0 animate-ping opacity-20"><Shield size={16} className="text-cyan-400" /></div>
-          </div>
+        <div className="flex items-center gap-2">
+          <GuardMapSymbol size={20} />
           <span className="text-[14px] font-bold">
             <span className="text-cyan-400">Guard</span>
             <span className="text-slate-100">Map</span>
@@ -977,9 +975,10 @@ export function LandingPage() {
             {/* Brand */}
             <div>
               <div className="flex items-center gap-2 mb-2">
-                <Shield size={14} className="text-cyan-400" />
+                <GuardMapSymbol size={16} />
                 <span className="text-[14px] font-bold">
-                  <span className="text-cyan-400">Guard</span>Map
+                  <span className="text-cyan-400">Guard</span>
+                  <span className="text-slate-100">Map</span>
                 </span>
               </div>
               <p className="text-[12px] text-slate-600 max-w-[200px] leading-relaxed">

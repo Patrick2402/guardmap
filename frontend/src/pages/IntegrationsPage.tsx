@@ -5,9 +5,10 @@ import {
   Plus, Copy, Check, X, ChevronRight, Terminal,
   RefreshCw, Trash2, Key, AlertCircle, CheckCircle2,
   Clock, ShieldCheck, Activity, Cloud, Loader2,
-  ExternalLink, Eye, EyeOff, Shield, ArrowLeft,
+  ExternalLink, Eye, EyeOff, ArrowLeft,
   Bell, Send, Slack,
 } from 'lucide-react'
+import { GuardMapSymbol } from '../components/GuardMapLogo'
 import { supabase, db } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import { OrgSwitcher } from '../components/OrgSwitcher'
@@ -1057,12 +1058,7 @@ export function IntegrationsPage() {
           onClick={() => navigate('/overview')}
           className="flex items-center gap-2.5 shrink-0 cursor-pointer select-none group"
         >
-          <div className="relative">
-            <Shield size={16} className="text-cyan-400" />
-            <div className="absolute inset-0 animate-ping opacity-15">
-              <Shield size={16} className="text-cyan-400" />
-            </div>
-          </div>
+          <GuardMapSymbol size={18} />
           <div className="flex items-baseline gap-0">
             <span className="text-[14px] font-sans font-bold text-cyan-400">Guard</span>
             <span className="text-[14px] font-sans font-bold text-slate-100">Map</span>

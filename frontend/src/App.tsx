@@ -1,7 +1,8 @@
 import { useState, useCallback, useMemo, useRef, useEffect } from 'react'
 import { useNavigate, useParams, useLocation, Routes, Route, Navigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Shield, Zap, RefreshCw, AlertCircle, ChevronDown, Cloud, BookOpen, Activity, Plus } from 'lucide-react'
+import { Zap, RefreshCw, AlertCircle, ChevronDown, Cloud, BookOpen, Activity, Plus } from 'lucide-react'
+import { GuardMapSymbol } from './components/GuardMapLogo'
 
 import { useGraphData, DataSource } from './hooks/useGraphData'
 import { useClusters }    from './hooks/useClusters'
@@ -54,10 +55,7 @@ function RequireAuth({ children }: { children: React.ReactNode }) {
     return (
       <div className="h-screen w-screen flex items-center justify-center"
         style={{ background: '#080c14' }}>
-        <div className="relative">
-          <Shield size={28} className="text-cyan-900" />
-          <Shield size={28} className="absolute inset-0 text-cyan-400 animate-ping opacity-30" />
-        </div>
+        <GuardMapSymbol size={28} />
       </div>
     )
   }
@@ -311,13 +309,8 @@ function ClusterView() {
         style={{ height: 52, background: 'rgba(8,12,20,0.75)', backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
 
         {/* Logo */}
-        <div className="flex items-center gap-2.5 shrink-0 cursor-pointer select-none" onClick={() => handleTabChange('overview')}>
-          <div className="relative">
-            <Shield size={16} className="text-cyan-400" />
-            <div className="absolute inset-0 animate-ping opacity-15">
-              <Shield size={16} className="text-cyan-400" />
-            </div>
-          </div>
+        <div className="flex items-center gap-2 shrink-0 cursor-pointer select-none" onClick={() => handleTabChange('overview')}>
+          <GuardMapSymbol size={18} />
           <div className="flex items-baseline gap-0">
             <span className="text-[14px] font-sans font-bold text-cyan-400">Guard</span>
             <span className="text-[14px] font-sans font-bold text-slate-100">Map</span>
@@ -383,10 +376,7 @@ function ClusterView() {
             <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               className="absolute inset-0 flex flex-col items-center justify-center gap-4 z-20"
             >
-              <div className="relative">
-                <Shield size={36} className="text-cyan-900" />
-                <Shield size={36} className="absolute inset-0 text-cyan-400 animate-ping opacity-40" />
-              </div>
+              <GuardMapSymbol size={36} />
               <p className="text-[11px] font-mono text-slate-500 animate-pulse">Scanning cluster security graph...</p>
             </motion.div>
           )}

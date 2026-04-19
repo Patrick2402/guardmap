@@ -9,6 +9,7 @@ import {
 } from 'lucide-react'
 import { supabase, db } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
+import { GuardMapSymbol } from '../components/GuardMapLogo'
 import { OrgSwitcher } from '../components/OrgSwitcher'
 import type { Invitation, AuditLog, Organization } from '../lib/database.types'
 
@@ -835,12 +836,7 @@ export function SettingsPage() {
       >
         <button onClick={() => navigate('/overview')}
           className="flex items-center gap-2.5 shrink-0 cursor-pointer select-none">
-          <div className="relative">
-            <Shield size={16} className="text-cyan-400" />
-            <div className="absolute inset-0 animate-ping opacity-15">
-              <Shield size={16} className="text-cyan-400" />
-            </div>
-          </div>
+          <GuardMapSymbol size={18} />
           <div className="flex items-baseline">
             <span className="text-[14px] font-sans font-bold text-cyan-400">Guard</span>
             <span className="text-[14px] font-sans font-bold text-slate-100">Map</span>

@@ -1,7 +1,8 @@
 import { useState, FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Shield, Building2, ArrowRight, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react'
+import { Building2, ArrowRight, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react'
+import { GuardMapSymbol } from '../components/GuardMapLogo'
 import { supabase, db } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 
@@ -52,7 +53,7 @@ export function OnboardingPage() {
       >
         {/* Logo */}
         <div className="flex items-center justify-center gap-2.5 mb-10">
-          <Shield size={18} className="text-cyan-400" />
+          <GuardMapSymbol size={20} />
           <div className="flex items-baseline">
             <span className="text-[16px] font-sans font-bold text-cyan-400">Guard</span>
             <span className="text-[16px] font-sans font-bold text-slate-100">Map</span>

@@ -2,11 +2,12 @@ import { useState, FormEvent, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  Shield, Mail, Lock, Eye, EyeOff, AlertCircle,
+  Mail, Lock, Eye, EyeOff, AlertCircle,
   Loader2, User, ArrowRight, Check, ArrowLeft,
   GitGraph, ShieldAlert, Zap, Activity,
 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
+import { GuardMapSymbol } from '../components/GuardMapLogo'
 
 type Mode = 'login' | 'signup' | 'reset'
 
@@ -230,12 +231,7 @@ export function LoginPage() {
 
         {/* Logo */}
         <div className="relative flex items-center gap-2.5">
-          <div className="relative">
-            <Shield size={18} className="text-cyan-400" />
-            <div className="absolute inset-0 animate-ping opacity-20">
-              <Shield size={18} className="text-cyan-400" />
-            </div>
-          </div>
+          <GuardMapSymbol size={22} />
           <span className="text-[16px] font-bold">
             <span className="text-cyan-400">Guard</span>
             <span className="text-slate-100">Map</span>
@@ -324,7 +320,7 @@ export function LoginPage() {
 
         {/* Mobile logo */}
         <div className="lg:hidden flex items-center gap-2.5 mb-8">
-          <Shield size={18} className="text-cyan-400" />
+          <GuardMapSymbol size={22} />
           <span className="text-[16px] font-bold">
             <span className="text-cyan-400">Guard</span>
             <span className="text-slate-100">Map</span>
