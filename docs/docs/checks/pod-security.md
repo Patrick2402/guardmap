@@ -84,10 +84,18 @@ Container mounts a host path volume — can expose sensitive node files or enabl
 
 ---
 
-### `default_sa_binding`
-Default ServiceAccount has a RoleBinding — grants permissions to all pods that don't specify a ServiceAccount.
+### `sensitive_env_plaintext`
+Environment variable name contains a credential keyword (`PASSWORD`, `SECRET`, `TOKEN`, `API_KEY`, etc.) and is set as a literal string value — exposed in `kubectl describe`, pod specs, audit logs.
 
-**Remediation:** Create dedicated ServiceAccounts per workload and remove bindings from `default`.
+**Remediation:** Use a Kubernetes Secret and reference it via `valueFrom.secretKeyRef`:
+```yaml
+env:
+- name: DB_PASSWORD
+  valueFrom:
+    secretKeyRef:
+      name: db-credentials
+      key: password
+```
 
 ---
 
@@ -109,10 +117,43 @@ resources:
 ### `unpinned_image`
 Image uses `:latest` or has no tag — non-deterministic deployments, possible supply-chain risk.
 
-**Remediation:**
+**Remediation:** Pin to a specific digest or immutable tag:
 ```yaml
 image: nginx:1.25.3
 ```
+
+---
+
+### `secret_as_env`
+A Kubernetes Secret is mounted as an environment variable — secrets exposed in process listings and `kubectl describe`.
+
+**Remediation:** Mount secrets as files instead (`volumeMounts` + `volumes.secret`), or use an external secrets manager.
+
+---
+
+### `no_seccomp_profile`
+No seccomp profile set — container can make any syscall the kernel allows, widening exploit surface.
+
+**Remediation:**
+```yaml
+securityContext:
+  seccompProfile:
+    type: RuntimeDefault
+```
+
+---
+
+### `automount_default_sa_token`
+Pod uses the default ServiceAccount with `automountServiceAccountToken: true` — Kubernetes API credentials mounted in every container unnecessarily.
+
+**Remediation:** Either set `automountServiceAccountToken: false` on the pod, or create a dedicated ServiceAccount with minimal RBAC and disable auto-mount on the default SA.
+
+---
+
+### `irsa_automount_token`
+Pod has an IRSA annotation (AWS IAM role) **and** automounts its ServiceAccount token — the token is accessible to any process in the container and can be used to call the Kubernetes API.
+
+**Remediation:** Set `automountServiceAccountToken: false` on the pod spec (IRSA uses a projected token from the webhook, not the mounted SA token).
 
 ---
 
@@ -154,3 +195,52 @@ livenessProbe:
   initialDelaySeconds: 10
   periodSeconds: 15
 ```
+
+---
+
+### `no_readiness_probe`
+No readiness probe — pod receives traffic before it is ready, causing request failures during startup.
+
+**Remediation:**
+```yaml
+readinessProbe:
+  httpGet:
+    path: /ready
+    port: 8080
+  initialDelaySeconds: 5
+  periodSeconds: 10
+```
+
+---
+
+### `no_drop_all_caps`
+Container does not drop all Linux capabilities — runs with a broader syscall surface than needed.
+
+**Remediation:**
+```yaml
+securityContext:
+  capabilities:
+    drop: ["ALL"]
+    add: ["NET_BIND_SERVICE"]  # only if actually needed
+```
+
+---
+
+### `public_registry_image`
+Image is pulled from a public registry (`docker.io`, `ghcr.io`, `quay.io`) — no control over image provenance, possible supply-chain risk.
+
+**Remediation:** Mirror images to a private registry (ECR, GCR, Harbor) and pull from there. Enable image scanning on push.
+
+---
+
+### `host_port`
+Container exposes a `hostPort` — binds directly on the node's network interface, bypassing NetworkPolicy.
+
+**Remediation:** Use a Kubernetes Service instead of `hostPort` to expose the container.
+
+---
+
+### `default_namespace_workload`
+Workload runs in the `default` namespace — lacks namespace-level isolation and is harder to apply targeted RBAC and NetworkPolicy.
+
+**Remediation:** Move workloads into dedicated namespaces per team or environment.

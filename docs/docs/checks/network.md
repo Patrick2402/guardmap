@@ -6,7 +6,7 @@ sidebar_position: 4
 
 # Network checks
 
-## High
+## Medium
 
 ### `no_network_policy`
 Namespace has workloads but no NetworkPolicy — all pods can freely communicate cluster-wide.
@@ -28,13 +28,11 @@ spec:
 
 ---
 
-## Medium
-
-### `allow_all_network_policy`
-NetworkPolicy has an empty `from` or `to` selector — equivalent to no policy.
+### `allow_all_ingress`
+A NetworkPolicy has an empty `from` selector on an ingress rule — allows traffic from any pod or IP, making it equivalent to no ingress policy.
 
 ```yaml
-# dangerous — empty selector allows everything
+# dangerous — empty from selector allows everything
 spec:
   ingress:
   - {}
@@ -44,6 +42,30 @@ spec:
 
 ---
 
-## Coverage check
+### `allow_all_egress`
+A NetworkPolicy has an empty `to` selector on an egress rule — all outbound traffic is allowed, bypassing egress controls.
 
-For each user namespace with at least one workload, GuardMap checks whether at least one `NetworkPolicy` exists. System namespaces are excluded.
+**Remediation:** Define explicit egress rules to known destinations. Block all other outbound traffic by default.
+
+---
+
+### `public_loadbalancer`
+Service of type `LoadBalancer` has no `loadBalancerSourceRanges` — exposed to the entire internet.
+
+**Remediation:** Restrict access with source ranges:
+```yaml
+spec:
+  type: LoadBalancer
+  loadBalancerSourceRanges:
+  - "10.0.0.0/8"       # internal traffic only
+  - "203.0.113.0/24"   # specific office IP range
+```
+
+---
+
+## Low
+
+### `node_port_service`
+Service uses `NodePort` — opens a port on every node in the cluster, bypassing NetworkPolicy on the node interface.
+
+**Remediation:** Use `ClusterIP` + an Ingress controller instead of `NodePort` for external access.

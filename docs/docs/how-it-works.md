@@ -20,7 +20,7 @@ CronJob (every 6h)
   ├─ Builds IRSA graph
   │  (SA → IAM Role → AWS Resource)
   │
-  ├─ Runs 71 security checks
+  ├─ Runs 45+ security checks
   │
   └─ HTTP POST /rpc/submit_scan ──►  Supabase (submit_scan RPC)
                                        │
@@ -34,6 +34,7 @@ CronJob (every 6h)
                                        ├─ Overview (score ring)
                                        ├─ Findings (from DB)
                                        ├─ Graph / Topology / RBAC
+                                       ├─ Benchmarks (CIS / MITRE / NSA)
                                        └─ History (trend chart)
 ```
 

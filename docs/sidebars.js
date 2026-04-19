@@ -15,6 +15,7 @@ const sidebars = {
         'guides/connect-cluster',
         'guides/understanding-score',
         'guides/dashboard-tour',
+        'guides/benchmarks',
         'guides/multi-cluster',
       ],
     },
@@ -28,6 +29,7 @@ const sidebars = {
         'checks/rbac',
         'checks/network',
         'checks/iam',
+        'checks/batch',
       ],
     },
     {

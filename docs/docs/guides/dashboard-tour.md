@@ -58,12 +58,26 @@ Lists every security issue from the last scan, sourced directly from the databas
 
 Use the **severity filter** to focus on critical/high only. Each finding includes the affected resource and remediation steps.
 
+## Benchmarks
+
+Maps your findings against five security frameworks:
+
+| Framework | Controls |
+|-----------|----------|
+| CIS Kubernetes Benchmark v1.8 | 26 |
+| MITRE ATT&CK for Containers | 16 |
+| NSA/CISA Kubernetes Hardening Guide 2022 | 13 |
+| AWS EKS Security Best Practices | 7 |
+| OWASP Kubernetes Top 10 | 10 |
+
+Each framework card shows coverage % and how many controls are actively triggered by findings in your cluster. Click any control row to open a detail sheet with the full description, attack scenario, step-by-step remediation, and links to active findings.
+
 ## History
 
 Shows your security score over time as an area chart, plus a list of all past scans with trend indicators (↑↓).
 
-The chart has reference lines at 90 (Passed) and 50 (Medium Risk).
+The chart has reference lines at 90 (Passed) and 50 (Medium Risk). Scan rows show the timestamp, score delta (↑/↓), and breakdown of finding counts.
 
 ## Explorer
 
-A raw data explorer — browse all nodes and edges in the graph. Useful for debugging or verifying discovered resources.
+A raw data explorer — search and filter all nodes and edges discovered in your cluster. Filter by node type (pod, deployment, IAM role, service…), sort by label or namespace, and inspect raw metadata. Useful for verifying what the agent discovered or exporting data for external tooling.

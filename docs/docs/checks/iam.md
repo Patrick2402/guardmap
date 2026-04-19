@@ -21,10 +21,10 @@ Pod → ServiceAccount (with role-arn annotation)
 
 ## Critical
 
-### `iam_full_access`
-Pod can perform all actions on an AWS resource — equivalent to admin credentials.
+### `iam_wildcard_access`
+Pod's IAM policy uses a wildcard action (`*` or `s3:*`) — equivalent to admin credentials on that AWS service.
 
-**Remediation:** Replace wildcard policies with specific actions and resources:
+**Remediation:** Replace wildcards with specific actions and resource ARNs:
 ```json
 {
   "Effect": "Allow",
@@ -44,12 +44,48 @@ Pod has write/delete permissions on an AWS resource.
 
 ---
 
+### `iam_broad_access`
+Pod's IAM role grants access to more than 3 distinct AWS services — overly broad permissions increase blast radius on compromise.
+
+**Remediation:** Split into separate IAM roles, one per workload, with only the services that workload actually uses.
+
+---
+
+### `shared_role_cross_env`
+The same IAM role is used by pods in different namespaces (e.g. `production` and `staging`) — a compromise in one environment can pivot to the other.
+
+**Remediation:** Create separate IAM roles per environment. IRSA roles are cheap; blast radius isolation is not.
+
+---
+
+## Medium
+
+### `irsa_automount_token`
+Pod has an IRSA annotation **and** `automountServiceAccountToken: true` — the Kubernetes API token is mounted alongside the AWS credentials, giving attackers a second credential set to abuse.
+
+**Remediation:** IRSA uses a projected volume token injected by the mutating webhook, not the auto-mounted SA token. Disable auto-mount safely:
+```yaml
+spec:
+  automountServiceAccountToken: false
+```
+
+---
+
+## Low
+
+### `sa_unused_irsa`
+A ServiceAccount has an IRSA annotation (`eks.amazonaws.com/role-arn`) but no pod is currently using it — orphaned IAM bindings that should be cleaned up.
+
+**Remediation:** Remove the annotation if the ServiceAccount is no longer in use, or delete the ServiceAccount entirely. Orphaned bindings can be exploited if someone creates a pod referencing the SA.
+
+---
+
 ## Access level classification
 
 | Level | Examples | Finding |
 |-------|----------|---------|
-| **Full** | `*`, `s3:*`, `iam:*` | Critical |
-| **Write** | `s3:PutObject`, `sqs:SendMessage` | High |
+| **Full** | `*`, `s3:*`, `iam:*` | `iam_wildcard_access` (Critical) |
+| **Write** | `s3:PutObject`, `sqs:SendMessage` | `iam_write_access` (High) |
 | **Read** | `s3:GetObject`, `sqs:ReceiveMessage` | None |
 
 IRSA Graph edges are colour-coded: **red** = full, **orange** = write, **blue** = read.
