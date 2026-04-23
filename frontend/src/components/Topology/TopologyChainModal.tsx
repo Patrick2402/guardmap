@@ -59,13 +59,19 @@ const EDGE_COLOR: Record<string, string> = {
   'uses config →':  '#38bdf8',
 }
 
-// ── Chain builder ──────────────────────────────────────────────────────────────
+// ── Flow edge sets ─────────────────────────────────────────────────────────────
+// Traffic flow: direction of "data path" through the cluster
+const MAIN_FLOW    = new Set(['routes →', 'selects', 'manages', 'schedules'])
+// RBAC permission chain
+const RBAC_FLOW    = new Set(['bound →', 'grants →'])
+// Lateral resource dependencies (secrets/configs)
+const LATERAL_FLOW = new Set(['uses secret →', 'uses config →'])
 
-const WORKLOAD_SET    = new Set(['deployment', 'statefulset', 'daemonset', 'job', 'cronjob'])
-const TRAFFIC_TYPES   = new Set([...WORKLOAD_SET, 'pod', 'k8s_service', 'ingress'])
-const RBAC_BINDING    = new Set(['k8s_rolebinding', 'k8s_clusterrolebinding'])
-const RBAC_ROLE       = new Set(['k8s_role', 'k8s_clusterrole'])
-const CONFIG_TYPES    = new Set(['secret', 'configmap'])
+const WORKLOAD_SET  = new Set(['deployment', 'statefulset', 'daemonset', 'job', 'cronjob'])
+const TRAFFIC_TYPES = new Set([...WORKLOAD_SET, 'pod', 'k8s_service', 'ingress'])
+const RBAC_BINDING  = new Set(['k8s_rolebinding', 'k8s_clusterrolebinding'])
+const RBAC_ROLE     = new Set(['k8s_role', 'k8s_clusterrole'])
+const CONFIG_TYPES  = new Set(['secret', 'configmap'])
 
 type ChainKind = 'traffic' | 'rbac' | 'netpol' | 'config' | 'fallback'
 
@@ -76,10 +82,11 @@ interface Chain {
   extraBranchCount?: number
 }
 
+const INTERNET: VirtualNode = { id: '__internet__', type: 'internet', label: 'Internet' }
+
 function buildTopoChain(focal: GraphNode, data: GraphData): Chain {
   const { nodes, edges } = data
   const nodeMap = new Map(nodes.map(n => [n.id, n]))
-
   const outE = new Map<string, typeof edges[0][]>()
   const inE  = new Map<string, typeof edges[0][]>()
   edges.forEach(e => {
@@ -88,233 +95,193 @@ function buildTopoChain(focal: GraphNode, data: GraphData): Chain {
     if (!inE.has(e.target)) inE.set(e.target, [])
     inE.get(e.target)!.push(e)
   })
-
   const out = (id: string) => outE.get(id) ?? []
   const inn = (id: string) => inE.get(id)  ?? []
-  const isFocal = (n: GraphNode) => n.id === focal.id
+  const F = focal.id
 
-  // ── RBAC chain ───────────────────────────────────────────────────────────────
-  if (RBAC_BINDING.has(focal.type)) {
-    const steps: ChainNode[] = []
-    const saEdge   = inn(focal.id).find(e => e.label === 'bound →')
-    const roleEdge = out(focal.id).find(e => e.label === 'grants →')
-    const sa   = saEdge   ? nodeMap.get(saEdge.source)   : undefined
-    const role = roleEdge ? nodeMap.get(roleEdge.target) : undefined
-
-    if (sa)   steps.push({ node: sa,    isFocal: false })
-    steps.push({ node: focal, edgeLabel: sa ? 'bound →' : undefined, isFocal: true })
-    if (role) steps.push({ node: role, edgeLabel: 'grants →', isFocal: false })
-    return { kind: 'rbac', steps }
-  }
-
-  if (RBAC_ROLE.has(focal.type)) {
-    const steps: ChainNode[] = []
-    const bindEdge = inn(focal.id).find(e => e.label === 'grants →')
-    const binding  = bindEdge ? nodeMap.get(bindEdge.source) : undefined
-    if (binding) {
-      const saEdge = inn(binding.id).find(e => e.label === 'bound →')
-      const sa     = saEdge ? nodeMap.get(saEdge.source) : undefined
-      if (sa) steps.push({ node: sa, isFocal: false })
-      steps.push({ node: binding, edgeLabel: sa ? 'bound →' : undefined, isFocal: false })
+  // ── BFS upstream ──────────────────────────────────────────────────────────────
+  // Walk backwards from startId through `flow` edges (depth-limited).
+  // Returns [{node, edgeFwd}] ordered root → last-ancestor.
+  // edgeFwd = label of the edge FROM that node TO the next one (towards focal).
+  function walkUp(startId: string, flow: Set<string>): { node: GraphNode; edgeFwd: string }[] {
+    const result: { node: GraphNode; edgeFwd: string }[] = []
+    const vis = new Set([startId])
+    let cur = startId
+    for (let depth = 0; depth < 8; depth++) {
+      const e = inn(cur).find(e => !!e.label && flow.has(e.label))
+      if (!e || !e.label) break
+      const p = nodeMap.get(e.source)
+      if (!p || vis.has(p.id)) break
+      result.unshift({ node: p, edgeFwd: e.label })
+      vis.add(p.id)
+      cur = p.id
     }
-    steps.push({ node: focal, edgeLabel: binding ? 'grants →' : undefined, isFocal: true })
-    return { kind: 'rbac', steps }
+    return result
   }
 
-  // ── NetworkPolicy chain ──────────────────────────────────────────────────────
+  // ── BFS downstream ────────────────────────────────────────────────────────────
+  // Walk forward from startId through `flow` edges (depth-limited).
+  // Returns ChainNode[] for nodes AFTER startId. Surfaces focal among siblings.
+  function walkDown(startId: string, flow: Set<string>, vis: Set<string>): ChainNode[] {
+    const steps: ChainNode[] = []
+    let cur = startId
+    for (let depth = 0; depth < 6; depth++) {
+      const ces = out(cur).filter(e => !!e.label && flow.has(e.label) && !vis.has(e.target))
+      if (!ces.length) break
+      // Surface focal node among siblings so "selected" badge is always visible
+      const focalEdge = ces.find(e => e.target === F)
+      const chosen = focalEdge ?? ces[0]
+      const child = nodeMap.get(chosen.target)
+      if (!child) break
+      steps.push({
+        node: child,
+        edgeLabel: chosen.label ?? undefined,
+        isFocal: child.id === F,
+        extraCount: ces.length > 1 ? ces.length - 1 : undefined,
+      })
+      vis.add(child.id)
+      cur = child.id
+    }
+    return steps
+  }
+
+  // ── Build full linear chain through focal ─────────────────────────────────────
+  // upstream → focal → downstream, with Internet prefix when chain starts at Ingress.
+  function buildChain(flow: Set<string>): ChainNode[] {
+    const up  = walkUp(F, flow)
+    const vis = new Set([F, ...up.map(x => x.node.id)])
+    const leftmost = up.length > 0 ? up[0].node : focal
+    const atIngress = leftmost.type === 'ingress'
+    const steps: ChainNode[] = []
+
+    if (atIngress) {
+      steps.push({ node: INTERNET as unknown as GraphNode, isFocal: false })
+    }
+    up.forEach((x, i) => {
+      steps.push({
+        node: x.node,
+        edgeLabel: i === 0 ? (atIngress ? '→' : undefined) : up[i - 1].edgeFwd,
+        isFocal: x.node.id === F,
+      })
+    })
+    steps.push({
+      node: focal,
+      edgeLabel: up.length > 0 ? up[up.length - 1].edgeFwd : (atIngress ? '→' : undefined),
+      isFocal: true,
+    })
+    steps.push(...walkDown(F, flow, vis))
+    return steps
+  }
+
+  // ── Lateral branches ──────────────────────────────────────────────────────────
+  // Secret/configmap usage from a workload node — appended as extra branches.
+  function laterals(wl: GraphNode): ChainNode[][] {
+    return out(wl.id)
+      .filter(e => !!e.label && LATERAL_FLOW.has(e.label))
+      .slice(0, 5)
+      .map(e => {
+        const res = nodeMap.get(e.target)
+        if (!res) return null
+        return [
+          { node: wl, isFocal: wl.id === F },
+          { node: res, edgeLabel: e.label ?? undefined, isFocal: false },
+        ] as ChainNode[]
+      })
+      .filter(Boolean) as ChainNode[][]
+  }
+
+  // ── RBAC ──────────────────────────────────────────────────────────────────────
+  if (RBAC_BINDING.has(focal.type) || RBAC_ROLE.has(focal.type)) {
+    return { kind: 'rbac', steps: buildChain(RBAC_FLOW) }
+  }
+
+  // ── NetworkPolicy ─────────────────────────────────────────────────────────────
   if (focal.type === 'networkpolicy') {
     const steps: ChainNode[] = [{ node: focal, isFocal: true }]
-    out(focal.id)
-      .filter(e => e.label === 'selects')
-      .slice(0, 4)
-      .forEach(e => {
-        const wl = nodeMap.get(e.target)
-        if (wl) steps.push({ node: wl, edgeLabel: 'selects', isFocal: false })
-      })
+    out(F).filter(e => e.label === 'selects').slice(0, 4).forEach(e => {
+      const wl = nodeMap.get(e.target)
+      if (wl) steps.push({ node: wl, edgeLabel: 'selects', isFocal: false })
+    })
     return { kind: 'netpol', steps }
   }
 
-  // ── Config / Secret chain ────────────────────────────────────────────────────
+  // ── Config / Secret ───────────────────────────────────────────────────────────
   if (CONFIG_TYPES.has(focal.type)) {
     const edgeLabel = focal.type === 'secret' ? 'uses secret →' : 'uses config →'
-    const useEdges = inn(focal.id).filter(e => e.label === edgeLabel)
+    const useEdges  = inn(F).filter(e => e.label === edgeLabel)
+    if (!useEdges.length) return { kind: 'config', steps: [{ node: focal, isFocal: true }] }
 
-    if (useEdges.length === 0) {
-      return { kind: 'config', steps: [{ node: focal, isFocal: true }] }
-    }
-
-    // One branch per workload: Pod → Workload → Secret/ConfigMap
-    const branches: ChainNode[][] = useEdges.slice(0, 5).map(e => {
+    const branches = useEdges.slice(0, 5).map(e => {
       const wl = nodeMap.get(e.source)
       if (!wl) return null
-      const pods = out(wl.id)
-        .filter(pe => pe.label === 'manages')
-        .map(pe => nodeMap.get(pe.target))
-        .filter(Boolean) as GraphNode[]
+      const pods = out(wl.id).filter(pe => pe.label === 'manages')
+        .map(pe => nodeMap.get(pe.target)).filter(Boolean) as GraphNode[]
       const branch: ChainNode[] = []
-      if (pods.length > 0) {
-        branch.push({
-          node: pods[0],
-          isFocal: isFocal(pods[0]),
-          extraCount: pods.length > 1 ? pods.length - 1 : undefined,
-        })
+      if (pods.length) {
+        branch.push({ node: pods[0], isFocal: false, extraCount: pods.length > 1 ? pods.length - 1 : undefined })
       }
-      branch.push({ node: wl, edgeLabel: pods.length > 0 ? 'manages' : undefined, isFocal: isFocal(wl) })
+      branch.push({ node: wl, edgeLabel: pods.length ? 'manages' : undefined, isFocal: false })
       branch.push({ node: focal, edgeLabel: edgeLabel, isFocal: true })
       return branch
     }).filter(Boolean) as ChainNode[][]
 
-    const extraCount = useEdges.length > 5 ? useEdges.length - 5 : 0
-    return { kind: 'config', steps: [], branches, ...(extraCount > 0 ? { extraBranchCount: extraCount } : {}) }
+    const extraBranchCount = useEdges.length > 5 ? useEdges.length - 5 : 0
+    return { kind: 'config', steps: [], branches, extraBranchCount: extraBranchCount || undefined }
   }
 
-  // ── Traffic / Batch chain ─────────────────────────────────────────────────────
-
-  // Helper: build the downstream chain starting from a workload node
-  function buildWorkloadBranch(
-    wl: GraphNode | undefined,
-    cj: GraphNode | undefined,
-    svcNode: GraphNode | undefined,
-    ingressNode: GraphNode | undefined,
-    prefixSteps: ChainNode[],
-  ): ChainNode[] {
-    const branch: ChainNode[] = [...prefixSteps]
-    if (ingressNode) {
-      const internet: VirtualNode = { id: '__internet__', type: 'internet', label: 'Internet' }
-      if (branch.length === 0) {
-        branch.push({ node: internet as unknown as GraphNode, isFocal: false })
-        branch.push({ node: ingressNode, edgeLabel: '→', isFocal: isFocal(ingressNode) })
-      }
-    }
-    if (svcNode) branch.push({ node: svcNode, edgeLabel: ingressNode ? 'routes →' : undefined, isFocal: isFocal(svcNode) })
-    if (cj) {
-      branch.push({ node: cj, edgeLabel: svcNode ? 'selects' : undefined, isFocal: isFocal(cj) })
-      if (wl) branch.push({ node: wl, edgeLabel: 'schedules', isFocal: isFocal(wl) })
-    } else if (wl) {
-      branch.push({ node: wl, edgeLabel: svcNode ? 'selects' : undefined, isFocal: isFocal(wl) })
-    }
-    const rawPods: GraphNode[] = wl
-      ? out(wl.id).filter(e => e.label === 'manages').map(e => nodeMap.get(e.target)).filter(Boolean) as GraphNode[]
-      : focal.type === 'pod' ? [focal] : []
-    // Put the focal pod first so "selected" badge is always visible
-    const focalPodIdx = rawPods.findIndex(p => p.id === focal.id)
-    const pods = focalPodIdx > 0
-      ? [rawPods[focalPodIdx], ...rawPods.filter((_, i) => i !== focalPodIdx)]
-      : rawPods
-    if (pods.length > 0) {
-      branch.push({
-        node: pods[0],
-        edgeLabel: wl ? 'manages' : undefined,
-        isFocal: isFocal(pods[0]),
-        extraCount: pods.length > 1 ? pods.length - 1 : undefined,
-      })
-    }
-    return branch
-  }
-
+  // ── Traffic / Batch ───────────────────────────────────────────────────────────
   if (TRAFFIC_TYPES.has(focal.type)) {
-    let workload: GraphNode | undefined
-    let cronJob:  GraphNode | undefined
+    const up = walkUp(F, MAIN_FLOW)
 
-    if (focal.type === 'cronjob') {
-      cronJob = focal
-      const jobEdge = out(focal.id).find(e => e.label === 'schedules')
-      workload = jobEdge ? nodeMap.get(jobEdge.target) : undefined
-    } else if (focal.type === 'job') {
-      workload = focal
-      const cjEdge = inn(focal.id).find(e => e.label === 'schedules')
-      cronJob = cjEdge ? nodeMap.get(cjEdge.source) : undefined
-    } else if (focal.type === 'pod') {
-      const managesEdge = inn(focal.id).find(e => e.label === 'manages')
-      const parent = managesEdge ? nodeMap.get(managesEdge.source) : undefined
-      if (parent?.type === 'job') {
-        workload = parent
-        const cjEdge = inn(workload.id).find(e => e.label === 'schedules')
-        cronJob = cjEdge ? nodeMap.get(cjEdge.source) : undefined
-      } else {
-        workload = parent
-      }
-    } else if (focal.type === 'k8s_service') {
-      const e = out(focal.id).find(e => e.label === 'selects')
-      workload = e ? nodeMap.get(e.target) : undefined
-    } else if (focal.type === 'ingress') {
-      // multi-service: handled below
-    } else {
-      workload = focal
-    }
+    // Detect multi-service ingress anywhere in the upstream path (or focal itself)
+    const ingressInPath = focal.type === 'ingress' ? focal
+      : up.find(x => x.node.type === 'ingress')?.node
 
-    const isBatch = workload?.type === 'job' || cronJob !== undefined
-    let svc: GraphNode | undefined
-    let ingress: GraphNode | undefined
-    let allSvcs: GraphNode[] = []
-
-    if (!isBatch) {
-      const svcAnchor = workload ?? (focal.type === 'k8s_service' ? focal : undefined)
-      if (svcAnchor && svcAnchor.type !== 'job') {
-        const e = inn(svcAnchor.id).find(e => e.label === 'selects')
-        svc = e ? nodeMap.get(e.source) : undefined
-      }
-      if (focal.type === 'k8s_service') svc = focal
-      if (svc) {
-        const e = inn(svc.id).find(e => e.label === 'routes →')
-        ingress = e ? nodeMap.get(e.source) : undefined
-      }
-      if (focal.type === 'ingress') {
-        ingress = focal
-        allSvcs = out(focal.id)
-          .filter(e => e.label === 'routes →')
-          .map(e => nodeMap.get(e.target))
-          .filter(Boolean) as GraphNode[]
-        svc = allSvcs[0]
-      }
-    }
-
-    // Multi-service ingress → one branch per service
-    if (allSvcs.length > 1) {
-      const internet: VirtualNode = { id: '__internet__', type: 'internet', label: 'Internet' }
-      const branches: ChainNode[][] = allSvcs.map(sv => {
-        const we = out(sv.id).find(e => e.label === 'selects')
-        const wl = we ? nodeMap.get(we.target) : undefined
-        return buildWorkloadBranch(wl, undefined, sv, ingress, [
-          { node: internet as unknown as GraphNode, isFocal: false },
-          { node: ingress!, edgeLabel: '→', isFocal: isFocal(ingress!) },
-        ])
-      })
-      return { kind: 'traffic', steps: [], branches }
-    }
-
-    // For ingress focal with a single service, workload must be derived from the service
-    if (!workload && !cronJob && svc) {
-      const we = out(svc.id).find(e => e.label === 'selects')
-      if (we) workload = nodeMap.get(we.target)
-    }
-
-    const trafficSteps = buildWorkloadBranch(workload, cronJob, svc, ingress, [])
-    if (trafficSteps.length === 0) return { kind: 'fallback', steps: [{ node: focal, isFocal: true }] }
-
-    // Append secret/configmap branches for the workload
-    if (workload) {
-      const resourceEdges = [
-        ...out(workload.id).filter(e => e.label === 'uses secret →'),
-        ...out(workload.id).filter(e => e.label === 'uses config →'),
-      ]
-      if (resourceEdges.length > 0) {
-        const resourceBranches = resourceEdges.slice(0, 5).map(e => {
-          const res = nodeMap.get(e.target)
-          if (!res) return null
-          return [
-            { node: workload!, isFocal: isFocal(workload!), edgeLabel: undefined },
-            { node: res, edgeLabel: e.label, isFocal: false },
-          ] as ChainNode[]
+    if (ingressInPath) {
+      const svcEdges = out(ingressInPath.id).filter(e => e.label === 'routes →')
+      if (svcEdges.length > 1) {
+        const internet = INTERNET as unknown as GraphNode
+        const branches: ChainNode[][] = svcEdges.map(se => {
+          const svc = nodeMap.get(se.target)
+          if (!svc) return null
+          const branch: ChainNode[] = [
+            { node: internet, isFocal: false },
+            { node: ingressInPath, edgeLabel: '→', isFocal: ingressInPath.id === F },
+            { node: svc, edgeLabel: 'routes →', isFocal: svc.id === F },
+          ]
+          const wlEdge = out(svc.id).find(e => e.label === 'selects')
+          const wl = wlEdge ? nodeMap.get(wlEdge.target) : undefined
+          if (wl) {
+            branch.push({ node: wl, edgeLabel: 'selects', isFocal: wl.id === F })
+            const podEdges = out(wl.id).filter(e => e.label === 'manages')
+            const pod = podEdges[0] ? nodeMap.get(podEdges[0].target) : undefined
+            if (pod) {
+              branch.push({
+                node: pod, edgeLabel: 'manages', isFocal: pod.id === F,
+                extraCount: podEdges.length > 1 ? podEdges.length - 1 : undefined,
+              })
+            }
+          }
+          return branch
         }).filter(Boolean) as ChainNode[][]
-        return { kind: 'traffic', steps: [], branches: [trafficSteps, ...resourceBranches] }
+        return { kind: 'traffic', steps: [], branches }
       }
     }
 
-    return { kind: 'traffic', steps: trafficSteps }
+    // Generic single-path chain
+    const mainSteps = buildChain(MAIN_FLOW)
+
+    // Append lateral (secret/configmap) branches from the workload in the chain
+    const wlNode = mainSteps.find(s => WORKLOAD_SET.has(s.node.type))?.node as GraphNode | undefined
+    const lats   = wlNode ? laterals(wlNode) : []
+    if (lats.length > 0) {
+      return { kind: 'traffic', steps: [], branches: [mainSteps, ...lats] }
+    }
+
+    if (mainSteps.length > 1) return { kind: 'traffic', steps: mainSteps }
   }
 
-  // ── Fallback ─────────────────────────────────────────────────────────────────
+  // ── Fallback ──────────────────────────────────────────────────────────────────
   return { kind: 'fallback', steps: [{ node: focal, isFocal: true }] }
 }
 
