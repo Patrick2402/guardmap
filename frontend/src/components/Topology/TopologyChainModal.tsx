@@ -206,13 +206,51 @@ function buildTopoChain(focal: GraphNode, data: GraphData): Chain {
   return { kind: 'fallback', steps: [{ node: focal, isFocal: true }] }
 }
 
+// ── Chain description ──────────────────────────────────────────────────────────
+
+function chainDescription(chain: Chain): string | null {
+  const s = chain.steps
+  if (chain.kind === 'rbac') {
+    const sa      = s.find(x => x.node.type === 'serviceaccount')
+    const role    = s.find(x => RBAC_ROLE.has(x.node.type as string))
+    const roleKind = role?.node.type === 'k8s_clusterrole' ? 'ClusterRole' : 'Role'
+    if (sa && role)
+      return `ServiceAccount "${sa.node.label}" is bound to ${roleKind} "${role.node.label}" via this binding — granting it the Kubernetes API permissions defined in the role.`
+    if (role)
+      return `This binding grants permissions defined in ${roleKind} "${role.node.label}".`
+    return 'This binding grants a ServiceAccount access to a Kubernetes Role.'
+  }
+  if (chain.kind === 'traffic') {
+    const ing  = s.find(x => x.node.type === 'ingress')
+    const svc  = s.find(x => x.node.type === 'k8s_service')
+    const wl   = s.find(x => WORKLOAD_SET.has(x.node.type as string))
+    if (ing && svc && wl)
+      return `External traffic enters through Ingress "${ing.node.label}", is routed to Service "${svc.node.label}", which selects ${TYPE_CFG[wl.node.type]?.label ?? wl.node.type} "${wl.node.label}".`
+    if (svc && wl)
+      return `Service "${svc.node.label}" selects ${TYPE_CFG[wl.node.type]?.label ?? wl.node.type} "${wl.node.label}" (no public Ingress).`
+    return null
+  }
+  if (chain.kind === 'netpol') {
+    const count = s.length - 1
+    return `This NetworkPolicy applies to ${count} workload${count !== 1 ? 's' : ''}. It controls which traffic is allowed in/out of the selected pods.`
+  }
+  if (chain.kind === 'config') {
+    const count = s.filter(x => !x.isFocal).length
+    const focal = s.find(x => x.isFocal)
+    const kind  = focal?.node.type === 'secret' ? 'Secret' : 'ConfigMap'
+    if (count > 0)
+      return `This ${kind} is used by ${count} workload${count !== 1 ? 's' : ''}. Changing or deleting it will affect those workloads.`
+    return `This ${kind} exists in the namespace but is not currently mounted by any workload.`
+  }
+  return null
+}
+
 // ── Chain Step Card ────────────────────────────────────────────────────────────
 
 function StepCard({ step }: { step: ChainNode }) {
-  const n    = step.node
-  const cfg  = TYPE_CFG[n.type] ?? { color: '#94a3b8', label: n.type, Icon: Box }
+  const n         = step.node
+  const cfg       = TYPE_CFG[n.type] ?? { color: '#94a3b8', label: n.type, Icon: Box }
   const edgeColor = step.edgeLabel ? (EDGE_COLOR[step.edgeLabel] ?? '#475569') : '#475569'
-  const shortLabel = n.label.length > 22 ? n.label.slice(0, 19) + '…' : n.label
 
   return (
     <div className="flex items-center gap-2 shrink-0">
@@ -228,11 +266,12 @@ function StepCard({ step }: { step: ChainNode }) {
         </div>
       )}
 
-      <div className="relative">
+      {/* Card with tooltip */}
+      <div className="relative group">
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex flex-col gap-1.5 p-3 rounded-xl shrink-0"
+          className="flex flex-col gap-1.5 p-3 rounded-xl shrink-0 cursor-default"
           style={{
             background: n.type === 'internet'
               ? 'rgba(239,68,68,0.08)'
@@ -242,28 +281,27 @@ function StepCard({ step }: { step: ChainNode }) {
             border: step.isFocal
               ? `1.5px solid ${cfg.color}70`
               : `1px solid ${cfg.color}20`,
-            minWidth: 110,
-            maxWidth: 160,
+            minWidth: 130,
             boxShadow: step.isFocal
               ? `0 0 24px ${cfg.color}28, 0 0 8px ${cfg.color}14`
               : `0 0 16px ${cfg.color}0a`,
           }}
         >
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1.5 flex-wrap">
             <cfg.Icon size={11} style={{ color: cfg.color }} />
             <span className="text-[9px] font-mono font-bold uppercase tracking-widest" style={{ color: cfg.color }}>
               {cfg.label}
             </span>
             {step.isFocal && (
-              <span className="ml-auto text-[8px] font-mono px-1 py-0.5 rounded"
+              <span className="text-[8px] font-mono px-1 py-0.5 rounded"
                 style={{ background: `${cfg.color}20`, color: cfg.color }}>
                 selected
               </span>
             )}
           </div>
 
-          <div className="text-[12px] font-mono font-semibold text-slate-200 leading-tight break-all">
-            {shortLabel}
+          <div className="text-[12px] font-mono font-semibold text-slate-200 leading-snug break-all max-w-[200px]">
+            {n.label}
           </div>
 
           {'namespace' in n && n.namespace && (
@@ -271,8 +309,22 @@ function StepCard({ step }: { step: ChainNode }) {
           )}
         </motion.div>
 
+        {/* Tooltip */}
+        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-50
+          pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+          <div className="px-2.5 py-1.5 rounded-lg border text-[10px] font-mono text-slate-200 whitespace-nowrap shadow-xl"
+            style={{ background: '#0d1421', borderColor: `${cfg.color}40` }}>
+            {n.label}
+            {'namespace' in n && n.namespace && (
+              <span className="text-slate-500 ml-1">· {n.namespace}</span>
+            )}
+          </div>
+          <div className="w-2 h-2 mx-auto -mt-1 rotate-45 border-b border-r"
+            style={{ background: '#0d1421', borderColor: `${cfg.color}40` }} />
+        </div>
+
         {step.extraCount && (
-          <div className="absolute -right-2 -bottom-2 text-[9px] font-mono px-1.5 py-0.5 rounded-full border"
+          <div className="absolute -right-2 -bottom-2 text-[9px] font-mono px-1.5 py-0.5 rounded-full border z-10"
             style={{ background: 'rgba(8,12,20,0.95)', borderColor: `${TYPE_CFG['pod']?.color ?? '#94a3b8'}40`, color: '#94a3b8' }}>
             +{step.extraCount}
           </div>
@@ -486,11 +538,24 @@ export function TopologyChainModal({ node, data, onClose }: TopologyChainModalPr
               {/* Chain visualization */}
               {showChain && chain && (
                 <div className="px-6 pt-5 pb-4">
-                  <div className="text-[9px] font-mono font-bold uppercase tracking-widest text-slate-600 mb-4">
+                  <div className="text-[9px] font-mono font-bold uppercase tracking-widest text-slate-600 mb-3">
                     {CHAIN_TITLE[chain.kind]}
                   </div>
-                  <div className="overflow-x-auto pb-2">
-                    <div className="flex items-center min-w-max gap-0">
+
+                  {/* Human-readable description */}
+                  {(() => {
+                    const desc = chainDescription(chain)
+                    return desc ? (
+                      <div className="flex items-start gap-2 mb-4 px-3 py-2.5 rounded-xl"
+                        style={{ background: `${cfg.color}08`, border: `1px solid ${cfg.color}18` }}>
+                        <span className="text-[10px] font-mono font-bold shrink-0 mt-px" style={{ color: cfg.color }}>?</span>
+                        <p className="text-[11px] font-sans text-slate-400 leading-relaxed">{desc}</p>
+                      </div>
+                    ) : null
+                  })()}
+
+                  <div className="overflow-x-auto pb-2" style={{ overflowY: 'visible' }}>
+                    <div className="flex items-center min-w-max gap-0 py-6">
                       {chain.steps.map((step, i) => (
                         <StepCard key={step.node.id + i} step={step} />
                       ))}
