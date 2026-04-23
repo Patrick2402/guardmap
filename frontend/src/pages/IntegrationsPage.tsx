@@ -1073,7 +1073,7 @@ export function IntegrationsPage() {
 
         {/* Breadcrumb */}
         <div className="flex items-center gap-2 text-slate-600">
-          <span className="text-[12px] font-sans">Dashboard</span>
+          <button onClick={() => navigate('/overview')} className="text-[12px] font-sans hover:text-slate-300 transition-colors">Dashboard</button>
           <ChevronRight size={11} />
           <span className="text-[12px] font-sans font-medium text-slate-300 flex items-center gap-1.5">
             <Activity size={11} className="text-cyan-400" />

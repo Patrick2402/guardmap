@@ -6,7 +6,7 @@ import {
   AlertTriangle, CheckCircle, XCircle, Boxes, BookMarked,
   KeyRound, FileText, Flame,
 } from 'lucide-react'
-import { GraphData } from '../../types'
+import { GraphData, NodeType } from '../../types'
 import { TabId } from '../Nav'
 import { countCriticalFindings } from '../Findings/FindingsView'
 import type { ScanMeta, DbFinding } from '../../hooks/useGraphData'
@@ -378,6 +378,7 @@ const EMPTY_GRAPH: GraphData = { nodes: [], edges: [] }
 interface OverviewViewProps {
   data?: GraphData | null
   onNavigate: (tab: TabId, nodeId?: string) => void
+  onNavigateToExplorer?: (filter: NodeType | 'all') => void
   scanMeta?: ScanMeta | null
 }
 
@@ -385,7 +386,7 @@ function fmtScanTime(iso: string): string {
   return new Date(iso).toLocaleString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })
 }
 
-export function OverviewView({ data, onNavigate, scanMeta }: OverviewViewProps) {
+export function OverviewView({ data, onNavigate, onNavigateToExplorer, scanMeta }: OverviewViewProps) {
   const stats = useClusterStats(data ?? EMPTY_GRAPH)
   const { sev: graphSev } = stats
   const riskyWorkloads = useTopRiskyWorkloads(data ?? EMPTY_GRAPH, scanMeta?.findings ?? [])
@@ -478,22 +479,26 @@ export function OverviewView({ data, onNavigate, scanMeta }: OverviewViewProps) 
 
         {/* ── Cluster Stats ── */}
         <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
-          {[
-            { icon: <Server    size={15} />, value: stats.namespaces,  label: 'Namespaces',  color: '#a78bfa' },
-            { icon: <Layers    size={15} />, value: stats.workloads,   label: 'Workloads',   color: '#3b82f6' },
-            { icon: <Container size={15} />, value: stats.pods,        label: 'Pods',        color: '#06b6d4' },
-            { icon: <Network   size={15} />, value: stats.services,    label: 'Services',    color: '#14b8a6' },
-            { icon: <Globe     size={15} />, value: stats.ingresses,   label: 'Ingresses',   color: '#22c55e' },
-            { icon: <Lock      size={15} />, value: stats.rbacRoles,   label: 'RBAC Roles',  color: '#8b5cf6' },
-            { icon: <KeyRound  size={15} />, value: stats.secrets,     label: 'Secrets',     color: '#f59e0b' },
-            { icon: <FileText  size={15} />, value: stats.configmaps,  label: 'ConfigMaps',  color: '#6366f1' },
-          ].map(({ icon, value, label, color }, i) => (
+          {([
+            { icon: <Server    size={13} />, value: stats.namespaces,  label: 'Namespaces',  color: '#a78bfa', explorerFilter: null,          tab: 'topology' as TabId },
+            { icon: <Layers    size={13} />, value: stats.workloads,   label: 'Workloads',   color: '#3b82f6', explorerFilter: 'deployment'   as NodeType, tab: 'explorer' as TabId },
+            { icon: <Container size={13} />, value: stats.pods,        label: 'Pods',        color: '#06b6d4', explorerFilter: 'pod'          as NodeType, tab: 'explorer' as TabId },
+            { icon: <Network   size={13} />, value: stats.services,    label: 'Services',    color: '#14b8a6', explorerFilter: 'k8s_service'  as NodeType, tab: 'explorer' as TabId },
+            { icon: <Globe     size={13} />, value: stats.ingresses,   label: 'Ingresses',   color: '#22c55e', explorerFilter: 'ingress'      as NodeType, tab: 'explorer' as TabId },
+            { icon: <Lock      size={13} />, value: stats.rbacRoles,   label: 'RBAC Roles',  color: '#8b5cf6', explorerFilter: 'k8s_role'     as NodeType, tab: 'explorer' as TabId },
+            { icon: <KeyRound  size={13} />, value: stats.secrets,     label: 'Secrets',     color: '#f59e0b', explorerFilter: 'secret'       as NodeType, tab: 'explorer' as TabId },
+            { icon: <FileText  size={13} />, value: stats.configmaps,  label: 'ConfigMaps',  color: '#6366f1', explorerFilter: 'configmap'    as NodeType, tab: 'explorer' as TabId },
+          ] as const).map(({ icon, value, label, color, explorerFilter, tab }, i) => (
             <motion.div
               key={label}
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.04 }}
-              className="rounded-2xl px-4 py-3.5 flex items-center gap-3"
+              onClick={() => {
+                if (explorerFilter && onNavigateToExplorer) onNavigateToExplorer(explorerFilter)
+                onNavigate(tab)
+              }}
+              className="rounded-2xl px-4 py-3.5 flex flex-col gap-1.5 cursor-pointer group transition-all duration-150"
               style={{
                 background: `rgba(255,255,255,0.025)`,
                 backdropFilter: 'blur(16px)',
@@ -501,15 +506,14 @@ export function OverviewView({ data, onNavigate, scanMeta }: OverviewViewProps) 
                 boxShadow: `0 4px 20px rgba(0,0,0,0.25), 0 0 30px ${color}0d, inset 0 1px 0 rgba(255,255,255,0.05)`,
                 border: '1px solid rgba(255,255,255,0.04)',
               }}
+              whileHover={{ scale: 1.03, boxShadow: `0 4px 24px rgba(0,0,0,0.3), 0 0 30px ${color}22, inset 0 1px 0 rgba(255,255,255,0.07)` }}
+              whileTap={{ scale: 0.97 }}
             >
-              <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
-                style={{ background: `${color}12` }}>
+              <div className="flex items-center gap-1.5">
                 <span style={{ color }}>{icon}</span>
-              </div>
-              <div>
                 <div className="text-2xl font-mono font-bold leading-none" style={{ color }}>{value}</div>
-                <div className="text-xs font-sans text-slate-500 mt-1">{label}</div>
               </div>
+              <div className="text-xs font-sans text-slate-500 whitespace-nowrap group-hover:text-slate-400 transition-colors">{label}</div>
             </motion.div>
           ))}
         </div>

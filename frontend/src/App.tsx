@@ -228,6 +228,7 @@ function ClusterView() {
   const [graphHintDismissed, setGraphHintDismissed] = useState(
     () => localStorage.getItem('gm_graph_hint_dismissed') === '1'
   )
+  const [explorerInitialFilter, setExplorerInitialFilter] = useState<import('./types').NodeType | 'all'>('all')
   function dismissGraphHint() {
     localStorage.setItem('gm_graph_hint_dismissed', '1')
     setGraphHintDismissed(true)
@@ -407,7 +408,7 @@ function ClusterView() {
 
           {activeTab === 'overview' && !loading && (
             <motion.div key="overview" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="absolute inset-0">
-              <OverviewView data={data} scanMeta={scanMeta ?? undefined} onNavigate={handleNavigate} />
+              <OverviewView data={data} scanMeta={scanMeta ?? undefined} onNavigate={handleNavigate} onNavigateToExplorer={f => { setExplorerInitialFilter(f); handleNavigate('explorer') }} />
             </motion.div>
           )}
 
@@ -458,7 +459,7 @@ function ClusterView() {
               {activeTab === 'rbac'       && <RBACView       data={data} focusNodeId={pendingFocusNodeId} />}
               {activeTab === 'findings'   && <FindingsView   data={data} dbFindings={scanMeta?.findings} onNavigate={handleNavigate} />}
               {activeTab === 'benchmarks' && <BenchmarksView data={data} dbFindings={scanMeta?.findings} onNavigate={handleNavigate} />}
-              {activeTab === 'explorer'   && <ExplorerView   data={data} clusterName={clusterName} />}
+              {activeTab === 'explorer'   && <ExplorerView   data={data} clusterName={clusterName} initialTypeFilter={explorerInitialFilter} />}
 
             </motion.div>
           )}

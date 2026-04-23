@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Search, X, Container, KeyRound, ShieldCheck, HardDrive,
@@ -11,6 +11,7 @@ import { GraphData, GraphNode, NodeType, AccessLevel } from '../../types'
 interface ExplorerViewProps {
   data: GraphData
   clusterName?: string
+  initialTypeFilter?: NodeType | 'all'
 }
 
 type SortKey = 'label' | 'namespace' | 'type' | 'access'
@@ -512,8 +513,9 @@ function ExpandedRow({ node, data }: { node: GraphNode; data: GraphData }) {
 
 // ── Main component ────────────────────────────────────────────────────────────
 
-export function ExplorerView({ data, clusterName = 'mock-cluster' }: ExplorerViewProps) {
-  const [typeFilter, setTypeFilter]   = useState<NodeType | 'all'>('all')
+export function ExplorerView({ data, clusterName = 'mock-cluster', initialTypeFilter }: ExplorerViewProps) {
+  const [typeFilter, setTypeFilter]   = useState<NodeType | 'all'>(initialTypeFilter ?? 'all')
+  useEffect(() => { if (initialTypeFilter) setTypeFilter(initialTypeFilter) }, [initialTypeFilter])
   const [nsFilter, setNsFilter]       = useState<string>('all')
   const [search, setSearch]           = useState('')
   const [sortKey, setSortKey]         = useState<SortKey>('type')
