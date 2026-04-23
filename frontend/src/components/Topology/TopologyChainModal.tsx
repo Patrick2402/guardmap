@@ -21,7 +21,8 @@ interface ChainNode {
   node: AnyNode
   edgeLabel?: string
   isFocal?: boolean
-  extraCount?: number  // "+N more siblings"
+  extraCount?: number      // "+N more pods/siblings"
+  parallelNodes?: AnyNode[] // stacked group (e.g. multiple services from one ingress)
 }
 
 // ── Visual config ──────────────────────────────────────────────────────────────
@@ -177,13 +178,12 @@ function buildTopoChain(focal: GraphNode, data: GraphData): Chain {
       const e = out(focal.id).find(e => e.label === 'selects')
       workload = e ? nodeMap.get(e.target) : undefined
     } else if (focal.type === 'ingress') {
-      const se = out(focal.id).find(e => e.label === 'routes →')
-      if (se) {
-        const svc = nodeMap.get(se.target)
-        if (svc) {
-          const we = out(svc.id).find(e => e.label === 'selects')
-          workload = we ? nodeMap.get(we.target) : undefined
-        }
+      // multi-service: handled separately in assembly — pick first for workload resolution
+      const svcEdges = out(focal.id).filter(e => e.label === 'routes →')
+      const firstSvc = svcEdges.length > 0 ? nodeMap.get(svcEdges[0].target) : undefined
+      if (firstSvc) {
+        const we = out(firstSvc.id).find(e => e.label === 'selects')
+        workload = we ? nodeMap.get(we.target) : undefined
       }
     } else {
       // deployment / statefulset / daemonset
@@ -199,6 +199,9 @@ function buildTopoChain(focal: GraphNode, data: GraphData): Chain {
     const isBatch = workload?.type === 'job' || cronJob !== undefined
     let svc: GraphNode | undefined
     let ingress: GraphNode | undefined
+    // All services from an ingress (for multi-route case)
+    let allSvcs: GraphNode[] = []
+
     if (!isBatch) {
       const svcAnchor = workload ?? (focal.type === 'k8s_service' ? focal : undefined)
       if (svcAnchor && svcAnchor.type !== 'job') {
@@ -210,7 +213,14 @@ function buildTopoChain(focal: GraphNode, data: GraphData): Chain {
         const e = inn(svc.id).find(e => e.label === 'routes →')
         ingress = e ? nodeMap.get(e.source) : undefined
       }
-      if (focal.type === 'ingress') ingress = focal
+      if (focal.type === 'ingress') {
+        ingress = focal
+        allSvcs = out(focal.id)
+          .filter(e => e.label === 'routes →')
+          .map(e => nodeMap.get(e.target))
+          .filter(Boolean) as GraphNode[]
+        svc = allSvcs[0]
+      }
     }
 
     const steps: ChainNode[] = []
@@ -219,21 +229,35 @@ function buildTopoChain(focal: GraphNode, data: GraphData): Chain {
       steps.push({ node: internet as unknown as GraphNode, isFocal: false })
       steps.push({ node: ingress, edgeLabel: '→', isFocal: isFocal(ingress) })
     }
-    if (svc) steps.push({ node: svc, edgeLabel: ingress ? 'routes →' : undefined, isFocal: isFocal(svc) })
+
+    // Multi-service ingress: show all services as stacked group
+    if (allSvcs.length > 1) {
+      steps.push({
+        node: allSvcs[0],
+        edgeLabel: 'routes →',
+        isFocal: isFocal(allSvcs[0]),
+        parallelNodes: allSvcs.slice(1),
+      })
+    } else if (svc) {
+      steps.push({ node: svc, edgeLabel: ingress ? 'routes →' : undefined, isFocal: isFocal(svc) })
+    }
 
     if (cronJob) {
       steps.push({ node: cronJob, edgeLabel: svc ? 'selects' : undefined, isFocal: isFocal(cronJob) })
       if (workload) steps.push({ node: workload, edgeLabel: 'schedules', isFocal: isFocal(workload) })
-    } else if (workload) {
+    } else if (workload && allSvcs.length <= 1) {
+      // Don't show workload when multi-service (ambiguous which service it belongs to)
       steps.push({ node: workload, edgeLabel: svc ? 'selects' : undefined, isFocal: isFocal(workload) })
     }
 
-    if (pods.length > 0) steps.push({
-      node: pods[0],
-      edgeLabel: workload ? 'manages' : undefined,
-      isFocal: isFocal(pods[0]),
-      extraCount: pods.length > 1 ? pods.length - 1 : undefined,
-    })
+    if (pods.length > 0 && allSvcs.length <= 1) {
+      steps.push({
+        node: pods[0],
+        edgeLabel: workload ? 'manages' : undefined,
+        isFocal: isFocal(pods[0]),
+        extraCount: pods.length > 1 ? pods.length - 1 : undefined,
+      })
+    }
 
     if (steps.length > 0) return { kind: 'traffic', steps }
   }
@@ -289,10 +313,55 @@ function chainDescription(chain: Chain): string | null {
 
 // ── Chain Step Card ────────────────────────────────────────────────────────────
 
+function NodeCard({ node, isFocal }: { node: AnyNode; isFocal?: boolean }) {
+  const cfg = TYPE_CFG[node.type] ?? { color: '#94a3b8', label: node.type, Icon: Box }
+  return (
+    <div
+      className="flex flex-col gap-1.5 p-3 rounded-xl shrink-0 cursor-default"
+      style={{
+        background: node.type === 'internet'
+          ? 'rgba(239,68,68,0.08)'
+          : isFocal
+            ? `${cfg.color}14`
+            : 'rgba(255,255,255,0.03)',
+        border: isFocal
+          ? `1.5px solid ${cfg.color}70`
+          : `1px solid ${cfg.color}20`,
+        minWidth: 130,
+        boxShadow: isFocal
+          ? `0 0 24px ${cfg.color}28, 0 0 8px ${cfg.color}14`
+          : `0 0 16px ${cfg.color}0a`,
+      }}
+    >
+      <div className="flex items-center gap-1.5 flex-wrap">
+        <cfg.Icon size={11} style={{ color: cfg.color }} />
+        <span className="text-[9px] font-mono font-bold uppercase tracking-widest" style={{ color: cfg.color }}>
+          {cfg.label}
+        </span>
+        {isFocal && (
+          <span className="text-[8px] font-mono px-1 py-0.5 rounded"
+            style={{ background: `${cfg.color}20`, color: cfg.color }}>
+            selected
+          </span>
+        )}
+      </div>
+      <div className="text-[12px] font-mono font-semibold text-slate-200 leading-snug"
+        style={{ wordBreak: 'break-word', maxWidth: 220 }}>
+        {node.label}
+      </div>
+      {'namespace' in node && node.namespace && (
+        <div className="text-[9px] font-mono text-slate-600">{node.namespace}</div>
+      )}
+    </div>
+  )
+}
+
 function StepCard({ step }: { step: ChainNode }) {
   const n         = step.node
   const cfg       = TYPE_CFG[n.type] ?? { color: '#94a3b8', label: n.type, Icon: Box }
   const edgeColor = step.edgeLabel ? (EDGE_COLOR[step.edgeLabel] ?? '#475569') : '#475569'
+  const hasParallel = step.parallelNodes && step.parallelNodes.length > 0
+  const allParallel = hasParallel ? [n, ...step.parallelNodes!] : null
 
   return (
     <div className="flex items-center gap-2 shrink-0">
@@ -309,51 +378,28 @@ function StepCard({ step }: { step: ChainNode }) {
       )}
 
       <div className="relative">
-        <div
-          className="flex flex-col gap-1.5 p-3 rounded-xl shrink-0 cursor-default"
-          style={{
-            background: n.type === 'internet'
-              ? 'rgba(239,68,68,0.08)'
-              : step.isFocal
-                ? `${cfg.color}14`
-                : 'rgba(255,255,255,0.03)',
-            border: step.isFocal
-              ? `1.5px solid ${cfg.color}70`
-              : `1px solid ${cfg.color}20`,
-            minWidth: 130,
-            boxShadow: step.isFocal
-              ? `0 0 24px ${cfg.color}28, 0 0 8px ${cfg.color}14`
-              : `0 0 16px ${cfg.color}0a`,
-          }}
-        >
-          <div className="flex items-center gap-1.5 flex-wrap">
-            <cfg.Icon size={11} style={{ color: cfg.color }} />
-            <span className="text-[9px] font-mono font-bold uppercase tracking-widest" style={{ color: cfg.color }}>
-              {cfg.label}
-            </span>
-            {step.isFocal && (
-              <span className="text-[8px] font-mono px-1 py-0.5 rounded"
-                style={{ background: `${cfg.color}20`, color: cfg.color }}>
-                selected
-              </span>
+        {hasParallel && allParallel ? (
+          <div className="flex flex-col gap-0 relative"
+            style={{ border: '1px solid rgba(20,184,166,0.2)', borderRadius: 14, padding: 4 }}>
+            <div className="text-[8px] font-mono font-bold uppercase tracking-widest text-teal-500 px-2 pt-1 pb-2">
+              {allParallel.length} services
+            </div>
+            <div className="flex flex-col gap-1.5">
+              {allParallel.map((pn, idx) => (
+                <NodeCard key={pn.id + idx} node={pn} isFocal={idx === 0 && step.isFocal} />
+              ))}
+            </div>
+          </div>
+        ) : (
+          <>
+            <NodeCard node={n} isFocal={step.isFocal} />
+            {step.extraCount && (
+              <div className="absolute -right-2 -bottom-2 text-[9px] font-mono px-1.5 py-0.5 rounded-full border z-10"
+                style={{ background: 'rgba(8,12,20,0.95)', borderColor: `${TYPE_CFG['pod']?.color ?? '#94a3b8'}40`, color: '#94a3b8' }}>
+                +{step.extraCount}
+              </div>
             )}
-          </div>
-
-          <div className="text-[12px] font-mono font-semibold text-slate-200 leading-snug"
-            style={{ wordBreak: 'break-word', maxWidth: 220 }}>
-            {n.label}
-          </div>
-
-          {'namespace' in n && n.namespace && (
-            <div className="text-[9px] font-mono text-slate-600">{n.namespace}</div>
-          )}
-        </div>
-
-        {step.extraCount && (
-          <div className="absolute -right-2 -bottom-2 text-[9px] font-mono px-1.5 py-0.5 rounded-full border z-10"
-            style={{ background: 'rgba(8,12,20,0.95)', borderColor: `${TYPE_CFG['pod']?.color ?? '#94a3b8'}40`, color: '#94a3b8' }}>
-            +{step.extraCount}
-          </div>
+          </>
         )}
       </div>
     </div>
