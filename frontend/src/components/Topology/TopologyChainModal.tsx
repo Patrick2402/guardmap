@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   X, Globe, Layers, Container, Shield, Network, GitBranch,
@@ -269,10 +269,8 @@ function StepCard({ step, onHover }: { step: ChainNode; onHover: (info: HoveredI
       )}
 
       <div className="relative">
-        <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex flex-col gap-1.5 p-3 rounded-xl shrink-0 cursor-default"
+        <div
+          className="flex flex-col gap-1.5 p-3 rounded-xl shrink-0 cursor-default transition-all duration-150"
           onMouseEnter={() => onHover({ label: n.label, namespace: ('namespace' in n ? n.namespace : undefined), type: n.type, color: cfg.color, typeLabel: cfg.label })}
           onMouseLeave={() => onHover(null)}
           style={{
@@ -303,14 +301,15 @@ function StepCard({ step, onHover }: { step: ChainNode; onHover: (info: HoveredI
             )}
           </div>
 
-          <div className="text-[12px] font-mono font-semibold text-slate-200 leading-snug break-all max-w-[200px]">
+          <div className="text-[12px] font-mono font-semibold text-slate-200 leading-snug"
+            style={{ wordBreak: 'break-word', maxWidth: 220 }}>
             {n.label}
           </div>
 
           {'namespace' in n && n.namespace && (
             <div className="text-[9px] font-mono text-slate-600">{n.namespace}</div>
           )}
-        </motion.div>
+        </div>
 
         {step.extraCount && (
           <div className="absolute -right-2 -bottom-2 text-[9px] font-mono px-1.5 py-0.5 rounded-full border z-10"
@@ -461,6 +460,18 @@ export function TopologyChainModal({ node, data, onClose }: TopologyChainModalPr
     [node, data]
   )
   const [hovered, setHovered] = useState<HoveredInfo | null>(null)
+  const scrollRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const el = scrollRef.current
+    if (!el) return
+    const onWheel = (e: WheelEvent) => {
+      if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) return  // already horizontal
+      e.preventDefault()
+      el.scrollLeft += e.deltaY
+    }
+    el.addEventListener('wheel', onWheel, { passive: false })
+    return () => el.removeEventListener('wheel', onWheel)
+  }, [])
 
   const cfg = node ? (TYPE_CFG[node.type] ?? { color: '#94a3b8', label: node.type, Icon: Box }) : null
   const showChain = chain && chain.kind !== 'fallback' && chain.steps.length > 1
@@ -544,7 +555,8 @@ export function TopologyChainModal({ node, data, onClose }: TopologyChainModalPr
                     ) : null
                   })()}
 
-                  <div className="overflow-x-auto">
+                  <div ref={scrollRef} className="overflow-x-auto"
+                    style={{ scrollbarWidth: 'thin', scrollbarColor: `${cfg.color}30 transparent` }}>
                     <div className="flex items-center min-w-max gap-0 py-4">
                       {chain.steps.map((step, i) => (
                         <StepCard key={step.node.id + i} step={step} onHover={setHovered} />
