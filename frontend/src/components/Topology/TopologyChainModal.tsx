@@ -47,14 +47,16 @@ const TYPE_CFG: Record<string, { color: string; label: string; Icon: React.Eleme
 }
 
 const EDGE_COLOR: Record<string, string> = {
-  '→':         '#94a3b8',
-  'routes →':  '#22c55e',
-  'selects':   '#14b8a6',
-  'manages':   '#3b82f6',
-  'schedules': '#0d9488',
-  'uses':      '#8b5cf6',
-  'grants →':  '#8b5cf6',
-  'bound →':   '#7c3aed',
+  '→':              '#94a3b8',
+  'routes →':       '#22c55e',
+  'selects':        '#14b8a6',
+  'manages':        '#3b82f6',
+  'schedules':      '#0d9488',
+  'uses':           '#8b5cf6',
+  'grants →':       '#8b5cf6',
+  'bound →':        '#7c3aed',
+  'uses secret →':  '#f59e0b',
+  'uses config →':  '#38bdf8',
 }
 
 // ── Chain builder ──────────────────────────────────────────────────────────────
@@ -70,7 +72,8 @@ type ChainKind = 'traffic' | 'rbac' | 'netpol' | 'config' | 'fallback'
 interface Chain {
   kind: ChainKind
   steps: ChainNode[]
-  branches?: ChainNode[][]  // one full path per branch (multi-service ingress)
+  branches?: ChainNode[][]
+  extraBranchCount?: number
 }
 
 function buildTopoChain(focal: GraphNode, data: GraphData): Chain {
@@ -133,20 +136,36 @@ function buildTopoChain(focal: GraphNode, data: GraphData): Chain {
 
   // ── Config / Secret chain ────────────────────────────────────────────────────
   if (CONFIG_TYPES.has(focal.type)) {
-    const label = focal.type === 'secret' ? 'uses secret →' : 'uses config →'
-    const useEdges = inn(focal.id).filter(e => e.label === label)
-    const steps: ChainNode[] = []
-    useEdges.slice(0, 3).forEach(e => {
+    const edgeLabel = focal.type === 'secret' ? 'uses secret →' : 'uses config →'
+    const useEdges = inn(focal.id).filter(e => e.label === edgeLabel)
+
+    if (useEdges.length === 0) {
+      return { kind: 'config', steps: [{ node: focal, isFocal: true }] }
+    }
+
+    // One branch per workload: Pod → Workload → Secret/ConfigMap
+    const branches: ChainNode[][] = useEdges.slice(0, 5).map(e => {
       const wl = nodeMap.get(e.source)
-      if (wl) steps.push({ node: wl, isFocal: false })
-    })
-    steps.push({
-      node: focal,
-      edgeLabel: useEdges.length > 0 ? label : undefined,
-      isFocal: true,
-      extraCount: useEdges.length > 3 ? useEdges.length - 3 : undefined,
-    })
-    return { kind: 'config', steps }
+      if (!wl) return null
+      const pods = out(wl.id)
+        .filter(pe => pe.label === 'manages')
+        .map(pe => nodeMap.get(pe.target))
+        .filter(Boolean) as GraphNode[]
+      const branch: ChainNode[] = []
+      if (pods.length > 0) {
+        branch.push({
+          node: pods[0],
+          isFocal: isFocal(pods[0]),
+          extraCount: pods.length > 1 ? pods.length - 1 : undefined,
+        })
+      }
+      branch.push({ node: wl, edgeLabel: pods.length > 0 ? 'manages' : undefined, isFocal: isFocal(wl) })
+      branch.push({ node: focal, edgeLabel: edgeLabel, isFocal: true })
+      return branch
+    }).filter(Boolean) as ChainNode[][]
+
+    const extraCount = useEdges.length > 5 ? useEdges.length - 5 : 0
+    return { kind: 'config', steps: [], branches, ...(extraCount > 0 ? { extraBranchCount: extraCount } : {}) }
   }
 
   // ── Traffic / Batch chain ─────────────────────────────────────────────────────
@@ -270,8 +289,29 @@ function buildTopoChain(focal: GraphNode, data: GraphData): Chain {
       if (we) workload = nodeMap.get(we.target)
     }
 
-    const steps = buildWorkloadBranch(workload, cronJob, svc, ingress, [])
-    if (steps.length > 0) return { kind: 'traffic', steps }
+    const trafficSteps = buildWorkloadBranch(workload, cronJob, svc, ingress, [])
+    if (trafficSteps.length === 0) return { kind: 'fallback', steps: [{ node: focal, isFocal: true }] }
+
+    // Append secret/configmap branches for the workload
+    if (workload) {
+      const resourceEdges = [
+        ...out(workload.id).filter(e => e.label === 'uses secret →'),
+        ...out(workload.id).filter(e => e.label === 'uses config →'),
+      ]
+      if (resourceEdges.length > 0) {
+        const resourceBranches = resourceEdges.slice(0, 5).map(e => {
+          const res = nodeMap.get(e.target)
+          if (!res) return null
+          return [
+            { node: workload!, isFocal: isFocal(workload!), edgeLabel: undefined },
+            { node: res, edgeLabel: e.label, isFocal: false },
+          ] as ChainNode[]
+        }).filter(Boolean) as ChainNode[][]
+        return { kind: 'traffic', steps: [], branches: [trafficSteps, ...resourceBranches] }
+      }
+    }
+
+    return { kind: 'traffic', steps: trafficSteps }
   }
 
   // ── Fallback ─────────────────────────────────────────────────────────────────
@@ -294,11 +334,21 @@ function chainDescription(chain: Chain): string | null {
   }
   if (chain.kind === 'traffic') {
     if (chain.branches && chain.branches.length > 1) {
-      const ing = chain.branches[0].find(x => x.node.type === 'ingress')
-      const svcNames = chain.branches
-        .map(b => b.find(x => x.node.type === 'k8s_service')?.node.label)
-        .filter(Boolean).join(', ')
-      return `Ingress "${ing?.node.label ?? ''}" routes traffic to ${chain.branches.length} services: ${svcNames}. Each row below shows the full path for one route.`
+      const hasIngress = chain.branches[0].some(x => x.node.type === 'ingress')
+      // Multi-service ingress: all branches are traffic paths
+      if (hasIngress && chain.branches.every(b => !b.some(x => CONFIG_TYPES.has(x.node.type)))) {
+        const ing = chain.branches[0].find(x => x.node.type === 'ingress')
+        const svcNames = chain.branches
+          .map(b => b.find(x => x.node.type === 'k8s_service')?.node.label)
+          .filter(Boolean).join(', ')
+        return `Ingress "${ing?.node.label ?? ''}" routes traffic to ${chain.branches.length} services: ${svcNames}. Each row shows the full path for one route.`
+      }
+      // Traffic + resource branches
+      const trafficBranch = chain.branches[0]
+      const wl = trafficBranch.find(x => WORKLOAD_SET.has(x.node.type))
+      const resourceCount = chain.branches.length - 1
+      const resourceLabel = resourceCount === 1 ? 'resource' : 'resources'
+      return `${wl ? `${TYPE_CFG[wl.node.type]?.label ?? 'Workload'} "${wl.node.label}"` : 'This workload'} uses ${resourceCount} ${resourceLabel}. Row 1 shows the traffic path; remaining rows show mounted secrets and config maps.`
     }
     const ing  = s.find(x => x.node.type === 'ingress')
     const svc  = s.find(x => x.node.type === 'k8s_service')
@@ -320,11 +370,13 @@ function chainDescription(chain: Chain): string | null {
     return `This NetworkPolicy applies to ${count} workload${count !== 1 ? 's' : ''}. It controls which traffic is allowed in/out of the selected pods.`
   }
   if (chain.kind === 'config') {
-    const count = s.filter(x => !x.isFocal).length
-    const focal = s.find(x => x.isFocal)
-    const kind  = focal?.node.type === 'secret' ? 'Secret' : 'ConfigMap'
+    const allSteps = chain.branches ? chain.branches.flat() : s
+    const focalNode = allSteps.find(x => x.isFocal)
+    const kind = focalNode?.node.type === 'secret' ? 'Secret' : 'ConfigMap'
+    const count = chain.branches?.length ?? s.filter(x => !x.isFocal).length
+    const extra = chain.extraBranchCount ?? 0
     if (count > 0)
-      return `This ${kind} is used by ${count} workload${count !== 1 ? 's' : ''}. Changing or deleting it will affect those workloads.`
+      return `This ${kind} is used by ${count + extra} workload${(count + extra) !== 1 ? 's' : ''}${extra > 0 ? ` (showing ${count})` : ''}. Each row shows the full pod→workload→${kind.toLowerCase()} path.`
     return `This ${kind} exists in the namespace but is not currently mounted by any workload.`
   }
   return null
@@ -640,7 +692,7 @@ export function TopologyChainModal({ node, data, onClose }: TopologyChainModalPr
                       <div className="flex flex-col gap-3 py-4 min-w-max">
                         {chain.branches.map((branch, bi) => (
                           <div key={bi} className="flex items-center gap-0">
-                            <div className="text-[9px] font-mono text-slate-700 w-5 shrink-0 text-right mr-2 self-center">
+                            <div className="text-[9px] font-mono text-slate-800 w-4 shrink-0 text-right mr-3 self-center select-none">
                               {bi + 1}
                             </div>
                             {branch.map((step, i) => (
@@ -648,6 +700,11 @@ export function TopologyChainModal({ node, data, onClose }: TopologyChainModalPr
                             ))}
                           </div>
                         ))}
+                        {chain.extraBranchCount && chain.extraBranchCount > 0 ? (
+                          <div className="text-[9px] font-mono text-slate-600 pl-7">
+                            +{chain.extraBranchCount} more workloads not shown
+                          </div>
+                        ) : null}
                       </div>
                     ) : (
                       <div className="flex items-center min-w-max gap-0 py-4">
