@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   X, Globe, Layers, Container, Shield, Network, GitBranch,
@@ -247,7 +247,9 @@ function chainDescription(chain: Chain): string | null {
 
 // ── Chain Step Card ────────────────────────────────────────────────────────────
 
-function StepCard({ step }: { step: ChainNode }) {
+interface HoveredInfo { label: string; namespace?: string; type: string; color: string; typeLabel: string }
+
+function StepCard({ step, onHover }: { step: ChainNode; onHover: (info: HoveredInfo | null) => void }) {
   const n         = step.node
   const cfg       = TYPE_CFG[n.type] ?? { color: '#94a3b8', label: n.type, Icon: Box }
   const edgeColor = step.edgeLabel ? (EDGE_COLOR[step.edgeLabel] ?? '#475569') : '#475569'
@@ -266,12 +268,13 @@ function StepCard({ step }: { step: ChainNode }) {
         </div>
       )}
 
-      {/* Card with tooltip */}
-      <div className="relative group">
+      <div className="relative">
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           className="flex flex-col gap-1.5 p-3 rounded-xl shrink-0 cursor-default"
+          onMouseEnter={() => onHover({ label: n.label, namespace: ('namespace' in n ? n.namespace : undefined), type: n.type, color: cfg.color, typeLabel: cfg.label })}
+          onMouseLeave={() => onHover(null)}
           style={{
             background: n.type === 'internet'
               ? 'rgba(239,68,68,0.08)'
@@ -308,20 +311,6 @@ function StepCard({ step }: { step: ChainNode }) {
             <div className="text-[9px] font-mono text-slate-600">{n.namespace}</div>
           )}
         </motion.div>
-
-        {/* Tooltip */}
-        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-50
-          pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-150">
-          <div className="px-2.5 py-1.5 rounded-lg border text-[10px] font-mono text-slate-200 whitespace-nowrap shadow-xl"
-            style={{ background: '#0d1421', borderColor: `${cfg.color}40` }}>
-            {n.label}
-            {'namespace' in n && n.namespace && (
-              <span className="text-slate-500 ml-1">· {n.namespace}</span>
-            )}
-          </div>
-          <div className="w-2 h-2 mx-auto -mt-1 rotate-45 border-b border-r"
-            style={{ background: '#0d1421', borderColor: `${cfg.color}40` }} />
-        </div>
 
         {step.extraCount && (
           <div className="absolute -right-2 -bottom-2 text-[9px] font-mono px-1.5 py-0.5 rounded-full border z-10"
@@ -471,6 +460,7 @@ export function TopologyChainModal({ node, data, onClose }: TopologyChainModalPr
     () => node ? buildTopoChain(node, data) : null,
     [node, data]
   )
+  const [hovered, setHovered] = useState<HoveredInfo | null>(null)
 
   const cfg = node ? (TYPE_CFG[node.type] ?? { color: '#94a3b8', label: node.type, Icon: Box }) : null
   const showChain = chain && chain.kind !== 'fallback' && chain.steps.length > 1
@@ -554,12 +544,37 @@ export function TopologyChainModal({ node, data, onClose }: TopologyChainModalPr
                     ) : null
                   })()}
 
-                  <div className="overflow-x-auto pb-2" style={{ overflowY: 'visible' }}>
-                    <div className="flex items-center min-w-max gap-0 py-6">
+                  <div className="overflow-x-auto">
+                    <div className="flex items-center min-w-max gap-0 py-4">
                       {chain.steps.map((step, i) => (
-                        <StepCard key={step.node.id + i} step={step} />
+                        <StepCard key={step.node.id + i} step={step} onHover={setHovered} />
                       ))}
                     </div>
+                  </div>
+
+                  {/* Hover info strip */}
+                  <div className="h-8 flex items-center mt-1">
+                    <AnimatePresence>
+                      {hovered && (
+                        <motion.div
+                          key={hovered.label}
+                          initial={{ opacity: 0, y: 4 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: 4 }}
+                          transition={{ duration: 0.12 }}
+                          className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-[11px] font-mono"
+                          style={{ background: `${hovered.color}10`, border: `1px solid ${hovered.color}25` }}
+                        >
+                          <span className="font-bold uppercase tracking-widest text-[9px]" style={{ color: hovered.color }}>
+                            {hovered.typeLabel}
+                          </span>
+                          <span className="text-slate-200">{hovered.label}</span>
+                          {hovered.namespace && (
+                            <span className="text-slate-600">· {hovered.namespace}</span>
+                          )}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </div>
                 </div>
               )}
