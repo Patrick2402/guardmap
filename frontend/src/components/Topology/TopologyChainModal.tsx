@@ -51,6 +51,7 @@ const EDGE_COLOR: Record<string, string> = {
   'routes →':  '#22c55e',
   'selects':   '#14b8a6',
   'manages':   '#3b82f6',
+  'schedules': '#0d9488',
   'uses':      '#8b5cf6',
   'grants →':  '#8b5cf6',
   'bound →':   '#7c3aed',
@@ -147,13 +148,31 @@ function buildTopoChain(focal: GraphNode, data: GraphData): Chain {
     return { kind: 'config', steps }
   }
 
-  // ── Traffic chain (ingress / service / workload / pod) ────────────────────────
+  // ── Traffic / Batch chain ─────────────────────────────────────────────────────
   if (TRAFFIC_TYPES.has(focal.type)) {
+    // workload = node that directly manages pods
+    // cronJob  = optional CronJob parent (when workload is a Job)
     let workload: GraphNode | undefined
-    if (WORKLOAD_SET.has(focal.type))  workload = focal
-    else if (focal.type === 'pod') {
-      const e = inn(focal.id).find(e => e.label === 'manages')
-      workload = e ? nodeMap.get(e.source) : undefined
+    let cronJob:  GraphNode | undefined
+
+    if (focal.type === 'cronjob') {
+      cronJob = focal
+      const jobEdge = out(focal.id).find(e => e.label === 'schedules')
+      workload = jobEdge ? nodeMap.get(jobEdge.target) : undefined
+    } else if (focal.type === 'job') {
+      workload = focal
+      const cjEdge = inn(focal.id).find(e => e.label === 'schedules')
+      cronJob = cjEdge ? nodeMap.get(cjEdge.source) : undefined
+    } else if (focal.type === 'pod') {
+      const managesEdge = inn(focal.id).find(e => e.label === 'manages')
+      const parent = managesEdge ? nodeMap.get(managesEdge.source) : undefined
+      if (parent?.type === 'job') {
+        workload = parent
+        const cjEdge = inn(workload.id).find(e => e.label === 'schedules')
+        cronJob = cjEdge ? nodeMap.get(cjEdge.source) : undefined
+      } else {
+        workload = parent
+      }
     } else if (focal.type === 'k8s_service') {
       const e = out(focal.id).find(e => e.label === 'selects')
       workload = e ? nodeMap.get(e.target) : undefined
@@ -166,23 +185,33 @@ function buildTopoChain(focal: GraphNode, data: GraphData): Chain {
           workload = we ? nodeMap.get(we.target) : undefined
         }
       }
+    } else {
+      // deployment / statefulset / daemonset
+      workload = focal
     }
 
+    // Pods: always from the direct workload (Job or regular)
     const pods: GraphNode[] = workload
       ? out(workload.id).filter(e => e.label === 'manages').map(e => nodeMap.get(e.target)).filter(Boolean) as GraphNode[]
       : focal.type === 'pod' ? [focal] : []
 
+    // Service / Ingress only relevant for non-batch workloads
+    const isBatch = workload?.type === 'job' || cronJob !== undefined
     let svc: GraphNode | undefined
-    if (workload) {
-      const e = inn(workload.id).find(e => e.label === 'selects')
-      svc = e ? nodeMap.get(e.source) : undefined
-    } else if (focal.type === 'k8s_service') svc = focal
-
     let ingress: GraphNode | undefined
-    if (svc) {
-      const e = inn(svc.id).find(e => e.label === 'routes →')
-      ingress = e ? nodeMap.get(e.source) : undefined
-    } else if (focal.type === 'ingress') ingress = focal
+    if (!isBatch) {
+      const svcAnchor = workload ?? (focal.type === 'k8s_service' ? focal : undefined)
+      if (svcAnchor && svcAnchor.type !== 'job') {
+        const e = inn(svcAnchor.id).find(e => e.label === 'selects')
+        svc = e ? nodeMap.get(e.source) : undefined
+      }
+      if (focal.type === 'k8s_service') svc = focal
+      if (svc) {
+        const e = inn(svc.id).find(e => e.label === 'routes →')
+        ingress = e ? nodeMap.get(e.source) : undefined
+      }
+      if (focal.type === 'ingress') ingress = focal
+    }
 
     const steps: ChainNode[] = []
     if (ingress) {
@@ -190,8 +219,15 @@ function buildTopoChain(focal: GraphNode, data: GraphData): Chain {
       steps.push({ node: internet as unknown as GraphNode, isFocal: false })
       steps.push({ node: ingress, edgeLabel: '→', isFocal: isFocal(ingress) })
     }
-    if (svc)     steps.push({ node: svc,     edgeLabel: ingress ? 'routes →' : undefined,  isFocal: isFocal(svc) })
-    if (workload) steps.push({ node: workload, edgeLabel: svc ? 'selects' : undefined,       isFocal: isFocal(workload) })
+    if (svc) steps.push({ node: svc, edgeLabel: ingress ? 'routes →' : undefined, isFocal: isFocal(svc) })
+
+    if (cronJob) {
+      steps.push({ node: cronJob, edgeLabel: svc ? 'selects' : undefined, isFocal: isFocal(cronJob) })
+      if (workload) steps.push({ node: workload, edgeLabel: 'schedules', isFocal: isFocal(workload) })
+    } else if (workload) {
+      steps.push({ node: workload, edgeLabel: svc ? 'selects' : undefined, isFocal: isFocal(workload) })
+    }
+
     if (pods.length > 0) steps.push({
       node: pods[0],
       edgeLabel: workload ? 'manages' : undefined,
@@ -223,7 +259,13 @@ function chainDescription(chain: Chain): string | null {
   if (chain.kind === 'traffic') {
     const ing  = s.find(x => x.node.type === 'ingress')
     const svc  = s.find(x => x.node.type === 'k8s_service')
-    const wl   = s.find(x => WORKLOAD_SET.has(x.node.type as string))
+    const cj   = s.find(x => x.node.type === 'cronjob')
+    const job  = s.find(x => x.node.type === 'job')
+    const wl   = s.find(x => ['deployment','statefulset','daemonset'].includes(x.node.type))
+    if (cj && job)
+      return `CronJob "${cj.node.label}" schedules Job "${job.node.label}" on its configured interval. The Job then manages pod execution.`
+    if (job && !cj)
+      return `Job "${job.node.label}" is a one-time workload that manages pod execution directly.`
     if (ing && svc && wl)
       return `External traffic enters through Ingress "${ing.node.label}", is routed to Service "${svc.node.label}", which selects ${TYPE_CFG[wl.node.type]?.label ?? wl.node.type} "${wl.node.label}".`
     if (svc && wl)
