@@ -848,7 +848,7 @@ export function SettingsPage() {
         <div className="h-5 w-px bg-white/8 shrink-0" />
 
         <div className="flex items-center gap-2 text-slate-600">
-          <span className="text-[12px] font-sans">Dashboard</span>
+          <button onClick={() => navigate('/overview')} className="text-[12px] font-sans hover:text-slate-300 transition-colors">Dashboard</button>
           <ChevronRight size={11} />
           <span className="text-[12px] font-sans font-medium text-slate-300 flex items-center gap-1.5">
             <Settings size={11} className="text-violet-400" />
