@@ -1,4 +1,4 @@
-import { useMemo, useState, useRef, useEffect } from 'react'
+import { useMemo, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   X, Globe, Layers, Container, Shield, Network, GitBranch,
@@ -247,9 +247,7 @@ function chainDescription(chain: Chain): string | null {
 
 // ── Chain Step Card ────────────────────────────────────────────────────────────
 
-interface HoveredInfo { label: string; namespace?: string; type: string; color: string; typeLabel: string }
-
-function StepCard({ step, onHover }: { step: ChainNode; onHover: (info: HoveredInfo | null) => void }) {
+function StepCard({ step }: { step: ChainNode }) {
   const n         = step.node
   const cfg       = TYPE_CFG[n.type] ?? { color: '#94a3b8', label: n.type, Icon: Box }
   const edgeColor = step.edgeLabel ? (EDGE_COLOR[step.edgeLabel] ?? '#475569') : '#475569'
@@ -270,9 +268,7 @@ function StepCard({ step, onHover }: { step: ChainNode; onHover: (info: HoveredI
 
       <div className="relative">
         <div
-          className="flex flex-col gap-1.5 p-3 rounded-xl shrink-0 cursor-default transition-all duration-150"
-          onMouseEnter={() => onHover({ label: n.label, namespace: ('namespace' in n ? n.namespace : undefined), type: n.type, color: cfg.color, typeLabel: cfg.label })}
-          onMouseLeave={() => onHover(null)}
+          className="flex flex-col gap-1.5 p-3 rounded-xl shrink-0 cursor-default"
           style={{
             background: n.type === 'internet'
               ? 'rgba(239,68,68,0.08)'
@@ -459,7 +455,6 @@ export function TopologyChainModal({ node, data, onClose }: TopologyChainModalPr
     () => node ? buildTopoChain(node, data) : null,
     [node, data]
   )
-  const [hovered, setHovered] = useState<HoveredInfo | null>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
     const el = scrollRef.current
@@ -559,35 +554,11 @@ export function TopologyChainModal({ node, data, onClose }: TopologyChainModalPr
                     style={{ scrollbarWidth: 'thin', scrollbarColor: `${cfg.color}30 transparent` }}>
                     <div className="flex items-center min-w-max gap-0 py-4">
                       {chain.steps.map((step, i) => (
-                        <StepCard key={step.node.id + i} step={step} onHover={setHovered} />
+                        <StepCard key={step.node.id + i} step={step} />
                       ))}
                     </div>
                   </div>
 
-                  {/* Hover info strip */}
-                  <div className="h-8 flex items-center mt-1">
-                    <AnimatePresence>
-                      {hovered && (
-                        <motion.div
-                          key={hovered.label}
-                          initial={{ opacity: 0, y: 4 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: 4 }}
-                          transition={{ duration: 0.12 }}
-                          className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-[11px] font-mono"
-                          style={{ background: `${hovered.color}10`, border: `1px solid ${hovered.color}25` }}
-                        >
-                          <span className="font-bold uppercase tracking-widest text-[9px]" style={{ color: hovered.color }}>
-                            {hovered.typeLabel}
-                          </span>
-                          <span className="text-slate-200">{hovered.label}</span>
-                          {hovered.namespace && (
-                            <span className="text-slate-600">· {hovered.namespace}</span>
-                          )}
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
                 </div>
               )}
 
