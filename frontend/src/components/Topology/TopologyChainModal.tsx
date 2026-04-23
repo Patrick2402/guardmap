@@ -174,9 +174,14 @@ function buildTopoChain(focal: GraphNode, data: GraphData): Chain {
     } else if (wl) {
       branch.push({ node: wl, edgeLabel: svcNode ? 'selects' : undefined, isFocal: isFocal(wl) })
     }
-    const pods: GraphNode[] = wl
+    const rawPods: GraphNode[] = wl
       ? out(wl.id).filter(e => e.label === 'manages').map(e => nodeMap.get(e.target)).filter(Boolean) as GraphNode[]
       : focal.type === 'pod' ? [focal] : []
+    // Put the focal pod first so "selected" badge is always visible
+    const focalPodIdx = rawPods.findIndex(p => p.id === focal.id)
+    const pods = focalPodIdx > 0
+      ? [rawPods[focalPodIdx], ...rawPods.filter((_, i) => i !== focalPodIdx)]
+      : rawPods
     if (pods.length > 0) {
       branch.push({
         node: pods[0],
@@ -257,6 +262,12 @@ function buildTopoChain(focal: GraphNode, data: GraphData): Chain {
         ])
       })
       return { kind: 'traffic', steps: [], branches }
+    }
+
+    // For ingress focal with a single service, workload must be derived from the service
+    if (!workload && !cronJob && svc) {
+      const we = out(svc.id).find(e => e.label === 'selects')
+      if (we) workload = nodeMap.get(we.target)
     }
 
     const steps = buildWorkloadBranch(workload, cronJob, svc, ingress, [])
