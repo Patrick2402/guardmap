@@ -1010,7 +1010,7 @@ export function IntegrationsPage() {
     setLoading(true)
     const [{ data: c }, { data: k }, { data: nc }] = await Promise.all([
       db.clusters().select('*').eq('organization_id', orgId).is('deleted_at', null).order('created_at', { ascending: false }),
-      db.apiKeys().select('*').eq('organization_id', orgId).order('created_at', { ascending: false }),
+      db.apiKeys().select('*').eq('organization_id', orgId).is('revoked_at', null).order('created_at', { ascending: false }),
       db.notificationChannels().select('*').eq('organization_id', orgId).eq('type', 'slack').maybeSingle(),
     ])
     setClusters((c ?? []) as Cluster[])
