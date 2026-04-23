@@ -1,0 +1,498 @@
+import { useMemo } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import {
+  X, Globe, Layers, Container, Shield, Network, GitBranch,
+  Box, ChevronRight, Hash, Lock, FileText, Users, Tag, Cpu, Clock,
+} from 'lucide-react'
+import { GraphData, GraphNode } from '../../types'
+
+// ── Types ──────────────────────────────────────────────────────────────────────
+
+interface VirtualNode {
+  id: string
+  type: string
+  label: string
+  namespace?: string
+}
+
+type AnyNode = GraphNode | VirtualNode
+
+interface ChainNode {
+  node: AnyNode
+  edgeLabel?: string
+  isFocal?: boolean
+  extraCount?: number  // "+N more siblings"
+}
+
+// ── Visual config ──────────────────────────────────────────────────────────────
+
+const TYPE_CFG: Record<string, { color: string; label: string; Icon: React.ElementType }> = {
+  internet:               { color: '#ef4444', label: 'Internet',       Icon: Globe      },
+  ingress:                { color: '#22c55e', label: 'Ingress',        Icon: Network    },
+  k8s_service:            { color: '#14b8a6', label: 'Service',        Icon: Layers     },
+  deployment:             { color: '#3b82f6', label: 'Deployment',     Icon: Layers     },
+  statefulset:            { color: '#a855f7', label: 'StatefulSet',    Icon: Layers     },
+  daemonset:              { color: '#f97316', label: 'DaemonSet',      Icon: GitBranch  },
+  job:                    { color: '#16a34a', label: 'Job',            Icon: Cpu        },
+  cronjob:                { color: '#0d9488', label: 'CronJob',        Icon: Clock      },
+  pod:                    { color: '#06b6d4', label: 'Pod',            Icon: Container  },
+  serviceaccount:         { color: '#8b5cf6', label: 'ServiceAccount', Icon: Shield     },
+  networkpolicy:          { color: '#f43f5e', label: 'NetworkPolicy',  Icon: Shield     },
+  k8s_role:               { color: '#ef4444', label: 'Role',           Icon: Lock       },
+  k8s_clusterrole:        { color: '#ef4444', label: 'ClusterRole',    Icon: Lock       },
+  k8s_rolebinding:        { color: '#7c3aed', label: 'RoleBinding',    Icon: Users      },
+  k8s_clusterrolebinding: { color: '#7c3aed', label: 'ClusterRoleBinding', Icon: Users },
+  secret:                 { color: '#f59e0b', label: 'Secret',         Icon: Lock       },
+  configmap:              { color: '#38bdf8', label: 'ConfigMap',      Icon: FileText   },
+}
+
+const EDGE_COLOR: Record<string, string> = {
+  '→':         '#94a3b8',
+  'routes →':  '#22c55e',
+  'selects':   '#14b8a6',
+  'manages':   '#3b82f6',
+  'uses':      '#8b5cf6',
+  'grants →':  '#8b5cf6',
+  'bound →':   '#7c3aed',
+}
+
+// ── Chain builder ──────────────────────────────────────────────────────────────
+
+const WORKLOAD_SET = new Set(['deployment', 'statefulset', 'daemonset', 'job', 'cronjob'])
+
+function buildTopoChain(focal: GraphNode, data: GraphData): ChainNode[] {
+  const { nodes, edges } = data
+  const nodeMap = new Map(nodes.map(n => [n.id, n]))
+
+  const outE = new Map<string, typeof edges[0][]>()
+  const inE  = new Map<string, typeof edges[0][]>()
+  edges.forEach(e => {
+    if (!outE.has(e.source)) outE.set(e.source, [])
+    outE.get(e.source)!.push(e)
+    if (!inE.has(e.target)) inE.set(e.target, [])
+    inE.get(e.target)!.push(e)
+  })
+
+  const out = (id: string) => outE.get(id) ?? []
+  const inn = (id: string) => inE.get(id)  ?? []
+
+  // ── Resolve workload as anchor ──────────────────────────────────────────────
+  let workload: GraphNode | undefined
+  if (WORKLOAD_SET.has(focal.type)) {
+    workload = focal
+  } else if (focal.type === 'pod') {
+    const e = inn(focal.id).find(e => e.label === 'manages')
+    workload = e ? nodeMap.get(e.source) : undefined
+  } else if (focal.type === 'k8s_service') {
+    const e = out(focal.id).find(e => e.label === 'selects')
+    workload = e ? nodeMap.get(e.target) : undefined
+  } else if (focal.type === 'ingress') {
+    const se = out(focal.id).find(e => e.label === 'routes →')
+    if (se) {
+      const svc = nodeMap.get(se.target)
+      if (svc) {
+        const we = out(svc.id).find(e => e.label === 'selects')
+        workload = we ? nodeMap.get(we.target) : undefined
+      }
+    }
+  }
+
+  // ── Pods from workload ──────────────────────────────────────────────────────
+  let pods: GraphNode[] = []
+  if (workload) {
+    pods = out(workload.id)
+      .filter(e => e.label === 'manages')
+      .map(e => nodeMap.get(e.target))
+      .filter(Boolean) as GraphNode[]
+  } else if (focal.type === 'pod') {
+    pods = [focal]
+  }
+
+  // ── Service upstream of workload ────────────────────────────────────────────
+  let svc: GraphNode | undefined
+  if (workload) {
+    const e = inn(workload.id).find(e => e.label === 'selects')
+    svc = e ? nodeMap.get(e.source) : undefined
+  } else if (focal.type === 'k8s_service') {
+    svc = focal
+  }
+
+  // ── Ingress upstream of service ─────────────────────────────────────────────
+  let ingress: GraphNode | undefined
+  if (svc) {
+    const e = inn(svc.id).find(e => e.label === 'routes →')
+    ingress = e ? nodeMap.get(e.source) : undefined
+  } else if (focal.type === 'ingress') {
+    ingress = focal
+  }
+
+  // ── Assemble chain ──────────────────────────────────────────────────────────
+  const chain: ChainNode[] = []
+  const isFocal = (n: GraphNode) => n.id === focal.id
+
+  if (ingress) {
+    const internet: VirtualNode = { id: '__internet__', type: 'internet', label: 'Internet' }
+    chain.push({ node: internet as unknown as GraphNode, isFocal: false })
+    chain.push({ node: ingress, edgeLabel: '→', isFocal: isFocal(ingress) })
+  }
+
+  if (svc) {
+    chain.push({ node: svc, edgeLabel: ingress ? 'routes →' : undefined, isFocal: isFocal(svc) })
+  }
+
+  if (workload) {
+    chain.push({ node: workload, edgeLabel: svc ? 'selects' : undefined, isFocal: isFocal(workload) })
+  }
+
+  // Show first pod + sibling count
+  if (pods.length > 0) {
+    chain.push({
+      node: pods[0],
+      edgeLabel: workload ? 'manages' : undefined,
+      isFocal: isFocal(pods[0]),
+      extraCount: pods.length > 1 ? pods.length - 1 : undefined,
+    })
+  }
+
+  // ── Fallback: non-chain nodes (RBAC, NetworkPolicy, Secrets) ────────────────
+  if (chain.length === 0) {
+    chain.push({ node: focal, isFocal: true })
+  }
+
+  return chain
+}
+
+// ── Chain Step Card ────────────────────────────────────────────────────────────
+
+function StepCard({ step }: { step: ChainNode }) {
+  const n    = step.node
+  const cfg  = TYPE_CFG[n.type] ?? { color: '#94a3b8', label: n.type, Icon: Box }
+  const edgeColor = step.edgeLabel ? (EDGE_COLOR[step.edgeLabel] ?? '#475569') : '#475569'
+  const shortLabel = n.label.length > 22 ? n.label.slice(0, 19) + '…' : n.label
+
+  return (
+    <div className="flex items-center gap-2 shrink-0">
+      {step.edgeLabel !== undefined && (
+        <div className="flex flex-col items-center gap-0.5 shrink-0 mx-1">
+          <div className="flex items-center gap-0.5">
+            <div className="w-6 h-px" style={{ background: `${edgeColor}60` }} />
+            <ChevronRight size={10} style={{ color: edgeColor }} />
+          </div>
+          <span className="text-[9px] font-mono whitespace-nowrap" style={{ color: edgeColor }}>
+            {step.edgeLabel}
+          </span>
+        </div>
+      )}
+
+      <div className="relative">
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex flex-col gap-1.5 p-3 rounded-xl shrink-0"
+          style={{
+            background: n.type === 'internet'
+              ? 'rgba(239,68,68,0.08)'
+              : step.isFocal
+                ? `${cfg.color}14`
+                : 'rgba(255,255,255,0.03)',
+            border: step.isFocal
+              ? `1.5px solid ${cfg.color}70`
+              : `1px solid ${cfg.color}20`,
+            minWidth: 110,
+            maxWidth: 160,
+            boxShadow: step.isFocal
+              ? `0 0 24px ${cfg.color}28, 0 0 8px ${cfg.color}14`
+              : `0 0 16px ${cfg.color}0a`,
+          }}
+        >
+          <div className="flex items-center gap-1.5">
+            <cfg.Icon size={11} style={{ color: cfg.color }} />
+            <span className="text-[9px] font-mono font-bold uppercase tracking-widest" style={{ color: cfg.color }}>
+              {cfg.label}
+            </span>
+            {step.isFocal && (
+              <span className="ml-auto text-[8px] font-mono px-1 py-0.5 rounded"
+                style={{ background: `${cfg.color}20`, color: cfg.color }}>
+                selected
+              </span>
+            )}
+          </div>
+
+          <div className="text-[12px] font-mono font-semibold text-slate-200 leading-tight break-all">
+            {shortLabel}
+          </div>
+
+          {'namespace' in n && n.namespace && (
+            <div className="text-[9px] font-mono text-slate-600">{n.namespace}</div>
+          )}
+        </motion.div>
+
+        {step.extraCount && (
+          <div className="absolute -right-2 -bottom-2 text-[9px] font-mono px-1.5 py-0.5 rounded-full border"
+            style={{ background: 'rgba(8,12,20,0.95)', borderColor: `${TYPE_CFG['pod']?.color ?? '#94a3b8'}40`, color: '#94a3b8' }}>
+            +{step.extraCount}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ── Metadata section ───────────────────────────────────────────────────────────
+
+function MetaRow({ k, v, color }: { k: string; v?: string; color?: string }) {
+  if (!v) return null
+  return (
+    <div className="flex gap-3 py-0.5">
+      <span className="text-[10px] font-mono text-slate-600 shrink-0 w-24">{k}</span>
+      <span className={`text-[10px] font-mono break-all ${color ?? 'text-slate-300'}`}>{v}</span>
+    </div>
+  )
+}
+
+function NodeMeta({ node }: { node: GraphNode }) {
+  const m = node.metadata ?? {}
+  const cfg = TYPE_CFG[node.type] ?? { color: '#94a3b8', label: node.type, Icon: Box }
+
+  const rows = [
+    { k: 'replicas',    v: m.replicas,       color: 'text-blue-300'   },
+    { k: 'svc account',v: m.serviceAccount,  color: 'text-violet-300' },
+    { k: 'node',       v: m.nodeName                                   },
+    { k: 'phase',      v: m.phase,           color: m.phase === 'Running' ? 'text-emerald-400' : m.phase === 'Failed' ? 'text-red-400' : undefined },
+    { k: 'type',       v: m.svcType                                    },
+    { k: 'cluster IP', v: m.clusterIP !== 'None' ? m.clusterIP : '',  color: 'text-teal-300' },
+    { k: 'ports',      v: m.ports                                      },
+    { k: 'host',       v: m.host,            color: 'text-green-300'  },
+    { k: 'class',      v: m.ingressClass                               },
+    { k: 'tls',        v: m.tls,             color: 'text-emerald-300'},
+    { k: 'effect',     v: m.effect,          color: m.effect === 'deny' ? 'text-red-400' : 'text-emerald-400' },
+    { k: 'schedule',   v: m.schedule,        color: 'text-teal-300'   },
+  ].filter(r => r.v)
+
+  const images = m.images?.split(', ').filter(Boolean) ?? []
+  const paths  = m.paths?.split('; ').filter(Boolean) ?? []
+  const labels = m.labels?.split(', ').filter(Boolean).map(s => {
+    const i = s.indexOf('=')
+    return i > 0 ? { k: s.slice(0, i), v: s.slice(i + 1) } : { k: s, v: '' }
+  }) ?? []
+
+  if (rows.length === 0 && images.length === 0 && paths.length === 0 && labels.length === 0) return null
+
+  return (
+    <div className="mt-4 mx-6 mb-2 rounded-xl border border-slate-800/60 bg-white/[0.02] overflow-hidden">
+      <div className="px-4 py-2 border-b border-slate-800/60"
+        style={{ background: `${cfg.color}08` }}>
+        <span className="text-[9px] font-mono font-bold uppercase tracking-widest" style={{ color: cfg.color }}>
+          {cfg.label} details
+        </span>
+      </div>
+      <div className="px-4 py-3 space-y-0.5">
+        {rows.map(r => <MetaRow key={r.k} k={r.k} v={r.v} color={r.color} />)}
+        {images.map(img => (
+          <div key={img} className="flex gap-3 py-0.5">
+            <span className="text-[10px] font-mono text-slate-600 shrink-0 w-24">image</span>
+            <span className="text-[10px] font-mono text-slate-400 break-all">{img}</span>
+          </div>
+        ))}
+        {paths.map(p => (
+          <div key={p} className="flex gap-3 py-0.5">
+            <span className="text-[10px] font-mono text-slate-600 shrink-0 w-24">route</span>
+            <span className="text-[10px] font-mono text-green-400 break-all">{p}</span>
+          </div>
+        ))}
+        {labels.length > 0 && (
+          <div className="flex gap-3 py-0.5">
+            <span className="text-[10px] font-mono text-slate-600 shrink-0 w-24 mt-0.5">labels</span>
+            <div className="flex flex-wrap gap-1">
+              {labels.map(({ k, v }) => (
+                <span key={k} className="text-[9px] font-mono px-1.5 py-0.5 rounded border border-slate-700/60 bg-slate-800/50 text-slate-400">
+                  <span className="text-slate-500">{k}</span>
+                  {v && <><span className="text-slate-600">=</span><span className="text-slate-300">{v}</span></>}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ── Connections section (for non-chain nodes) ──────────────────────────────────
+
+function ConnSection({ node, data }: { node: GraphNode; data: GraphData }) {
+  const nodeMap = new Map(data.nodes.map(n => [n.id, n]))
+  const outgoing = data.edges.filter(e => e.source === node.id)
+    .map(e => ({ e, peer: nodeMap.get(e.target) })).filter(x => x.peer)
+  const incoming = data.edges.filter(e => e.target === node.id)
+    .map(e => ({ e, peer: nodeMap.get(e.source) })).filter(x => x.peer)
+
+  if (outgoing.length === 0 && incoming.length === 0) return null
+
+  return (
+    <div className="mx-6 mt-3 mb-2 rounded-xl border border-slate-800/60 bg-white/[0.02] overflow-hidden">
+      <div className="px-4 py-2 border-b border-slate-800/60 bg-white/[0.02]">
+        <span className="text-[9px] font-mono font-bold uppercase tracking-widest text-slate-600">Connections</span>
+      </div>
+      <div className="px-4 py-2 space-y-1.5">
+        {[...incoming.map(x => ({ ...x, dir: 'in' as const })), ...outgoing.map(x => ({ ...x, dir: 'out' as const }))]
+          .map(({ e, peer, dir }) => {
+            const cfg = TYPE_CFG[peer!.type] ?? { color: '#94a3b8', label: peer!.type, Icon: Box }
+            return (
+              <div key={e.id} className="flex items-center gap-2">
+                <cfg.Icon size={10} style={{ color: cfg.color }} />
+                <span className="text-[10px] font-mono text-slate-300 flex-1">{peer!.label}</span>
+                <span className="text-[8px] font-mono px-1.5 py-0.5 rounded border"
+                  style={{ color: EDGE_COLOR[e.label ?? ''] ?? '#64748b', borderColor: `${EDGE_COLOR[e.label ?? ''] ?? '#334155'}40`, background: `${EDGE_COLOR[e.label ?? ''] ?? '#1e293b'}15` }}>
+                  {dir === 'in' ? '← ' : ''}{e.label ?? 'ref'}{dir === 'out' ? ' →' : ''}
+                </span>
+              </div>
+            )
+          })}
+      </div>
+    </div>
+  )
+}
+
+// ── Modal ──────────────────────────────────────────────────────────────────────
+
+interface TopologyChainModalProps {
+  node: GraphNode | null
+  data: GraphData
+  onClose: () => void
+}
+
+export function TopologyChainModal({ node, data, onClose }: TopologyChainModalProps) {
+  const chain = useMemo(
+    () => node ? buildTopoChain(node, data) : [],
+    [node, data]
+  )
+
+  const cfg = node ? (TYPE_CFG[node.type] ?? { color: '#94a3b8', label: node.type, Icon: Box }) : null
+
+  const isChainNode = node ? (
+    WORKLOAD_SET.has(node.type) || ['pod', 'k8s_service', 'ingress'].includes(node.type)
+  ) : false
+
+  return (
+    <AnimatePresence>
+      {node && cfg && (
+        <>
+          {/* Backdrop */}
+          <motion.div
+            key="topo-backdrop"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50"
+            style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(6px)' }}
+            onClick={onClose}
+          />
+
+          {/* Modal */}
+          <motion.div
+            key="topo-modal"
+            initial={{ opacity: 0, scale: 0.97, y: 16 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.97, y: 16 }}
+            transition={{ type: 'spring', damping: 28, stiffness: 320 }}
+            className="fixed inset-x-4 top-16 bottom-16 z-50 rounded-2xl flex flex-col overflow-hidden max-w-4xl mx-auto"
+            style={{
+              background: 'rgba(8,12,20,0.97)',
+              backdropFilter: 'blur(32px)',
+              WebkitBackdropFilter: 'blur(32px)',
+              border: `1px solid ${cfg.color}25`,
+              boxShadow: `0 24px 80px rgba(0,0,0,0.7), 0 0 60px ${cfg.color}10`,
+            }}
+            onClick={e => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center gap-3 px-6 py-4 shrink-0"
+              style={{ borderBottom: '1px solid rgba(255,255,255,0.06)', background: `${cfg.color}08` }}>
+              <cfg.Icon size={14} style={{ color: cfg.color }} />
+              <div className="flex-1 min-w-0">
+                <div className="text-[10px] font-mono font-bold uppercase tracking-widest mb-0.5" style={{ color: cfg.color }}>
+                  {cfg.label}
+                </div>
+                <div className="text-[16px] font-mono font-bold text-slate-100 truncate">{node.label}</div>
+                {node.namespace && (
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <Hash size={9} className="text-slate-600" />
+                    <span className="text-[10px] font-mono text-slate-500">{node.namespace}</span>
+                  </div>
+                )}
+              </div>
+              <button
+                onClick={onClose}
+                className="w-8 h-8 rounded-xl flex items-center justify-center text-slate-500 hover:text-slate-200 transition-colors shrink-0"
+                style={{ background: 'rgba(255,255,255,0.05)' }}
+              >
+                <X size={15} />
+              </button>
+            </div>
+
+            {/* Scrollable body */}
+            <div className="flex-1 overflow-y-auto">
+
+              {/* Chain visualization */}
+              {isChainNode && (
+                <div className="px-6 pt-6 pb-4">
+                  <div className="text-[9px] font-mono font-bold uppercase tracking-widest text-slate-600 mb-4">
+                    Traffic path
+                  </div>
+                  <div className="overflow-x-auto pb-2">
+                    <div className="flex items-center min-w-max gap-0">
+                      {chain.map((step, i) => (
+                        <StepCard key={step.node.id + i} step={step} />
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Node metadata */}
+              <NodeMeta node={node} />
+
+              {/* Connections (useful for non-chain nodes and as supplement) */}
+              {(!isChainNode || chain.length <= 1) && (
+                <ConnSection node={node} data={data} />
+              )}
+
+              {/* RBAC/security metadata */}
+              {(node.metadata?.rules || node.metadata?.roleRef) && (
+                <div className="mx-6 mt-3 mb-2 rounded-xl border border-slate-800/60 bg-white/[0.02] overflow-hidden">
+                  <div className="px-4 py-2 border-b border-slate-800/60">
+                    <span className="text-[9px] font-mono font-bold uppercase tracking-widest text-slate-600">RBAC</span>
+                  </div>
+                  <div className="px-4 py-3 space-y-0.5">
+                    <MetaRow k="rules"    v={node.metadata?.rules} />
+                    <MetaRow k="role ref" v={node.metadata?.roleRef} color="text-violet-300" />
+                    <MetaRow k="role kind" v={node.metadata?.roleKind} />
+                  </div>
+                </div>
+              )}
+
+            </div>
+
+            {/* Footer */}
+            <div className="flex items-center justify-between px-6 py-3 shrink-0"
+              style={{ borderTop: '1px solid rgba(255,255,255,0.05)', background: 'rgba(255,255,255,0.015)' }}>
+              <p className="text-[10px] font-mono text-slate-600">
+                {isChainNode
+                  ? 'Traffic path reconstructed from live graph · scroll right for full chain'
+                  : 'Click any node in the topology to inspect it'}
+              </p>
+              <button
+                onClick={onClose}
+                className="text-xs font-sans text-slate-500 hover:text-slate-300 transition-colors px-3 py-1.5 rounded-lg"
+                style={{ background: 'rgba(255,255,255,0.04)' }}
+              >
+                Close
+              </button>
+            </div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
+  )
+}

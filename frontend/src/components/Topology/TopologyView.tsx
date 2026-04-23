@@ -16,7 +16,7 @@ import { RBACBindingNode }                  from '../NodeTypes/RBACBindingNode'
 import { RBACGroupNode }                    from '../NodeTypes/RBACGroupNode'
 import { ConfigSecretNode }                 from '../NodeTypes/ConfigSecretNode'
 import { TopologyEdge }                     from '../EdgeTypes/TopologyEdge'
-import { TopologyDetails }                  from './TopologyDetails'
+import { TopologyChainModal }               from './TopologyChainModal'
 
 // ── React Flow registries ────────────────────────────────────────────────────
 
@@ -488,7 +488,7 @@ export function TopologyView({ data, focusNodeId }: TopologyViewProps) {
         </ReactFlow>
       </div>
 
-      <TopologyDetails node={selectedNode} data={data} onClose={() => setSelectedNode(null)} />
+      <TopologyChainModal node={selectedNode} data={data} onClose={() => setSelectedNode(null)} />
     </div>
   )
 }
