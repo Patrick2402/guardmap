@@ -21,8 +21,7 @@ interface ChainNode {
   node: AnyNode
   edgeLabel?: string
   isFocal?: boolean
-  extraCount?: number      // "+N more pods/siblings"
-  parallelNodes?: AnyNode[] // stacked group (e.g. multiple services from one ingress)
+  extraCount?: number
 }
 
 // ── Visual config ──────────────────────────────────────────────────────────────
@@ -71,6 +70,7 @@ type ChainKind = 'traffic' | 'rbac' | 'netpol' | 'config' | 'fallback'
 interface Chain {
   kind: ChainKind
   steps: ChainNode[]
+  branches?: ChainNode[][]  // one full path per branch (multi-service ingress)
 }
 
 function buildTopoChain(focal: GraphNode, data: GraphData): Chain {
@@ -150,9 +150,45 @@ function buildTopoChain(focal: GraphNode, data: GraphData): Chain {
   }
 
   // ── Traffic / Batch chain ─────────────────────────────────────────────────────
+
+  // Helper: build the downstream chain starting from a workload node
+  function buildWorkloadBranch(
+    wl: GraphNode | undefined,
+    cj: GraphNode | undefined,
+    svcNode: GraphNode | undefined,
+    ingressNode: GraphNode | undefined,
+    prefixSteps: ChainNode[],
+  ): ChainNode[] {
+    const branch: ChainNode[] = [...prefixSteps]
+    if (ingressNode) {
+      const internet: VirtualNode = { id: '__internet__', type: 'internet', label: 'Internet' }
+      if (branch.length === 0) {
+        branch.push({ node: internet as unknown as GraphNode, isFocal: false })
+        branch.push({ node: ingressNode, edgeLabel: '→', isFocal: isFocal(ingressNode) })
+      }
+    }
+    if (svcNode) branch.push({ node: svcNode, edgeLabel: ingressNode ? 'routes →' : undefined, isFocal: isFocal(svcNode) })
+    if (cj) {
+      branch.push({ node: cj, edgeLabel: svcNode ? 'selects' : undefined, isFocal: isFocal(cj) })
+      if (wl) branch.push({ node: wl, edgeLabel: 'schedules', isFocal: isFocal(wl) })
+    } else if (wl) {
+      branch.push({ node: wl, edgeLabel: svcNode ? 'selects' : undefined, isFocal: isFocal(wl) })
+    }
+    const pods: GraphNode[] = wl
+      ? out(wl.id).filter(e => e.label === 'manages').map(e => nodeMap.get(e.target)).filter(Boolean) as GraphNode[]
+      : focal.type === 'pod' ? [focal] : []
+    if (pods.length > 0) {
+      branch.push({
+        node: pods[0],
+        edgeLabel: wl ? 'manages' : undefined,
+        isFocal: isFocal(pods[0]),
+        extraCount: pods.length > 1 ? pods.length - 1 : undefined,
+      })
+    }
+    return branch
+  }
+
   if (TRAFFIC_TYPES.has(focal.type)) {
-    // workload = node that directly manages pods
-    // cronJob  = optional CronJob parent (when workload is a Job)
     let workload: GraphNode | undefined
     let cronJob:  GraphNode | undefined
 
@@ -178,28 +214,14 @@ function buildTopoChain(focal: GraphNode, data: GraphData): Chain {
       const e = out(focal.id).find(e => e.label === 'selects')
       workload = e ? nodeMap.get(e.target) : undefined
     } else if (focal.type === 'ingress') {
-      // multi-service: handled separately in assembly — pick first for workload resolution
-      const svcEdges = out(focal.id).filter(e => e.label === 'routes →')
-      const firstSvc = svcEdges.length > 0 ? nodeMap.get(svcEdges[0].target) : undefined
-      if (firstSvc) {
-        const we = out(firstSvc.id).find(e => e.label === 'selects')
-        workload = we ? nodeMap.get(we.target) : undefined
-      }
+      // multi-service: handled below
     } else {
-      // deployment / statefulset / daemonset
       workload = focal
     }
 
-    // Pods: always from the direct workload (Job or regular)
-    const pods: GraphNode[] = workload
-      ? out(workload.id).filter(e => e.label === 'manages').map(e => nodeMap.get(e.target)).filter(Boolean) as GraphNode[]
-      : focal.type === 'pod' ? [focal] : []
-
-    // Service / Ingress only relevant for non-batch workloads
     const isBatch = workload?.type === 'job' || cronJob !== undefined
     let svc: GraphNode | undefined
     let ingress: GraphNode | undefined
-    // All services from an ingress (for multi-route case)
     let allSvcs: GraphNode[] = []
 
     if (!isBatch) {
@@ -223,42 +245,21 @@ function buildTopoChain(focal: GraphNode, data: GraphData): Chain {
       }
     }
 
-    const steps: ChainNode[] = []
-    if (ingress) {
-      const internet: VirtualNode = { id: '__internet__', type: 'internet', label: 'Internet' }
-      steps.push({ node: internet as unknown as GraphNode, isFocal: false })
-      steps.push({ node: ingress, edgeLabel: '→', isFocal: isFocal(ingress) })
-    }
-
-    // Multi-service ingress: show all services as stacked group
+    // Multi-service ingress → one branch per service
     if (allSvcs.length > 1) {
-      steps.push({
-        node: allSvcs[0],
-        edgeLabel: 'routes →',
-        isFocal: isFocal(allSvcs[0]),
-        parallelNodes: allSvcs.slice(1),
+      const internet: VirtualNode = { id: '__internet__', type: 'internet', label: 'Internet' }
+      const branches: ChainNode[][] = allSvcs.map(sv => {
+        const we = out(sv.id).find(e => e.label === 'selects')
+        const wl = we ? nodeMap.get(we.target) : undefined
+        return buildWorkloadBranch(wl, undefined, sv, ingress, [
+          { node: internet as unknown as GraphNode, isFocal: false },
+          { node: ingress!, edgeLabel: '→', isFocal: isFocal(ingress!) },
+        ])
       })
-    } else if (svc) {
-      steps.push({ node: svc, edgeLabel: ingress ? 'routes →' : undefined, isFocal: isFocal(svc) })
+      return { kind: 'traffic', steps: [], branches }
     }
 
-    if (cronJob) {
-      steps.push({ node: cronJob, edgeLabel: svc ? 'selects' : undefined, isFocal: isFocal(cronJob) })
-      if (workload) steps.push({ node: workload, edgeLabel: 'schedules', isFocal: isFocal(workload) })
-    } else if (workload && allSvcs.length <= 1) {
-      // Don't show workload when multi-service (ambiguous which service it belongs to)
-      steps.push({ node: workload, edgeLabel: svc ? 'selects' : undefined, isFocal: isFocal(workload) })
-    }
-
-    if (pods.length > 0 && allSvcs.length <= 1) {
-      steps.push({
-        node: pods[0],
-        edgeLabel: workload ? 'manages' : undefined,
-        isFocal: isFocal(pods[0]),
-        extraCount: pods.length > 1 ? pods.length - 1 : undefined,
-      })
-    }
-
+    const steps = buildWorkloadBranch(workload, cronJob, svc, ingress, [])
     if (steps.length > 0) return { kind: 'traffic', steps }
   }
 
@@ -281,6 +282,13 @@ function chainDescription(chain: Chain): string | null {
     return 'This binding grants a ServiceAccount access to a Kubernetes Role.'
   }
   if (chain.kind === 'traffic') {
+    if (chain.branches && chain.branches.length > 1) {
+      const ing = chain.branches[0].find(x => x.node.type === 'ingress')
+      const svcNames = chain.branches
+        .map(b => b.find(x => x.node.type === 'k8s_service')?.node.label)
+        .filter(Boolean).join(', ')
+      return `Ingress "${ing?.node.label ?? ''}" routes traffic to ${chain.branches.length} services: ${svcNames}. Each row below shows the full path for one route.`
+    }
     const ing  = s.find(x => x.node.type === 'ingress')
     const svc  = s.find(x => x.node.type === 'k8s_service')
     const cj   = s.find(x => x.node.type === 'cronjob')
@@ -313,55 +321,10 @@ function chainDescription(chain: Chain): string | null {
 
 // ── Chain Step Card ────────────────────────────────────────────────────────────
 
-function NodeCard({ node, isFocal }: { node: AnyNode; isFocal?: boolean }) {
-  const cfg = TYPE_CFG[node.type] ?? { color: '#94a3b8', label: node.type, Icon: Box }
-  return (
-    <div
-      className="flex flex-col gap-1.5 p-3 rounded-xl shrink-0 cursor-default"
-      style={{
-        background: node.type === 'internet'
-          ? 'rgba(239,68,68,0.08)'
-          : isFocal
-            ? `${cfg.color}14`
-            : 'rgba(255,255,255,0.03)',
-        border: isFocal
-          ? `1.5px solid ${cfg.color}70`
-          : `1px solid ${cfg.color}20`,
-        minWidth: 130,
-        boxShadow: isFocal
-          ? `0 0 24px ${cfg.color}28, 0 0 8px ${cfg.color}14`
-          : `0 0 16px ${cfg.color}0a`,
-      }}
-    >
-      <div className="flex items-center gap-1.5 flex-wrap">
-        <cfg.Icon size={11} style={{ color: cfg.color }} />
-        <span className="text-[9px] font-mono font-bold uppercase tracking-widest" style={{ color: cfg.color }}>
-          {cfg.label}
-        </span>
-        {isFocal && (
-          <span className="text-[8px] font-mono px-1 py-0.5 rounded"
-            style={{ background: `${cfg.color}20`, color: cfg.color }}>
-            selected
-          </span>
-        )}
-      </div>
-      <div className="text-[12px] font-mono font-semibold text-slate-200 leading-snug"
-        style={{ wordBreak: 'break-word', maxWidth: 220 }}>
-        {node.label}
-      </div>
-      {'namespace' in node && node.namespace && (
-        <div className="text-[9px] font-mono text-slate-600">{node.namespace}</div>
-      )}
-    </div>
-  )
-}
-
 function StepCard({ step }: { step: ChainNode }) {
   const n         = step.node
   const cfg       = TYPE_CFG[n.type] ?? { color: '#94a3b8', label: n.type, Icon: Box }
   const edgeColor = step.edgeLabel ? (EDGE_COLOR[step.edgeLabel] ?? '#475569') : '#475569'
-  const hasParallel = step.parallelNodes && step.parallelNodes.length > 0
-  const allParallel = hasParallel ? [n, ...step.parallelNodes!] : null
 
   return (
     <div className="flex items-center gap-2 shrink-0">
@@ -378,28 +341,48 @@ function StepCard({ step }: { step: ChainNode }) {
       )}
 
       <div className="relative">
-        {hasParallel && allParallel ? (
-          <div className="flex flex-col gap-0 relative"
-            style={{ border: '1px solid rgba(20,184,166,0.2)', borderRadius: 14, padding: 4 }}>
-            <div className="text-[8px] font-mono font-bold uppercase tracking-widest text-teal-500 px-2 pt-1 pb-2">
-              {allParallel.length} services
-            </div>
-            <div className="flex flex-col gap-1.5">
-              {allParallel.map((pn, idx) => (
-                <NodeCard key={pn.id + idx} node={pn} isFocal={idx === 0 && step.isFocal} />
-              ))}
-            </div>
-          </div>
-        ) : (
-          <>
-            <NodeCard node={n} isFocal={step.isFocal} />
-            {step.extraCount && (
-              <div className="absolute -right-2 -bottom-2 text-[9px] font-mono px-1.5 py-0.5 rounded-full border z-10"
-                style={{ background: 'rgba(8,12,20,0.95)', borderColor: `${TYPE_CFG['pod']?.color ?? '#94a3b8'}40`, color: '#94a3b8' }}>
-                +{step.extraCount}
-              </div>
+        <div
+          className="flex flex-col gap-1.5 p-3 rounded-xl shrink-0 cursor-default"
+          style={{
+            background: n.type === 'internet'
+              ? 'rgba(239,68,68,0.08)'
+              : step.isFocal
+                ? `${cfg.color}14`
+                : 'rgba(255,255,255,0.03)',
+            border: step.isFocal
+              ? `1.5px solid ${cfg.color}70`
+              : `1px solid ${cfg.color}20`,
+            minWidth: 130,
+            boxShadow: step.isFocal
+              ? `0 0 24px ${cfg.color}28, 0 0 8px ${cfg.color}14`
+              : `0 0 16px ${cfg.color}0a`,
+          }}
+        >
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <cfg.Icon size={11} style={{ color: cfg.color }} />
+            <span className="text-[9px] font-mono font-bold uppercase tracking-widest" style={{ color: cfg.color }}>
+              {cfg.label}
+            </span>
+            {step.isFocal && (
+              <span className="text-[8px] font-mono px-1 py-0.5 rounded"
+                style={{ background: `${cfg.color}20`, color: cfg.color }}>
+                selected
+              </span>
             )}
-          </>
+          </div>
+          <div className="text-[12px] font-mono font-semibold text-slate-200 leading-snug"
+            style={{ wordBreak: 'break-word', maxWidth: 220 }}>
+            {n.label}
+          </div>
+          {'namespace' in n && n.namespace && (
+            <div className="text-[9px] font-mono text-slate-600">{n.namespace}</div>
+          )}
+        </div>
+        {step.extraCount && (
+          <div className="absolute -right-2 -bottom-2 text-[9px] font-mono px-1.5 py-0.5 rounded-full border z-10"
+            style={{ background: 'rgba(8,12,20,0.95)', borderColor: `${TYPE_CFG['pod']?.color ?? '#94a3b8'}40`, color: '#94a3b8' }}>
+            +{step.extraCount}
+          </div>
         )}
       </div>
     </div>
@@ -557,7 +540,9 @@ export function TopologyChainModal({ node, data, onClose }: TopologyChainModalPr
   }, [])
 
   const cfg = node ? (TYPE_CFG[node.type] ?? { color: '#94a3b8', label: node.type, Icon: Box }) : null
-  const showChain = chain && chain.kind !== 'fallback' && chain.steps.length > 1
+  const showChain = chain && chain.kind !== 'fallback' && (
+    chain.steps.length > 1 || (chain.branches && chain.branches.length > 0)
+  )
 
   return (
     <AnimatePresence>
@@ -640,11 +625,26 @@ export function TopologyChainModal({ node, data, onClose }: TopologyChainModalPr
 
                   <div ref={scrollRef} className="overflow-x-auto"
                     style={{ scrollbarWidth: 'thin', scrollbarColor: `${cfg.color}30 transparent` }}>
-                    <div className="flex items-center min-w-max gap-0 py-4">
-                      {chain.steps.map((step, i) => (
-                        <StepCard key={step.node.id + i} step={step} />
-                      ))}
-                    </div>
+                    {chain.branches && chain.branches.length > 0 ? (
+                      <div className="flex flex-col gap-3 py-4 min-w-max">
+                        {chain.branches.map((branch, bi) => (
+                          <div key={bi} className="flex items-center gap-0">
+                            <div className="text-[9px] font-mono text-slate-700 w-5 shrink-0 text-right mr-2 self-center">
+                              {bi + 1}
+                            </div>
+                            {branch.map((step, i) => (
+                              <StepCard key={step.node.id + i} step={step} />
+                            ))}
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="flex items-center min-w-max gap-0 py-4">
+                        {chain.steps.map((step, i) => (
+                          <StepCard key={step.node.id + i} step={step} />
+                        ))}
+                      </div>
+                    )}
                   </div>
 
                 </div>
