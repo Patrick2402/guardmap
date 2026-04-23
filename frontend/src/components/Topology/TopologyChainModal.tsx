@@ -285,6 +285,21 @@ function buildTopoChain(focal: GraphNode, data: GraphData): Chain {
   return { kind: 'fallback', steps: [{ node: focal, isFocal: true }] }
 }
 
+// ── Fork detection ────────────────────────────────────────────────────────────
+// Returns the rightmost node ID (in branches[0]) that appears in ALL branches.
+// That node is the "fork point" — shared prefix ends there, branches diverge after.
+function findForkNodeId(branches: ChainNode[][]): string | undefined {
+  if (branches.length < 2) return undefined
+  const sets = branches.map(b => new Set(b.map(s => s.node.id)))
+  const commonIds = new Set([...sets[0]].filter(id => sets.every(s => s.has(id))))
+  if (!commonIds.size) return undefined
+  const b0 = branches[0]
+  for (let i = b0.length - 1; i >= 0; i--) {
+    if (commonIds.has(b0[i].node.id)) return b0[i].node.id
+  }
+  return undefined
+}
+
 // ── Chain description ──────────────────────────────────────────────────────────
 
 function chainDescription(chain: Chain): string | null {
@@ -655,25 +670,71 @@ export function TopologyChainModal({ node, data, onClose }: TopologyChainModalPr
 
                   <div ref={scrollRef} className="overflow-x-auto"
                     style={{ scrollbarWidth: 'thin', scrollbarColor: `${cfg.color}30 transparent` }}>
-                    {chain.branches && chain.branches.length > 0 ? (
-                      <div className="flex flex-col gap-3 py-4 min-w-max">
-                        {chain.branches.map((branch, bi) => (
-                          <div key={bi} className="flex items-center gap-0">
-                            <div className="text-[9px] font-mono text-slate-800 w-4 shrink-0 text-right mr-3 self-center select-none">
-                              {bi + 1}
+                    {chain.branches && chain.branches.length > 0 ? (() => {
+                      const forkId = findForkNodeId(chain.branches)
+                      if (forkId) {
+                        const b0 = chain.branches[0]
+                        const forkIdx0 = b0.findIndex(s => s.node.id === forkId)
+                        const prefix = b0.slice(0, forkIdx0 + 1)
+                        const tails = chain.branches
+                          .map(b => b.slice(b.findIndex(s => s.node.id === forkId) + 1))
+                          .filter(t => t.length > 0)
+                        return (
+                          <div className="flex flex-col py-4 min-w-max">
+                            {/* Shared prefix row */}
+                            <div className="flex items-center gap-0">
+                              {prefix.map((step, i) => (
+                                <StepCard key={step.node.id + i} step={step} />
+                              ))}
                             </div>
-                            {branch.map((step, i) => (
-                              <StepCard key={step.node.id + i} step={step} />
+                            {/* Branch separator */}
+                            <div className="flex items-center gap-2 my-1.5 pl-2">
+                              <div className="h-px flex-1 max-w-[120px]" style={{ background: 'rgba(255,255,255,0.07)' }} />
+                              <span className="text-[9px] font-mono text-slate-600 shrink-0">
+                                {tails.length} branch{tails.length !== 1 ? 'es' : ''}
+                              </span>
+                              <div className="h-px flex-1 max-w-[120px]" style={{ background: 'rgba(255,255,255,0.07)' }} />
+                            </div>
+                            {/* Branch tails with ├/└ connectors */}
+                            {tails.map((tail, bi) => (
+                              <div key={bi} className="flex items-center gap-0 mt-1">
+                                <span className="text-[11px] font-mono text-slate-600 mr-2 shrink-0 select-none" style={{ fontFamily: 'monospace' }}>
+                                  {bi === tails.length - 1 ? '└' : '├'}
+                                </span>
+                                {tail.map((step, i) => (
+                                  <StepCard key={step.node.id + i} step={step} />
+                                ))}
+                              </div>
                             ))}
+                            {chain.extraBranchCount && chain.extraBranchCount > 0 ? (
+                              <div className="text-[9px] font-mono text-slate-600 pl-6 mt-1.5">
+                                +{chain.extraBranchCount} more not shown
+                              </div>
+                            ) : null}
                           </div>
-                        ))}
-                        {chain.extraBranchCount && chain.extraBranchCount > 0 ? (
-                          <div className="text-[9px] font-mono text-slate-600 pl-7">
-                            +{chain.extraBranchCount} more workloads not shown
-                          </div>
-                        ) : null}
-                      </div>
-                    ) : (
+                        )
+                      }
+                      // No common fork found — fall back to numbered rows
+                      return (
+                        <div className="flex flex-col gap-3 py-4 min-w-max">
+                          {chain.branches.map((branch, bi) => (
+                            <div key={bi} className="flex items-center gap-0">
+                              <div className="text-[9px] font-mono text-slate-800 w-4 shrink-0 text-right mr-3 self-center select-none">
+                                {bi + 1}
+                              </div>
+                              {branch.map((step, i) => (
+                                <StepCard key={step.node.id + i} step={step} />
+                              ))}
+                            </div>
+                          ))}
+                          {chain.extraBranchCount && chain.extraBranchCount > 0 ? (
+                            <div className="text-[9px] font-mono text-slate-600 pl-7">
+                              +{chain.extraBranchCount} more workloads not shown
+                            </div>
+                          ) : null}
+                        </div>
+                      )
+                    })() : (
                       <div className="flex items-center min-w-max gap-0 py-4">
                         {chain.steps.map((step, i) => (
                           <StepCard key={step.node.id + i} step={step} />
