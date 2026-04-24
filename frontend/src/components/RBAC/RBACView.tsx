@@ -222,8 +222,8 @@ export function RBACView({ data, focusNodeId }: RBACViewProps) {
           { label: 'high risk', value: stats.high,     color: 'text-orange-400' },
         ].map(({ label, value, color }) => (
           <div key={label} className="flex items-center gap-1.5">
-            <span className={`text-sm font-mono font-bold ${color}`}>{value}</span>
-            <span className="text-xs font-mono text-slate-400">{label}</span>
+            <span className={`text-lg font-mono font-bold ${color}`}>{value}</span>
+            <span className="text-sm font-sans text-slate-400">{label}</span>
           </div>
         ))}
         <span className="ml-auto text-xs font-mono text-slate-400 hidden md:block">
