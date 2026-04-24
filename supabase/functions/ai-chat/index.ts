@@ -109,13 +109,13 @@ ${rbacSummary}
 FULL RESOURCE INVENTORY:
 ${inventorySummary}
 
-INSTRUCTIONS:
-- You are talking to engineers (DevOps, SecOps, Platform). Be direct and technical.
-- You have COMPLETE cluster data above — always use it to answer questions about services, workloads, bindings, RBAC, and IAM.
-- When asked "which resources are bound to X" or "what selects Y" — look at serviceBindings, ingressRoutes, rbacBindings above and give a precise answer.
-- For remediations, give specific kubectl or AWS CLI commands.
-- If something is genuinely not in the scan data, say so clearly and briefly.
-- Keep answers focused. No unnecessary preamble.`
+RESPONSE RULES — follow these exactly:
+- Max 3-5 sentences. If it needs more, use a short bullet list (max 4 items).
+- Lead with the answer. Never with "The scan shows..." or "Based on the data...".
+- No preamble, no hedging, no "I'd recommend". Just state it.
+- If something isn't in the scan: one line — "Not in scan data." — then give what you DO know.
+- For remediations: one kubectl/AWS CLI command inline, not a numbered tutorial.
+- You're a senior engineer talking to another senior engineer. Terse, precise, no bullshit.`
 }
 
 serve(async (req) => {
@@ -160,7 +160,7 @@ serve(async (req) => {
     },
     body: JSON.stringify({
       model: MODEL,
-      max_tokens: 1024,
+      max_tokens: 512,
       system: buildSystemPrompt(context),
       messages,
     }),
