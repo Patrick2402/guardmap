@@ -456,7 +456,6 @@ function ClusterView() {
                     />
                   </div>
                   <Legend />
-                  <Sidebar blastRadius={blastRadius} selectedNode={selectedNode} data={data} onClose={handleSidebarClose} onFocusNode={handleFocusNode} dbFindings={scanMeta?.findings} onViewFindings={() => handleNavigate('findings')} />
                   <div className="pointer-events-none absolute inset-0 overflow-hidden">
                     <div className="absolute inset-x-0 h-px bg-gradient-to-r from-transparent via-cyan-500/8 to-transparent animate-scan" />
                   </div>
