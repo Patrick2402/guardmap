@@ -4,7 +4,7 @@ import ReactFlow, {
   NodeMouseHandler, ReactFlowInstance,
 } from 'reactflow'
 import 'reactflow/dist/style.css'
-import { Layers, KeyRound } from 'lucide-react'
+import { Layers, KeyRound, ShieldCheck } from 'lucide-react'
 
 import { GraphData, GraphNode, GraphEdge }  from '../../types'
 import { PodNode }                          from '../NodeTypes/PodNode'
@@ -112,10 +112,13 @@ function nsHeight(cats: Node[][]): number {
   return NS_HDR + 2 * NS_PY + inner
 }
 
-function buildLayout(nodes: Node[], showPods: boolean, showConfigs: boolean) {
+const RBAC_TYPES = new Set(['k8s_role','k8s_clusterrole','k8s_rolebinding','k8s_clusterrolebinding'])
+
+function buildLayout(nodes: Node[], showPods: boolean, showConfigs: boolean, showRBAC: boolean) {
   const visible = nodes.filter(n => {
     if (n.type === 'pod' && !showPods) return false
     if ((n.type === 'secret' || n.type === 'configmap') && !showConfigs) return false
+    if (RBAC_TYPES.has(n.type!) && !showRBAC) return false
     return true
   })
 
@@ -223,6 +226,7 @@ interface TopologyViewProps {
 export function TopologyView({ data, focusNodeId }: TopologyViewProps) {
   const [showPods,       setShowPods]       = useState(false)
   const [showConfigs,    setShowConfigs]    = useState(false)
+  const [showRBAC,       setShowRBAC]       = useState(false)
   const [selectedNode,   setSelectedNode]   = useState<GraphNode | null>(null)
   const [rfReady,        setRfReady]        = useState(false)
   const rfRef = useRef<ReactFlowInstance | null>(null)
@@ -314,8 +318,8 @@ export function TopologyView({ data, focusNodeId }: TopologyViewProps) {
 
   // ── Layout ─────────────────────────────────────────────────────────────────
   const { groupNodes, positionedNodes } = useMemo(
-    () => buildLayout(baseNodes, showPods, showConfigs),
-    [baseNodes, showPods, showConfigs])
+    () => buildLayout(baseNodes, showPods, showConfigs, showRBAC),
+    [baseNodes, showPods, showConfigs, showRBAC])
 
   // ── Merge dimming + selection into final nodes ─────────────────────────────
   const allNodes: Node[] = useMemo(() => [
@@ -427,6 +431,19 @@ export function TopologyView({ data, focusNodeId }: TopologyViewProps) {
           <KeyRound size={10} />
           Secrets {showConfigs ? 'ON' : 'OFF'}
         </button>
+
+        {/* RBAC toggle */}
+        <button
+          onClick={() => setShowRBAC(p => !p)}
+          className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-mono transition-all ${
+            showRBAC
+              ? 'border-violet-500/50 bg-violet-950/40 text-violet-300'
+              : 'border-cyber-border bg-cyber-panel text-slate-400 hover:text-slate-300'
+          }`}
+        >
+          <ShieldCheck size={10} />
+          RBAC {showRBAC ? 'ON' : 'OFF'}
+        </button>
       </div>
 
       {/* ── Edge legend — only when a node is selected ──────────────────── */}
@@ -453,7 +470,7 @@ export function TopologyView({ data, focusNodeId }: TopologyViewProps) {
           onPaneClick={() => setSelectedNode(null)}
           onInit={(instance) => { rfRef.current = instance; setRfReady(true) }}
           fitView
-          fitViewOptions={{ padding: 0.05 }}
+          fitViewOptions={{ padding: 0.08 }}
           minZoom={0.03}
           maxZoom={2}
           proOptions={{ hideAttribution: true }}
