@@ -6,7 +6,7 @@ import {
   RefreshCw, Trash2, Key, AlertCircle, CheckCircle2,
   Clock, ShieldCheck, Activity, Cloud, Loader2,
   ExternalLink, Eye, EyeOff, ArrowLeft,
-  Bell, Send, Slack, ToggleLeft, ToggleRight,
+  Bell, Send, Slack, ToggleLeft, ToggleRight, PlayCircle,
 } from 'lucide-react'
 import { GuardMapSymbol } from '../components/GuardMapLogo'
 import { supabase, db } from '../lib/supabase'
@@ -612,8 +612,130 @@ function NewKeyModal({ cluster, orgId, onClose }: {
   )
 }
 
+// ── Run Scan Modal ────────────────────────────────────────────────────────────
+function RunScanModal({ cluster, onClose }: { cluster: Cluster; onClose: () => void }) {
+  const scanCmd = `kubectl create job --from=cronjob/guardmap-scanner guardmap-scan-now -n guardmap`
+  const logsCmd = `kubectl logs -n guardmap -l job-name=guardmap-scan-now -f --tail=100`
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <motion.div
+        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+        className="absolute inset-0"
+        style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)' }}
+        onClick={onClose}
+      />
+      <motion.div
+        initial={{ opacity: 0, scale: 0.96, y: 12 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.96, y: 12 }}
+        transition={{ type: 'spring', damping: 28, stiffness: 320 }}
+        className="relative w-full max-w-lg rounded-2xl flex flex-col"
+        style={{
+          background: 'rgba(10,15,26,0.98)',
+          backdropFilter: 'blur(32px)',
+          border: '1px solid rgba(255,255,255,0.07)',
+          boxShadow: '0 24px 64px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.05)',
+        }}
+        onClick={e => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4"
+          style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-xl flex items-center justify-center"
+              style={{ background: 'rgba(0,212,255,0.1)', border: '1px solid rgba(0,212,255,0.2)' }}>
+              <PlayCircle size={15} className="text-cyan-400" />
+            </div>
+            <div>
+              <div className="text-sm font-sans font-semibold text-slate-100">Trigger immediate scan</div>
+              <div className="text-xs font-sans text-slate-400 mt-0.5">{cluster.name}</div>
+            </div>
+          </div>
+          <button onClick={onClose}
+            className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-300 transition-colors"
+            style={{ background: 'rgba(255,255,255,0.04)' }}>
+            <X size={14} />
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="px-6 py-5 space-y-4">
+          <div className="text-xs font-sans text-slate-400 leading-relaxed">
+            The agent scans automatically every 6 hours. To run an immediate scan,
+            paste this command in any terminal with <span className="font-mono text-slate-300">kubectl</span> access to your cluster:
+          </div>
+
+          {/* Scan command */}
+          <div>
+            <div className="text-xs font-sans text-slate-400 mb-1.5">1. Trigger scan job</div>
+            <div className="rounded-xl overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.07)' }}>
+              <div className="flex items-center justify-between px-3 py-2"
+                style={{ background: 'rgba(255,255,255,0.04)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                <div className="flex items-center gap-2">
+                  <Terminal size={11} className="text-slate-400" />
+                  <span className="text-[11px] font-mono text-slate-400">kubectl</span>
+                </div>
+                <CopyButton text={scanCmd} className="text-slate-400 hover:text-cyan-400" />
+              </div>
+              <pre className="px-3 py-2.5 text-xs font-mono text-cyan-300 leading-relaxed overflow-x-auto"
+                style={{ background: 'rgba(0,0,0,0.3)' }}>
+                {scanCmd}
+              </pre>
+            </div>
+          </div>
+
+          {/* Logs command */}
+          <div>
+            <div className="text-xs font-sans text-slate-400 mb-1.5">2. Follow logs (optional)</div>
+            <div className="rounded-xl overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.07)' }}>
+              <div className="flex items-center justify-between px-3 py-2"
+                style={{ background: 'rgba(255,255,255,0.04)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                <div className="flex items-center gap-2">
+                  <Terminal size={11} className="text-slate-400" />
+                  <span className="text-[11px] font-mono text-slate-400">kubectl logs</span>
+                </div>
+                <CopyButton text={logsCmd} className="text-slate-400 hover:text-cyan-400" />
+              </div>
+              <pre className="px-3 py-2.5 text-xs font-mono text-slate-400 leading-relaxed overflow-x-auto"
+                style={{ background: 'rgba(0,0,0,0.3)' }}>
+                {logsCmd}
+              </pre>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 p-3 rounded-xl text-xs font-sans text-slate-400"
+            style={{ background: 'rgba(0,212,255,0.04)', border: '1px solid rgba(0,212,255,0.1)' }}>
+            <Clock size={11} className="text-cyan-500 shrink-0" />
+            Results appear in the dashboard within ~1 minute of the scan completing. The next automatic scan runs in {nextScanIn(cluster.last_scan_at)}.
+          </div>
+        </div>
+
+        <div className="px-6 pb-5">
+          <button onClick={onClose}
+            className="w-full py-2.5 rounded-xl text-sm font-sans font-semibold flex items-center justify-center gap-2"
+            style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)', color: '#94a3b8' }}>
+            Close
+          </button>
+        </div>
+      </motion.div>
+    </div>
+  )
+}
+
+function nextScanIn(lastScanAt: string | null): string {
+  if (!lastScanAt) return 'up to 6h'
+  const elapsed = Date.now() - new Date(lastScanAt).getTime()
+  const remaining = Math.max(0, 6 * 3600 * 1000 - elapsed)
+  const h = Math.floor(remaining / 3600000)
+  const m = Math.floor((remaining % 3600000) / 60000)
+  if (h > 0) return `~${h}h ${m}m`
+  if (m > 0) return `~${m}m`
+  return 'any time now'
+}
+
 // ── Cluster Card ──────────────────────────────────────────────────────────────
-function ClusterCard({ cluster, orgId, onDelete, onNewKey }: { cluster: Cluster; orgId: string; onDelete: () => void; onNewKey: () => void }) {
+function ClusterCard({ cluster, orgId, onDelete, onNewKey, onRunScan }: { cluster: Cluster; orgId: string; onDelete: () => void; onNewKey: () => void; onRunScan: () => void }) {
   const status  = agentStatus(cluster)
   const style   = AGENT_STATUS_STYLE[status]
   const score   = cluster.last_scan_score
@@ -661,6 +783,12 @@ function ClusterCard({ cluster, orgId, onDelete, onNewKey }: { cluster: Cluster;
             <div className={`w-1.5 h-1.5 rounded-full ${style.dot}`} />
             {style.label}
           </div>
+          <button onClick={onRunScan}
+            title="Run scan now"
+            className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-cyan-400 transition-colors"
+            style={{ background: 'rgba(255,255,255,0.04)' }}>
+            <PlayCircle size={12} />
+          </button>
           <button onClick={onNewKey}
             title="Generate new API key"
             className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-cyan-400 transition-colors"
@@ -1051,6 +1179,7 @@ export function IntegrationsPage() {
   const [showAdd, setShowAdd]                 = useState(false)
   const [showSlackModal, setShowSlackModal]   = useState(false)
   const [newKeyCluster, setNewKeyCluster]     = useState<Cluster | null>(null)
+  const [runScanCluster, setRunScanCluster]   = useState<Cluster | null>(null)
 
   const load = useCallback(async () => {
     if (!orgId) return
@@ -1207,7 +1336,7 @@ export function IntegrationsPage() {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {clusters.map(c => (
-                <ClusterCard key={c.id} cluster={c} orgId={orgId} onDelete={() => handleDeleteCluster(c.id)} onNewKey={() => setNewKeyCluster(c)} />
+                <ClusterCard key={c.id} cluster={c} orgId={orgId} onDelete={() => handleDeleteCluster(c.id)} onNewKey={() => setNewKeyCluster(c)} onRunScan={() => setRunScanCluster(c)} />
               ))}
             </div>
           )}
@@ -1371,6 +1500,13 @@ export function IntegrationsPage() {
             onClose={() => setShowSlackModal(false)}
             onSaved={load}
           />
+        )}
+      </AnimatePresence>
+
+      {/* Run scan modal */}
+      <AnimatePresence>
+        {runScanCluster && (
+          <RunScanModal cluster={runScanCluster} onClose={() => setRunScanCluster(null)} />
         )}
       </AnimatePresence>
     </div>

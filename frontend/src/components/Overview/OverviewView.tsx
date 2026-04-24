@@ -4,9 +4,9 @@ import {
   ShieldAlert, ShieldCheck, Network, Lock, Server,
   Layers, ArrowRight, Globe, Container, GitGraph,
   AlertTriangle, CheckCircle, XCircle, Boxes, BookMarked,
-  KeyRound, FileText, Flame,
+  KeyRound, FileText, Flame, Zap,
 } from 'lucide-react'
-import { GraphData, NodeType } from '../../types'
+import { GraphData, NodeType, WORKLOAD_TYPES as ALL_WORKLOAD_TYPES } from '../../types'
 import { TabId } from '../Nav'
 import { countCriticalFindings } from '../Findings/FindingsView'
 import type { ScanMeta, DbFinding } from '../../hooks/useGraphData'
@@ -269,6 +269,168 @@ function NsTile({ ns, wls, ps, svcs, ings, hasNetpol, danger, issues, onNavigate
   )
 }
 
+// ── Blast Radius Summary ──────────────────────────────────────────────────────
+
+interface WorkloadExposure {
+  id: string
+  name: string
+  namespace: string
+  awsCount: number
+  fullCount: number
+  pct: number
+}
+
+function useSummaryBlastRadius(data: GraphData): { totalAws: number; top: WorkloadExposure[]; worstPct: number } | null {
+  return useMemo(() => {
+    const awsNodes = data.nodes.filter(n => n.type === 'aws_service')
+    const totalAws = awsNodes.length
+    if (totalAws === 0) return null
+
+    const workloads = data.nodes.filter(n =>
+      ALL_WORKLOAD_TYPES.includes(n.type) && !SKIP_NS.has(n.namespace ?? '')
+    )
+    if (workloads.length === 0) return null
+
+    const top: WorkloadExposure[] = workloads.map(w => {
+      const seeds = new Set<string>([w.id])
+      data.edges.forEach(e => {
+        if (e.source === w.id && e.label === 'manages') seeds.add(e.target)
+      })
+      const reachable = new Set<string>(seeds)
+      const queue = [...seeds]
+      while (queue.length) {
+        const cur = queue.shift()!
+        data.edges.forEach(e => {
+          if (e.source === cur && !reachable.has(e.target)) {
+            reachable.add(e.target)
+            queue.push(e.target)
+          }
+        })
+      }
+      const reached = awsNodes.filter(n => reachable.has(n.id))
+      const full    = reached.filter(n =>
+        data.edges.some(e => reachable.has(e.source) && e.target === n.id && e.accessLevel === 'full')
+      )
+      return {
+        id: w.id, name: w.label ?? '', namespace: w.namespace ?? '',
+        awsCount: reached.length, fullCount: full.length,
+        pct: Math.round((reached.length / totalAws) * 100),
+      }
+    })
+    .filter(r => r.awsCount > 0)
+    .sort((a, b) => b.awsCount !== a.awsCount ? b.awsCount - a.awsCount : b.fullCount - a.fullCount)
+    .slice(0, 3)
+
+    if (top.length === 0) return null
+    return { totalAws, top, worstPct: top[0].pct }
+  }, [data])
+}
+
+function BlastRadiusWidget({
+  summary,
+  onNavigate,
+}: {
+  summary: NonNullable<ReturnType<typeof useSummaryBlastRadius>>
+  onNavigate: (tab: TabId, nodeId?: string) => void
+}) {
+  const { top, totalAws, worstPct } = summary
+  const worst = top[0]
+  const barColor = worstPct >= 75 ? '#ef4444' : worstPct >= 40 ? '#f97316' : worstPct >= 20 ? '#eab308' : '#22c55e'
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="rounded-2xl overflow-hidden"
+      style={{
+        background: 'rgba(255,255,255,0.02)',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
+        boxShadow: `0 4px 30px rgba(0,0,0,0.3), 0 0 50px ${barColor}0a, inset 0 1px 0 rgba(255,255,255,0.04)`,
+        border: '1px solid rgba(255,255,255,0.04)',
+      }}
+    >
+      {/* Header */}
+      <div className="flex items-start justify-between px-5 py-4"
+        style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+        <div>
+          <div className="flex items-center gap-2.5">
+            <Zap size={15} className="text-amber-400" />
+            <span className="text-base font-sans font-bold text-slate-100">Blast Radius</span>
+            <span className="text-[11px] font-mono font-bold px-2 py-0.5 rounded-lg"
+              style={{ background: `${barColor}18`, color: barColor }}>
+              {worstPct}% worst-case
+            </span>
+          </div>
+          <div className="text-xs font-sans text-slate-400 mt-0.5">
+            AWS resources reachable if one workload is compromised
+          </div>
+        </div>
+        <button
+          onClick={() => onNavigate('graph', worst.id)}
+          className="text-xs font-sans text-slate-400 hover:text-slate-300 transition-colors flex items-center gap-1"
+        >
+          Explore <ArrowRight size={11} />
+        </button>
+      </div>
+
+      {/* Worst-case bar */}
+      <div className="px-5 pt-4 pb-3">
+        <div className="flex items-center justify-between mb-1.5">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-sans font-semibold text-slate-200">{worst.name}</span>
+            <span className="text-[10px] font-mono text-slate-400">{worst.namespace}</span>
+          </div>
+          <span className="text-xs font-mono font-bold" style={{ color: barColor }}>
+            {worst.awsCount} / {totalAws} AWS services
+          </span>
+        </div>
+        <div className="h-2 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.06)' }}>
+          <motion.div
+            className="h-full rounded-full"
+            style={{ background: barColor, boxShadow: `0 0 8px ${barColor}60` }}
+            initial={{ width: 0 }}
+            animate={{ width: `${worstPct}%` }}
+            transition={{ duration: 1, ease: 'easeOut', delay: 0.1 }}
+          />
+        </div>
+        {worst.fullCount > 0 && (
+          <div className="mt-1.5 text-[11px] font-sans text-slate-400">
+            <span className="text-red-400 font-semibold">{worst.fullCount}</span> with full/write access
+          </div>
+        )}
+      </div>
+
+      {/* Top 3 list */}
+      {top.length > 1 && (
+        <div className="px-3 pb-3 space-y-1">
+          {top.map((w, i) => {
+            const c = w.pct >= 75 ? '#ef4444' : w.pct >= 40 ? '#f97316' : w.pct >= 20 ? '#eab308' : '#22c55e'
+            return (
+              <button
+                key={w.id}
+                onClick={() => onNavigate('graph', w.id)}
+                className="w-full flex items-center gap-3 px-3 py-2 rounded-xl group transition-colors text-left"
+                style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.03)' }}
+              >
+                <span className="text-[10px] font-mono text-slate-500 w-4">#{i + 1}</span>
+                <span className="text-xs font-sans text-slate-300 flex-1 truncate">{w.name}</span>
+                <span className="text-[10px] font-mono text-slate-400 shrink-0">{w.namespace}</span>
+                <div className="flex items-center gap-2 shrink-0">
+                  <div className="w-16 h-1 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.06)' }}>
+                    <div className="h-full rounded-full transition-all" style={{ width: `${w.pct}%`, background: c }} />
+                  </div>
+                  <span className="text-[10px] font-mono font-bold w-8 text-right" style={{ color: c }}>{w.pct}%</span>
+                </div>
+              </button>
+            )
+          })}
+        </div>
+      )}
+    </motion.div>
+  )
+}
+
 // ── Top Risky Workloads ───────────────────────────────────────────────────────
 
 interface RiskyWorkload {
@@ -390,7 +552,8 @@ function fmtScanTime(iso: string): string {
 export function OverviewView({ data, onNavigate, onNavigateToExplorer, scanMeta, isMock }: OverviewViewProps) {
   const stats = useClusterStats(data ?? EMPTY_GRAPH)
   const { sev: graphSev } = stats
-  const riskyWorkloads = useTopRiskyWorkloads(data ?? EMPTY_GRAPH, scanMeta?.findings ?? [])
+  const riskyWorkloads   = useTopRiskyWorkloads(data ?? EMPTY_GRAPH, scanMeta?.findings ?? [])
+  const blastSummary     = useSummaryBlastRadius(data ?? EMPTY_GRAPH)
 
   const sev = scanMeta
     ? { critical: scanMeta.criticalCount, high: scanMeta.highCount, medium: scanMeta.mediumCount, low: scanMeta.lowCount }
@@ -562,6 +725,11 @@ export function OverviewView({ data, onNavigate, onNavigateToExplorer, scanMeta,
               ))}
             </div>
           </motion.div>
+        )}
+
+        {/* ── Blast Radius ── */}
+        {blastSummary && (
+          <BlastRadiusWidget summary={blastSummary} onNavigate={onNavigate} />
         )}
 
         {/* ── Namespace Health ── */}
