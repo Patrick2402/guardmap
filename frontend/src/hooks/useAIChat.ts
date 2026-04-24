@@ -41,6 +41,9 @@ interface ClusterContext {
     ingress: string
     namespace: string
     routes: string[]
+    hosts: string[]
+    tls: string[]
+    paths: string
   }>
   // All nodes inventory grouped by type
   inventory: Array<{
@@ -150,6 +153,9 @@ function buildContext(
       ingress: ing.label,
       namespace: ing.namespace ?? 'default',
       routes,
+      hosts: ing.metadata?.host ? ing.metadata.host.split(', ').filter(Boolean) : [],
+      tls:   ing.metadata?.tls   ? ing.metadata.tls.split(', ').filter(Boolean)   : [],
+      paths: ing.metadata?.paths ?? '',
     })
   }
 

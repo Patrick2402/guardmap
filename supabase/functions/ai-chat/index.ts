@@ -24,7 +24,7 @@ interface ClusterContext {
     services: Array<{ name: string; accessLevel: string }>
   }>
   serviceBindings: Array<{ service: string; namespace: string; selects: string[] }>
-  ingressRoutes: Array<{ ingress: string; namespace: string; routes: string[] }>
+  ingressRoutes: Array<{ ingress: string; namespace: string; routes: string[]; hosts: string[]; tls: string[]; paths: string }>
   rbacBindings: Array<{ binding: string; namespace: string; role: string; subjects: string[] }>
   inventory: Array<{ type: string; namespace: string; name: string }>
 }
@@ -61,7 +61,12 @@ function buildSystemPrompt(ctx: ClusterContext): string {
   const ingressSummary = ctx.ingressRoutes.length === 0
     ? 'No ingress routes found.'
     : ctx.ingressRoutes
-        .map(i => `${i.namespace}/${i.ingress} routes → [${i.routes.join(', ')}]`)
+        .map(i => {
+          const domains = i.hosts.length > 0 ? ` domains=[${i.hosts.join(', ')}]` : ' (no domain configured)'
+          const tls     = i.tls.length > 0   ? ` tls=[${i.tls.join(', ')}]`       : ''
+          const paths   = i.paths             ? ` paths=${i.paths}`                : ''
+          return `${i.namespace}/${i.ingress}${domains}${tls}${paths} routes→[${i.routes.join(', ')}]`
+        })
         .join('\n')
 
   const rbacSummary = ctx.rbacBindings.length === 0
