@@ -58,7 +58,7 @@ function CustomTooltip({ active, payload, label }: any) {
         <span className="text-lg font-bold font-mono" style={{ color }}>{d.securityScore}</span>
         <span className="text-slate-400">{scoreLabel(d.securityScore)}</span>
       </div>
-      <div className="flex items-center gap-3 text-[11px]">
+      <div className="flex items-center gap-3 text-xs">
         {d.criticalCount > 0 && <span style={{ color: '#d13212' }}>{d.criticalCount} critical</span>}
         {d.highCount > 0     && <span style={{ color: '#ff7043' }}>{d.highCount} high</span>}
         {d.mediumCount > 0   && <span style={{ color: '#ff9900' }}>{d.mediumCount} medium</span>}
@@ -73,12 +73,12 @@ function Trend({ current, previous }: { current: number; previous: number | unde
   const diff = current - previous
   if (Math.abs(diff) < 2) return <Minus size={12} className="text-slate-400" />
   if (diff > 0) return (
-    <span className="flex items-center gap-0.5 text-emerald-400 text-[11px] font-mono">
+    <span className="flex items-center gap-0.5 text-emerald-400 text-xs font-mono">
       <TrendingUp size={11} />+{diff}
     </span>
   )
   return (
-    <span className="flex items-center gap-0.5 text-red-400 text-[11px] font-mono">
+    <span className="flex items-center gap-0.5 text-red-400 text-xs font-mono">
       <TrendingDown size={11} />{diff}
     </span>
   )
@@ -156,7 +156,7 @@ export function HistoryView({ source }: HistoryViewProps) {
 
         {/* ── Mock banner ── */}
         {isMock && (
-          <div className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-[11px] font-mono"
+          <div className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-mono"
             style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)' }}>
             <span className="font-bold text-amber-400">DEMO DATA</span>
             <span className="text-slate-400">Connect a live cluster to see real scan history and trends.</span>
@@ -198,12 +198,12 @@ export function HistoryView({ source }: HistoryViewProps) {
               className="rounded-2xl p-4"
               style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}
             >
-              <div className="flex items-center gap-1.5 text-[11px] text-slate-400 mb-2" style={{ color: card.color }}>
+              <div className="flex items-center gap-1.5 text-xs text-slate-400 mb-2" style={{ color: card.color }}>
                 {card.icon}
                 <span className="text-slate-400">{card.label}</span>
               </div>
               <div className="text-2xl font-bold font-mono" style={{ color: card.color }}>{card.value}</div>
-              <div className="text-[11px] text-slate-400 mt-0.5">{card.sub}</div>
+              <div className="text-xs text-slate-400 mt-0.5">{card.sub}</div>
             </motion.div>
           ))}
         </div>
@@ -218,11 +218,11 @@ export function HistoryView({ source }: HistoryViewProps) {
             style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}
           >
             <div className="flex items-center justify-between mb-4">
-              <div className="text-[13px] font-semibold text-slate-300 flex items-center gap-2">
+              <div className="text-sm font-semibold text-slate-300 flex items-center gap-2">
                 <TrendingUp size={13} className="text-cyan-400" />
                 Security score trend
               </div>
-              <div className="text-[11px] font-mono text-slate-400">{scans.length} scans</div>
+              <div className="text-xs font-mono text-slate-400">{scans.length} scans</div>
             </div>
             <ResponsiveContainer width="100%" height={180}>
               <AreaChart data={chartData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
@@ -288,16 +288,16 @@ export function HistoryView({ source }: HistoryViewProps) {
                   {/* Date + label */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className="text-[13px] font-semibold text-slate-200">{fmtDateFull(scan.scannedAt)}</span>
+                      <span className="text-sm font-semibold text-slate-200">{fmtDateFull(scan.scannedAt)}</span>
                       {i === 0 && (
-                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-cyan-900/40 text-cyan-400 border border-cyan-500/30">LATEST</span>
+                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-cyan-900/40 text-cyan-400 border border-cyan-500/30">LATEST</span>
                       )}
                     </div>
                     <div className="flex items-center gap-3 mt-0.5">
-                      <span className="text-[11px]" style={{ color }}>{scoreLabel(scan.securityScore)}</span>
-                      <span className="text-[11px] text-slate-400">{timeAgo(scan.scannedAt)}</span>
+                      <span className="text-xs" style={{ color }}>{scoreLabel(scan.securityScore)}</span>
+                      <span className="text-xs text-slate-400">{timeAgo(scan.scannedAt)}</span>
                       {scan.durationMs && (
-                        <span className="text-[11px] text-slate-400">{scan.durationMs}ms</span>
+                        <span className="text-xs text-slate-400">{scan.durationMs}ms</span>
                       )}
                     </div>
                   </div>
@@ -305,22 +305,22 @@ export function HistoryView({ source }: HistoryViewProps) {
                   {/* Counts */}
                   <div className="flex items-center gap-3 shrink-0">
                     {scan.criticalCount > 0 && (
-                      <span className="flex items-center gap-1 text-[11px] font-mono" style={{ color: '#d13212' }}>
+                      <span className="flex items-center gap-1 text-xs font-mono" style={{ color: '#d13212' }}>
                         <AlertCircle size={10} />{scan.criticalCount}
                       </span>
                     )}
                     {scan.highCount > 0 && (
-                      <span className="flex items-center gap-1 text-[11px] font-mono" style={{ color: '#ff7043' }}>
+                      <span className="flex items-center gap-1 text-xs font-mono" style={{ color: '#ff7043' }}>
                         <AlertTriangle size={10} />{scan.highCount}
                       </span>
                     )}
                     {scan.mediumCount > 0 && (
-                      <span className="flex items-center gap-1 text-[11px] font-mono" style={{ color: '#ff9900' }}>
+                      <span className="flex items-center gap-1 text-xs font-mono" style={{ color: '#ff9900' }}>
                         <Info size={10} />{scan.mediumCount}
                       </span>
                     )}
                     {scan.criticalCount === 0 && scan.highCount === 0 && scan.mediumCount === 0 && (
-                      <span className="text-[11px] text-emerald-500">Clean</span>
+                      <span className="text-xs text-emerald-500">Clean</span>
                     )}
                     <Trend current={scan.securityScore} previous={scans[i + 1]?.securityScore} />
                   </div>

@@ -406,16 +406,16 @@ function FrameworkCard({ fw, findings, isActive, onClick }: {
         border: isActive ? `1px solid ${fw.color}40` : '1px solid rgba(255,255,255,0.06)',
         boxShadow: isActive ? `0 0 28px ${fw.color}12` : 'none',
       }}>
-      <div className="text-[11px] font-mono font-bold mb-1 truncate" style={{ color: fw.color }}>{fw.shortName}</div>
+      <div className="text-xs font-mono font-bold mb-1 truncate" style={{ color: fw.color }}>{fw.shortName}</div>
       <div className="flex items-baseline gap-1 mb-2">
         <span className="text-2xl font-mono font-bold text-slate-100">{pct}</span>
         <span className="text-sm font-mono text-slate-400">%</span>
       </div>
       <ProgressBar value={covered} max={total} color={fw.color} />
       <div className="flex items-center justify-between mt-2">
-        <span className="text-[10px] font-mono text-slate-400">{covered}/{total} controls</span>
+        <span className="text-xs font-mono text-slate-400">{covered}/{total} controls</span>
         {active > 0 && (
-          <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-md"
+          <span className="text-xs font-mono font-bold px-1.5 py-0.5 rounded-md"
             style={{ background: 'rgba(239,68,68,0.12)', color: '#f87171', border: '1px solid rgba(239,68,68,0.2)' }}>
             {active} active
           </span>
@@ -494,7 +494,7 @@ export function BenchmarksView({ data, dbFindings, onNavigate }: BenchmarksViewP
           <div className="space-y-4">
             {[...byCategory.entries()].map(([cat, controls]) => (
               <div key={cat}>
-                <div className="text-[10px] font-mono font-bold uppercase tracking-[0.15em] text-slate-400 mb-2 px-1">{cat}</div>
+                <div className="text-xs font-mono font-bold uppercase tracking-[0.15em] text-slate-400 mb-2 px-1">{cat}</div>
                 <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.05)', background: 'rgba(255,255,255,0.015)' }}>
                   {controls.map((c, i) => {
                     const covered = isCovered(c)
@@ -515,7 +515,7 @@ export function BenchmarksView({ data, dbFindings, onNavigate }: BenchmarksViewP
                         </div>
 
                         <div className="shrink-0 w-[86px]">
-                          <span className="text-[11px] font-mono font-bold"
+                          <span className="text-xs font-mono font-bold"
                             style={{ color: covered ? fw.color : '#475569' }}>
                             {c.id}
                           </span>
@@ -528,13 +528,13 @@ export function BenchmarksView({ data, dbFindings, onNavigate }: BenchmarksViewP
                           {covered && c.coveredBy.length > 0 && (
                             <div className="flex items-center gap-1.5 mt-1 flex-wrap">
                               {c.coveredBy.slice(0, 4).map(r => (
-                                <span key={r} className="text-[9px] font-mono px-1.5 py-0.5 rounded-md"
+                                <span key={r} className="text-[10px] font-mono px-1.5 py-0.5 rounded-md"
                                   style={{ background: `${fw.color}10`, color: fw.color, border: `1px solid ${fw.color}20` }}>
                                   {r.replace(/_/g, ' ')}
                                 </span>
                               ))}
                               {c.coveredBy.length > 4 && (
-                                <span className="text-[9px] font-mono text-slate-400">+{c.coveredBy.length - 4} more</span>
+                                <span className="text-[10px] font-mono text-slate-400">+{c.coveredBy.length - 4} more</span>
                               )}
                             </div>
                           )}
@@ -547,9 +547,9 @@ export function BenchmarksView({ data, dbFindings, onNavigate }: BenchmarksViewP
                               {active.length} finding{active.length > 1 ? 's' : ''}
                             </span>
                           ) : covered ? (
-                            <span className="text-[10px] font-mono text-slate-400">clean</span>
+                            <span className="text-xs font-mono text-slate-400">clean</span>
                           ) : (
-                            <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-lg"
+                            <span className="text-xs font-mono font-bold px-2 py-0.5 rounded-lg"
                               title="Requires cluster-level access (admission controller, audit logs, or runtime agent) — not detectable from K8s API alone"
                               style={{ background: 'rgba(100,116,139,0.12)', color: '#64748b', border: '1px solid rgba(100,116,139,0.2)', cursor: 'help' }}>
                               N/A
@@ -580,7 +580,7 @@ export function BenchmarksView({ data, dbFindings, onNavigate }: BenchmarksViewP
               <MinusCircle size={12} className="text-slate-400" />
               <span className="text-xs font-sans text-slate-400">N/A — requires runtime/admission access</span>
             </div>
-            <span className="ml-auto text-[10px] font-mono text-slate-400">click any row for full details</span>
+            <span className="ml-auto text-xs font-mono text-slate-400">click any row for full details</span>
           </div>
         </div>
       </div>

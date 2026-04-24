@@ -69,7 +69,7 @@ function ScoreRing({ score, color, trackColor }: { score: number; color: string;
         >
           {score}
         </motion.span>
-        <span className="text-[11px] font-sans text-slate-400 mt-1 tracking-wider">/100</span>
+        <span className="text-xs font-sans text-slate-400 mt-1 tracking-wider">/100</span>
       </div>
     </div>
   )
@@ -241,7 +241,7 @@ function NsTile({ ns, wls, ps, svcs, ings, hasNetpol, danger, issues, onNavigate
             style={{ background: 'rgba(255,255,255,0.04)' }}>
             <span style={{ color: c }}>{icon}</span>
             <span className="text-sm font-mono font-bold mt-0.5" style={{ color: c }}>{v}</span>
-            <span className="text-[9px] font-sans text-slate-400 leading-none mt-0.5">{l}</span>
+            <span className="text-[10px] font-sans text-slate-400 leading-none mt-0.5">{l}</span>
           </div>
         ))}
       </div>
@@ -357,7 +357,7 @@ function BlastRadiusWidget({
           <div className="flex items-center gap-2.5">
             <Zap size={15} className="text-amber-400" />
             <span className="text-base font-sans font-bold text-slate-100">Blast Radius</span>
-            <span className="text-[11px] font-mono font-bold px-2 py-0.5 rounded-lg"
+            <span className="text-xs font-mono font-bold px-2 py-0.5 rounded-lg"
               style={{ background: `${barColor}18`, color: barColor }}>
               {worstPct}% worst-case
             </span>
@@ -379,7 +379,7 @@ function BlastRadiusWidget({
         <div className="flex items-center justify-between mb-1.5">
           <div className="flex items-center gap-2">
             <span className="text-xs font-sans font-semibold text-slate-200">{worst.name}</span>
-            <span className="text-[10px] font-mono text-slate-400">{worst.namespace}</span>
+            <span className="text-xs font-mono text-slate-400">{worst.namespace}</span>
           </div>
           <span className="text-xs font-mono font-bold" style={{ color: barColor }}>
             {worst.awsCount} / {totalAws} AWS services
@@ -395,7 +395,7 @@ function BlastRadiusWidget({
           />
         </div>
         {worst.fullCount > 0 && (
-          <div className="mt-1.5 text-[11px] font-sans text-slate-400">
+          <div className="mt-1.5 text-xs font-sans text-slate-400">
             <span className="text-red-400 font-semibold">{worst.fullCount}</span> with full/write access
           </div>
         )}
@@ -413,14 +413,14 @@ function BlastRadiusWidget({
                 className="w-full flex items-center gap-3 px-3 py-2 rounded-xl group transition-colors text-left"
                 style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.03)' }}
               >
-                <span className="text-[10px] font-mono text-slate-500 w-4">#{i + 1}</span>
+                <span className="text-xs font-mono text-slate-500 w-4">#{i + 1}</span>
                 <span className="text-xs font-sans text-slate-300 flex-1 truncate">{w.name}</span>
-                <span className="text-[10px] font-mono text-slate-400 shrink-0">{w.namespace}</span>
+                <span className="text-xs font-mono text-slate-400 shrink-0">{w.namespace}</span>
                 <div className="flex items-center gap-2 shrink-0">
                   <div className="w-16 h-1 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.06)' }}>
                     <div className="h-full rounded-full transition-all" style={{ width: `${w.pct}%`, background: c }} />
                   </div>
-                  <span className="text-[10px] font-mono font-bold w-8 text-right" style={{ color: c }}>{w.pct}%</span>
+                  <span className="text-xs font-mono font-bold w-8 text-right" style={{ color: c }}>{w.pct}%</span>
                 </div>
               </button>
             )
@@ -494,18 +494,18 @@ function RiskyWorkloadRow({ w, onNavigate, index }: {
       style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.04)' }}
     >
       {/* Rank */}
-      <span className="text-[11px] font-mono text-slate-400 w-4 shrink-0">#{index + 1}</span>
+      <span className="text-xs font-mono text-slate-400 w-4 shrink-0">#{index + 1}</span>
 
       {/* Name + namespace */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          <span className="text-[13px] font-semibold text-slate-200 truncate">{w.name}</span>
-          <span className="text-[10px] font-mono text-slate-400 shrink-0">{w.type}</span>
+          <span className="text-sm font-semibold text-slate-200 truncate">{w.name}</span>
+          <span className="text-xs font-mono text-slate-400 shrink-0">{w.type}</span>
         </div>
         <div className="flex items-center gap-2 mt-0.5">
-          <span className="text-[11px] text-slate-400">{w.namespace}</span>
+          <span className="text-xs text-slate-400">{w.namespace}</span>
           {w.flags.map(f => (
-            <span key={f} className="text-[10px] px-1.5 py-0.5 rounded-md font-mono"
+            <span key={f} className="text-xs px-1.5 py-0.5 rounded-md font-mono"
               style={{ background: 'rgba(239,68,68,0.1)', color: '#fca5a5' }}>{f}</span>
           ))}
         </div>
@@ -517,13 +517,13 @@ function RiskyWorkloadRow({ w, onNavigate, index }: {
           const count = w[s]
           if (!count) return null
           return (
-            <span key={s} className="text-[11px] font-mono font-bold px-2 py-0.5 rounded-full"
+            <span key={s} className="text-xs font-mono font-bold px-2 py-0.5 rounded-full"
               style={{ background: `${SEV_COLOR[s]}18`, color: SEV_COLOR[s] }}>
               {count}
             </span>
           )
         })}
-        <span className="text-[11px] text-slate-400 ml-1">
+        <span className="text-xs text-slate-400 ml-1">
           {totalFindings} finding{totalFindings !== 1 ? 's' : ''}
         </span>
       </div>
@@ -619,21 +619,21 @@ export function OverviewView({ data, onNavigate, onNavigateToExplorer, scanMeta,
                 </div>
               )}
               {scanMeta ? (
-                <div className="mt-2 flex items-center gap-3 text-[11px] text-slate-400 font-mono">
+                <div className="mt-2 flex items-center gap-3 text-xs text-slate-400 font-mono">
                   <span>Scanned {fmtScanTime(scanMeta.scannedAt)}</span>
                   {scanMeta.durationMs && <span>{scanMeta.durationMs}ms</span>}
                 </div>
               ) : isMock ? (
-                <div className="mt-2 flex items-center gap-2 text-[11px] font-mono">
+                <div className="mt-2 flex items-center gap-2 text-xs font-mono">
                   <span className="px-1.5 py-0.5 rounded text-amber-400 font-bold" style={{ background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.2)' }}>MOCK</span>
                   <span className="text-slate-400">Demo data · connect a cluster to see live results</span>
                 </div>
               ) : (
-                <div className="mt-2 text-[11px] font-mono text-slate-400">No scan yet — agent will submit results on next run</div>
+                <div className="mt-2 text-xs font-mono text-slate-400">No scan yet — agent will submit results on next run</div>
               )}
               <button
                 onClick={() => onNavigate('graph')}
-                className="mt-3 flex items-center gap-1.5 text-[11px] text-slate-400 hover:text-cyan-400 transition-colors"
+                className="mt-3 flex items-center gap-1.5 text-xs text-slate-400 hover:text-cyan-400 transition-colors"
               >
                 <GitGraph size={11} />
                 Open IRSA graph → click any workload to inspect its IAM permissions
@@ -817,7 +817,7 @@ export function OverviewView({ data, onNavigate, onNavigateToExplorer, scanMeta,
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-sans font-semibold text-slate-200">{label}</span>
                   {badge && (
-                    <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-md shrink-0"
+                    <span className="text-xs font-semibold px-1.5 py-0.5 rounded-md shrink-0"
                       style={{ background: `${color}20`, color }}>
                       {badge}
                     </span>

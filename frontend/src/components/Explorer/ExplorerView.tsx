@@ -617,7 +617,7 @@ export function ExplorerView({ data, clusterName = 'mock-cluster', initialTypeFi
             <button
               key={g.label}
               onClick={() => handleGroupClick(g)}
-              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border text-[10px] font-mono transition-all ${
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border text-xs font-mono transition-all ${
                 isGroupActive(g)
                   ? `border-white/15 bg-white/8 ${g.color}`
                   : 'border-cyber-border/50 bg-cyber-panel/40 text-slate-400 hover:text-slate-300 hover:border-slate-600/60'
@@ -625,7 +625,7 @@ export function ExplorerView({ data, clusterName = 'mock-cluster', initialTypeFi
             >
               <span className={isGroupActive(g) ? g.color : 'text-slate-400'}>{g.icon}</span>
               <span>{g.label}</span>
-              <span className={`px-1.5 py-px rounded-full text-[9px] ${isGroupActive(g) ? 'bg-white/12 text-slate-200' : 'bg-white/5 text-slate-400'}`}>
+              <span className={`px-1.5 py-px rounded-full text-[10px] ${isGroupActive(g) ? 'bg-white/12 text-slate-200' : 'bg-white/5 text-slate-400'}`}>
                 {g.count}
               </span>
             </button>
@@ -645,13 +645,13 @@ export function ExplorerView({ data, clusterName = 'mock-cluster', initialTypeFi
             <div className="flex items-center gap-3 px-5 py-2.5">
               {/* Namespace filter */}
               <div className="flex items-center gap-2">
-                <span className="text-[10px] font-mono text-slate-400">Namespace</span>
+                <span className="text-xs font-mono text-slate-400">Namespace</span>
                 <div className="flex items-center gap-1 p-0.5 rounded-lg border border-cyber-border bg-cyber-panel/60">
                   {namespaces.map(ns => (
                     <button
                       key={ns}
                       onClick={() => setNsFilter(ns)}
-                      className={`px-2 py-1 rounded-md text-[10px] font-mono transition-all ${
+                      className={`px-2 py-1 rounded-md text-xs font-mono transition-all ${
                         nsFilter === ns ? 'bg-white/8 text-slate-200 border border-white/10' : 'text-slate-400 hover:text-slate-300'
                       }`}
                     >
@@ -668,7 +668,7 @@ export function ExplorerView({ data, clusterName = 'mock-cluster', initialTypeFi
                   value={search}
                   onChange={e => setSearch(e.target.value)}
                   placeholder="search name, namespace, ARN..."
-                  className="bg-transparent text-[11px] font-mono text-slate-300 placeholder-slate-600 outline-none w-52"
+                  className="bg-transparent text-sm font-mono text-slate-300 placeholder-slate-600 outline-none w-52"
                 />
                 {search && <button onClick={() => setSearch('')} className="text-slate-400 hover:text-slate-300"><X size={11} /></button>}
               </div>
@@ -689,14 +689,14 @@ export function ExplorerView({ data, clusterName = 'mock-cluster', initialTypeFi
                 { key: 'access',    label: 'AWS Access' },
               ] as { key: SortKey; label: string }[]).map(col => (
                 <th key={col.key} onClick={() => toggleSort(col.key)}
-                  className="text-left px-5 py-2.5 text-[10px] font-mono font-semibold text-slate-400 uppercase tracking-widest cursor-pointer hover:text-slate-300 transition-colors select-none">
+                  className="text-left px-5 py-2.5 text-xs font-mono font-semibold text-slate-400 uppercase tracking-widest cursor-pointer hover:text-slate-300 transition-colors select-none">
                   <div className="flex items-center gap-1.5">
                     {col.label}
                     <SortIcon active={sortKey === col.key} dir={sortDir} />
                   </div>
                 </th>
               ))}
-              <th className="text-left px-5 py-2.5 text-[10px] font-mono font-semibold text-slate-400 uppercase tracking-widest">Connections</th>
+              <th className="text-left px-5 py-2.5 text-xs font-mono font-semibold text-slate-400 uppercase tracking-widest">Connections</th>
               <th className="w-10" />
             </tr>
           </thead>
@@ -721,7 +721,7 @@ export function ExplorerView({ data, clusterName = 'mock-cluster', initialTypeFi
                           <span className={`shrink-0 ${TYPE_COLOR[node.type].split(' ')[0]}`}>
                             {TYPE_ICON[node.type]}
                           </span>
-                          <span className="text-[11px] font-mono font-medium text-slate-200">{node.label}</span>
+                          <span className="text-sm font-mono font-medium text-slate-200">{node.label}</span>
                           {/* Security badges */}
                           {node.metadata?.privileged === 'true' && (
                             <span className="text-[8px] font-mono px-1 py-px rounded bg-red-900/50 text-red-400 border border-red-500/30">PRIV</span>
@@ -735,22 +735,22 @@ export function ExplorerView({ data, clusterName = 'mock-cluster', initialTypeFi
                         </div>
                       </td>
                       <td className="px-5 py-2.5">
-                        <span className="text-[11px] font-mono text-slate-400">{node.namespace ?? <span className="text-slate-400">—</span>}</span>
+                        <span className="text-sm font-mono text-slate-400">{node.namespace ?? <span className="text-slate-400">—</span>}</span>
                       </td>
                       <td className="px-5 py-2.5">
-                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md border text-[10px] font-mono ${TYPE_COLOR[node.type]}`}>
+                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md border text-xs font-mono ${TYPE_COLOR[node.type]}`}>
                           {TYPE_ICON[node.type]}
                           {TYPE_LABEL[node.type]}
                         </span>
                       </td>
                       <td className="px-5 py-2.5">
                         {access
-                          ? <span className={`inline-block px-2 py-0.5 rounded-md border text-[10px] font-mono font-semibold ${ACCESS_BADGE[access]}`}>{access.toUpperCase()}</span>
-                          : <span className="text-[11px] font-mono text-slate-400">—</span>
+                          ? <span className={`inline-block px-2 py-0.5 rounded-md border text-xs font-mono font-semibold ${ACCESS_BADGE[access]}`}>{access.toUpperCase()}</span>
+                          : <span className="text-sm font-mono text-slate-400">—</span>
                         }
                       </td>
                       <td className="px-5 py-2.5">
-                        <span className="text-[11px] font-mono text-slate-400">{links}</span>
+                        <span className="text-sm font-mono text-slate-400">{links}</span>
                       </td>
                       <td className="pr-5 py-2.5 text-right text-slate-400">
                         {isExpanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
@@ -771,20 +771,20 @@ export function ExplorerView({ data, clusterName = 'mock-cluster', initialTypeFi
           </tbody>
         </table>
         {rows.length === 0 && (
-          <div className="flex items-center justify-center h-32 text-[11px] font-mono text-slate-400">no results</div>
+          <div className="flex items-center justify-center h-32 text-sm font-mono text-slate-400">no results</div>
         )}
       </div>
 
       {/* ── Footer ── */}
       <div className="shrink-0 px-6 py-2 border-t border-cyber-border/40 flex items-center justify-between">
-        <span className="text-[10px] font-mono text-slate-400">
+        <span className="text-xs font-mono text-slate-400">
           {rows.length} of {data.nodes.length} resources
           {(typeFilter !== 'all' || nsFilter !== 'all' || search) && ' · filtered'}
         </span>
         {(typeFilter !== 'all' || nsFilter !== 'all' || search) && (
           <button
             onClick={() => { setTypeFilter('all'); setNsFilter('all'); setSearch('') }}
-            className="text-[10px] font-mono text-slate-400 hover:text-slate-300 transition-colors flex items-center gap-1"
+            className="text-xs font-mono text-slate-400 hover:text-slate-300 transition-colors flex items-center gap-1"
           >
             <X size={9} /> clear filters
           </button>
