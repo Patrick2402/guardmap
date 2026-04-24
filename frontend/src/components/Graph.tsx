@@ -119,6 +119,13 @@ export function Graph({ data, blastRadius, onNodeClick, onFocusReady, search = '
     })
   }, [rfInstance, onFocusReady])
 
+  // Re-fit view when namespace filter changes
+  useEffect(() => {
+    if (!rfInstance) return
+    const t = setTimeout(() => rfInstance.fitView({ padding: 0.15, duration: 600 }), 100)
+    return () => clearTimeout(t)
+  }, [activeNs, rfInstance])
+
   // Select + highlight node when navigating from Findings
   useEffect(() => {
     if (!focusNodeId) return
@@ -371,7 +378,7 @@ export function Graph({ data, blastRadius, onNodeClick, onFocusReady, search = '
         onInit={handleInit}
         onMove={handleMove}
         fitView
-        fitViewOptions={{ padding: 0.08 }}
+        fitViewOptions={{ padding: 0.15 }}
         minZoom={0.05}
         maxZoom={2}
         proOptions={{ hideAttribution: true }}

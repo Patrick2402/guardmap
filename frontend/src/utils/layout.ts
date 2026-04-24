@@ -1,7 +1,7 @@
 import dagre from '@dagrejs/dagre'
 import { Node, Edge } from 'reactflow'
 
-const NODE_W   = 200
+const NODE_W   = 210
 const NODE_H   = 68
 const ROW_GAP  = 10
 const PAD      = 28
@@ -95,14 +95,20 @@ export function applyNamespacedLayout(nodes: Node[], _edges: Edge[]): SwimLaneRe
     nsY += groupH + NS_GAP
   }
 
+  const totalNsH = nsY > 0 ? nsY - NS_GAP : 0
+  const iamColH  = iamRoles.length * (NODE_H + ROW_GAP) - ROW_GAP
+  const svcColH  = awsServices.length * (NODE_H + ROW_GAP) - ROW_GAP
+  const iamStartY = Math.max(0, (totalNsH - iamColH) / 2)
+  const svcStartY = Math.max(0, (totalNsH - svcColH) / 2)
+
   const ROLE_X = GROUP_W + COL_GAP
   iamRoles.forEach((node, i) => {
-    positionedNodes.push({ ...node, position: { x: ROLE_X, y: i * (NODE_H + ROW_GAP) } })
+    positionedNodes.push({ ...node, position: { x: ROLE_X, y: iamStartY + i * (NODE_H + ROW_GAP) } })
   })
 
   const SVC_X = ROLE_X + NODE_W + COL_GAP
   awsServices.forEach((node, i) => {
-    positionedNodes.push({ ...node, position: { x: SVC_X, y: i * (NODE_H + ROW_GAP) } })
+    positionedNodes.push({ ...node, position: { x: SVC_X, y: svcStartY + i * (NODE_H + ROW_GAP) } })
   })
 
   return { groupNodes, positionedNodes }
