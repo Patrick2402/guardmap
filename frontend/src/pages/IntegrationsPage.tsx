@@ -783,12 +783,6 @@ function ClusterCard({ cluster, orgId, onDelete, onNewKey, onRunScan }: { cluste
             <div className={`w-1.5 h-1.5 rounded-full ${style.dot}`} />
             {style.label}
           </div>
-          <button onClick={onRunScan}
-            title="Run scan now"
-            className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-cyan-400 transition-colors"
-            style={{ background: 'rgba(255,255,255,0.04)' }}>
-            <PlayCircle size={12} />
-          </button>
           <button onClick={onNewKey}
             title="Generate new API key"
             className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-cyan-400 transition-colors"
@@ -828,6 +822,16 @@ function ClusterCard({ cluster, orgId, onDelete, onNewKey, onRunScan }: { cluste
           <div className="text-[9px] font-sans text-slate-400 mt-1">Last scan</div>
         </div>
       </div>
+
+      {/* Run scan button */}
+      <button
+        onClick={onRunScan}
+        className="w-full mt-3 flex items-center justify-center gap-2 py-2 rounded-xl text-xs font-sans font-semibold transition-all"
+        style={{ background: 'rgba(0,212,255,0.07)', border: '1px solid rgba(0,212,255,0.15)', color: '#22d3ee' }}
+      >
+        <PlayCircle size={13} />
+        Run scan now
+      </button>
 
       {/* Status hints */}
       {status === 'pending' && (
