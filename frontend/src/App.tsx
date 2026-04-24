@@ -422,44 +422,13 @@ function ClusterView() {
             <motion.div key={activeTab} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="absolute inset-0">
 
               {activeTab === 'graph' && (
-                <>
-                  <div className="absolute top-0 left-0 right-0 z-10 border-b border-cyber-border/30 bg-cyber-panel/20 backdrop-blur-sm">
-                    {blastRadius ? (
-                      <p className="px-5 py-1.5 text-[10px] font-mono text-slate-400 pointer-events-none">
-                        Blast radius active — {blastRadius.fullTargets.length} full-access + {blastRadius.writeTargets.length} write targets exposed
-                      </p>
-                    ) : !graphHintDismissed ? (
-                      <div className="flex items-center justify-between px-5 py-2 gap-3"
-                        style={{ background: 'rgba(34,211,238,0.04)', borderBottom: '1px solid rgba(34,211,238,0.08)' }}>
-                        <p className="text-[11px] font-sans text-cyan-400/80">
-                          <span className="font-semibold text-cyan-400">Tip:</span> Click any workload node to inspect its IAM permissions and blast radius · Scroll to zoom · Drag to pan
-                        </p>
-                        <button onClick={dismissGraphHint}
-                          className="text-slate-400 hover:text-slate-400 transition-colors shrink-0 text-[11px] font-mono">
-                          Got it ✕
-                        </button>
-                      </div>
-                    ) : (
-                      <p className="px-5 py-1.5 text-[10px] font-mono text-slate-400 pointer-events-none">
-                        Click a Workload to see Blast Radius & IAM permissions · Scroll to zoom · Drag to pan
-                      </p>
-                    )}
-                  </div>
-                  <div className="absolute inset-0 pt-8">
-                    <Toolbar search={search} onSearch={setSearch} namespaces={namespaces} activeNs={activeNs} onNsChange={setActiveNs} />
-                    <Graph
-                      data={data} blastRadius={blastRadius} onNodeClick={handleNodeClick}
-                      onFocusReady={fn => { focusFnRef.current = fn }} search={search} activeNs={activeNs}
-                      focusNodeId={activeTab === 'graph' ? pendingFocusNodeId : null}
-                      findings={scanMeta?.findings}
-                      onFinding={handleNavigateToFinding}
-                    />
-                  </div>
-                  <Legend />
-                  <div className="pointer-events-none absolute inset-0 overflow-hidden">
-                    <div className="absolute inset-x-0 h-px bg-gradient-to-r from-transparent via-cyan-500/8 to-transparent animate-scan" />
-                  </div>
-                </>
+                <Graph
+                  data={data} blastRadius={blastRadius} onNodeClick={handleNodeClick}
+                  onFocusReady={fn => { focusFnRef.current = fn }}
+                  focusNodeId={pendingFocusNodeId}
+                  findings={scanMeta?.findings}
+                  onFinding={handleNavigateToFinding}
+                />
               )}
 
               {activeTab === 'topology'   && <TopologyView   data={data} focusNodeId={pendingFocusNodeId} />}
