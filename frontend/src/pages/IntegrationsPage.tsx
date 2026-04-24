@@ -6,7 +6,7 @@ import {
   RefreshCw, Trash2, Key, AlertCircle, CheckCircle2,
   Clock, ShieldCheck, Activity, Cloud, Loader2,
   ExternalLink, Eye, EyeOff, ArrowLeft,
-  Bell, Send, Slack,
+  Bell, Send, Slack, ToggleLeft, ToggleRight,
 } from 'lucide-react'
 import { GuardMapSymbol } from '../components/GuardMapLogo'
 import { supabase, db } from '../lib/supabase'
@@ -773,12 +773,17 @@ function SlackConfigModal({ orgId, existing, onClose, onSaved }: {
 }) {
   const [webhookUrl, setWebhookUrl]   = useState(existing?.webhook_url ?? '')
   const [channelName, setChannelName] = useState(existing?.channel_name ?? '')
+  const [enabled, setEnabled]         = useState(existing?.enabled ?? true)
   const [saving, setSaving]           = useState(false)
+  const [saved, setSaved]             = useState(false)
   const [testing, setTesting]         = useState(false)
   const [error, setError]             = useState<string | null>(null)
   const [testMsg, setTestMsg]         = useState<{ ok: boolean; text: string } | null>(null)
 
-  const isValid = webhookUrl.trim().startsWith('https://hooks.slack.com/')
+  const isValid  = webhookUrl.trim().startsWith('https://hooks.slack.com/')
+  const isDirty  = webhookUrl !== (existing?.webhook_url ?? '') ||
+                   channelName !== (existing?.channel_name ?? '') ||
+                   enabled !== (existing?.enabled ?? true)
 
   async function handleSave() {
     if (!isValid) return
@@ -789,10 +794,12 @@ function SlackConfigModal({ orgId, existing, onClose, onSaved }: {
         type: 'slack',
         webhook_url: webhookUrl.trim(),
         channel_name: channelName.trim() || null,
-        enabled: true,
+        enabled,
         updated_at: new Date().toISOString(),
       }, { onConflict: 'organization_id,type' })
       if (err) throw err
+      setSaved(true)
+      setTimeout(() => setSaved(false), 2000)
       onSaved()
       onClose()
     } catch (err: unknown) {
@@ -923,6 +930,45 @@ function SlackConfigModal({ orgId, existing, onClose, onSaved }: {
             />
           </div>
 
+          {/* Enable toggle */}
+          <div className="flex items-center justify-between py-1"
+            style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: 12 }}>
+            <div>
+              <div className="text-sm font-sans text-slate-300">Enable alerts</div>
+              <div className="text-xs font-sans text-slate-400 mt-0.5">Send Slack messages after each scan</div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setEnabled(v => !v)}
+              className="shrink-0 transition-colors"
+              style={{ color: enabled ? '#22c55e' : '#475569' }}
+            >
+              {enabled ? <ToggleRight size={32} /> : <ToggleLeft size={32} />}
+            </button>
+          </div>
+
+          {/* Alert triggers */}
+          <div className="rounded-xl p-3 space-y-2"
+            style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}>
+            <div className="text-[10px] font-sans font-semibold text-slate-400 uppercase tracking-wider mb-2">What triggers an alert</div>
+            {[
+              { icon: '🔴', label: 'New critical finding detected' },
+              { icon: '🟠', label: 'New high severity finding detected' },
+              { icon: '📊', label: 'Security score changes between scans' },
+              { icon: '📋', label: 'Top 10 new findings listed in message' },
+            ].map(t => (
+              <div key={t.label} className="flex items-center gap-2.5">
+                <span className="text-sm leading-none">{t.icon}</span>
+                <span className="text-xs font-sans text-slate-300">{t.label}</span>
+              </div>
+            ))}
+          </div>
+
+          <div className="text-xs font-sans text-slate-400 leading-relaxed px-0.5">
+            Only <span className="text-slate-300">new findings</span> (not seen in the previous scan) trigger a notification.
+            Set <span className="font-mono text-slate-300">GUARDMAP_DASHBOARD_URL</span> on the agent for deep links in messages.
+          </div>
+
           {/* Feedback */}
           {error && (
             <div className="flex items-start gap-2 p-3 rounded-xl text-sm"
@@ -974,16 +1020,17 @@ function SlackConfigModal({ orgId, existing, onClose, onSaved }: {
           </button>
           <button
             onClick={handleSave}
-            disabled={saving || !isValid}
+            disabled={saving || !isValid || !isDirty}
             className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-sans font-semibold transition-all"
             style={{
-              background: !isValid ? 'rgba(255,255,255,0.04)' : 'rgba(74,144,226,0.12)',
-              border: `1px solid ${!isValid ? 'rgba(255,255,255,0.06)' : 'rgba(74,144,226,0.25)'}`,
-              color: !isValid ? '#334155' : '#60a5fa',
+              background: saved ? 'rgba(16,185,129,0.12)' : (!isValid || !isDirty) ? 'rgba(255,255,255,0.04)' : 'rgba(74,144,226,0.12)',
+              border: `1px solid ${saved ? 'rgba(16,185,129,0.25)' : (!isValid || !isDirty) ? 'rgba(255,255,255,0.06)' : 'rgba(74,144,226,0.25)'}`,
+              color: saved ? '#34d399' : (!isValid || !isDirty) ? '#334155' : '#60a5fa',
+              opacity: (!isValid || !isDirty) ? 0.5 : 1,
             }}
           >
-            {saving ? <Loader2 size={12} className="animate-spin" /> : <CheckCircle2 size={12} />}
-            {existing ? 'Save changes' : 'Connect'}
+            {saving ? <Loader2 size={12} className="animate-spin" /> : saved ? <CheckCircle2 size={12} /> : <CheckCircle2 size={12} />}
+            {saved ? 'Saved!' : existing ? 'Save changes' : 'Connect'}
           </button>
         </div>
       </motion.div>
@@ -1217,13 +1264,13 @@ export function IntegrationsPage() {
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-sans font-semibold text-slate-100">Slack</span>
                       <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-lg text-xs font-sans font-medium"
-                        style={{ background: notificationChannel.enabled ? 'rgba(16,185,129,0.1)' : 'rgba(100,116,139,0.1)', color: notificationChannel.enabled ? '#34d399' : '#64748b' }}>
+                        style={{ background: notificationChannel.enabled ? 'rgba(16,185,129,0.1)' : 'rgba(100,116,139,0.1)', color: notificationChannel.enabled ? '#34d399' : '#94a3b8' }}>
                         <div className={`w-1.5 h-1.5 rounded-full ${notificationChannel.enabled ? 'bg-emerald-400 animate-pulse' : 'bg-slate-600'}`} />
                         {notificationChannel.enabled ? 'Active' : 'Disabled'}
                       </div>
                     </div>
                     <div className="text-xs font-mono text-slate-400 mt-0.5">
-                      {notificationChannel.channel_name || 'hooks.slack.com/…'}
+                      {notificationChannel.channel_name ? `#${notificationChannel.channel_name}` : 'hooks.slack.com/…'}
                     </div>
                   </div>
                 </div>
@@ -1235,10 +1282,16 @@ export function IntegrationsPage() {
                   Edit
                 </button>
               </div>
-              <div className="mt-3 flex items-center gap-2 p-2.5 rounded-xl text-xs font-sans text-slate-400"
-                style={{ background: 'rgba(16,185,129,0.05)', border: '1px solid rgba(16,185,129,0.1)' }}>
-                <CheckCircle2 size={11} className="text-emerald-400 shrink-0" />
-                New findings detected after each scan will be sent to this channel
+              <div className="mt-3 flex items-center gap-2 p-2.5 rounded-xl text-xs font-sans"
+                style={notificationChannel.enabled
+                  ? { background: 'rgba(16,185,129,0.05)', border: '1px solid rgba(16,185,129,0.1)', color: '#94a3b8' }
+                  : { background: 'rgba(100,116,139,0.05)', border: '1px solid rgba(100,116,139,0.1)', color: '#64748b' }}>
+                {notificationChannel.enabled
+                  ? <CheckCircle2 size={11} className="text-emerald-400 shrink-0" />
+                  : <Bell size={11} className="text-slate-500 shrink-0" />}
+                {notificationChannel.enabled
+                  ? 'New findings detected after each scan will be sent to this channel'
+                  : 'Alerts are disabled — click Edit to re-enable'}
               </div>
             </div>
           ) : (
