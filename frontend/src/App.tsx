@@ -457,7 +457,7 @@ function ClusterView() {
               )}
 
               {activeTab === 'topology'   && <TopologyView   data={data} focusNodeId={pendingFocusNodeId} />}
-              {activeTab === 'rbac'       && <RBACView       data={data} focusNodeId={pendingFocusNodeId} />}
+              {activeTab === 'rbac'       && <RBACView       data={data} focusNodeId={pendingFocusNodeId} findings={scanMeta?.findings} />}
               {activeTab === 'findings'   && <FindingsView   data={data} dbFindings={scanMeta?.findings} onNavigate={handleNavigate} />}
               {activeTab === 'benchmarks' && <BenchmarksView data={data} dbFindings={scanMeta?.findings} onNavigate={handleNavigate} />}
               {activeTab === 'explorer'   && <ExplorerView   data={data} clusterName={clusterName} initialTypeFilter={explorerInitialFilter} />}
