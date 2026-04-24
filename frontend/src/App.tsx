@@ -28,6 +28,7 @@ import { SettingsPage }       from './pages/SettingsPage'
 import { InvitePage }         from './pages/InvitePage'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import { OrgSwitcher }        from './components/OrgSwitcher'
+import { AIChat }             from './components/AIAgent/AIChat'
 
 const VALID_TABS = new Set<TabId>(['overview', 'graph', 'topology', 'rbac', 'findings', 'benchmarks', 'explorer', 'history'])
 
@@ -465,6 +466,18 @@ function ClusterView() {
           )}
         </AnimatePresence>
       </main>
+
+      <AIChat
+        data={data}
+        clusterName={clusterName}
+        dbFindings={scanMeta?.findings}
+        scanStats={scanMeta ? {
+          critical: scanMeta.criticalCount,
+          high:     scanMeta.highCount,
+          medium:   scanMeta.mediumCount,
+          low:      scanMeta.lowCount,
+        } : undefined}
+      />
     </div>
   )
 }
