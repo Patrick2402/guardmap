@@ -17,27 +17,16 @@ interface ChatMessage {
 interface ClusterContext {
   clusterName: string
   namespaces: string[]
-  stats: {
-    nodes: number
-    edges: number
-    critical: number
-    high: number
-    medium: number
-    low: number
-  }
-  findings: Array<{
-    severity: string
-    type: string
-    resource: string
-    description: string
-  }>
+  stats: { nodes: number; edges: number; critical: number; high: number; medium: number; low: number }
+  findings: Array<{ severity: string; type: string; resource: string; description: string }>
   iamChains: Array<{
-    workload: string
-    namespace: string
-    serviceAccount: string
-    role: string
+    workload: string; namespace: string; serviceAccount: string; role: string
     services: Array<{ name: string; accessLevel: string }>
   }>
+  serviceBindings: Array<{ service: string; namespace: string; selects: string[] }>
+  ingressRoutes: Array<{ ingress: string; namespace: string; routes: string[] }>
+  rbacBindings: Array<{ binding: string; namespace: string; role: string; subjects: string[] }>
+  inventory: Array<{ type: string; namespace: string; name: string }>
 }
 
 function buildSystemPrompt(ctx: ClusterContext): string {
@@ -58,14 +47,43 @@ function buildSystemPrompt(ctx: ClusterContext): string {
     ? 'No IRSA chains found.'
     : ctx.iamChains
         .map(c => {
-          const svcs = c.services.map(s => `${s.name}(${s.accessLevel})`).join(', ')
-          return `${c.namespace}/${c.workload} → ${c.serviceAccount} → ${c.role} → [${svcs}]`
+          const svcs = c.services.map(s => `${s.name}(${s.accessLevel})`).join(', ') || 'no AWS services'
+          return `${c.namespace}/${c.workload} → SA:${c.serviceAccount} → IAM:${c.role} → [${svcs}]`
         })
         .join('\n')
 
-  return `You are GuardMap AI — a senior cloud security engineer embedded in a Kubernetes security platform called GuardMap.
+  const svcSummary = ctx.serviceBindings.length === 0
+    ? 'No service bindings found.'
+    : ctx.serviceBindings
+        .map(s => `${s.namespace}/${s.service} selects: [${s.selects.join(', ')}]`)
+        .join('\n')
 
-You have full access to the latest security scan of cluster "${ctx.clusterName}".
+  const ingressSummary = ctx.ingressRoutes.length === 0
+    ? 'No ingress routes found.'
+    : ctx.ingressRoutes
+        .map(i => `${i.namespace}/${i.ingress} routes → [${i.routes.join(', ')}]`)
+        .join('\n')
+
+  const rbacSummary = ctx.rbacBindings.length === 0
+    ? 'No RBAC bindings found.'
+    : ctx.rbacBindings
+        .slice(0, 40)
+        .map(b => `${b.namespace}/${b.binding}: role=${b.role}, subjects=[${b.subjects.join(', ')}]`)
+        .join('\n')
+
+  const inventoryByType = ctx.inventory.reduce((acc, n) => {
+    if (!acc[n.type]) acc[n.type] = []
+    acc[n.type].push(`${n.namespace}/${n.name}`)
+    return acc
+  }, {} as Record<string, string[]>)
+
+  const inventorySummary = Object.entries(inventoryByType)
+    .map(([type, items]) => `${type}: ${items.join(', ')}`)
+    .join('\n')
+
+  return `You are GuardMap AI — a senior cloud security engineer embedded in a Kubernetes security platform.
+
+You have FULL access to the latest security scan of cluster "${ctx.clusterName}".
 
 CLUSTER OVERVIEW:
 - Namespaces: ${ctx.namespaces.join(', ')}
@@ -79,13 +97,25 @@ ${findingsSummary}
 IRSA PERMISSION CHAINS (Workload → ServiceAccount → IAM Role → AWS Services):
 ${iamSummary}
 
+K8s SERVICE BINDINGS (which Service selects which Workload):
+${svcSummary}
+
+INGRESS ROUTES (Ingress → Services):
+${ingressSummary}
+
+RBAC BINDINGS (RoleBinding/ClusterRoleBinding → Role → Subjects):
+${rbacSummary}
+
+FULL RESOURCE INVENTORY:
+${inventorySummary}
+
 INSTRUCTIONS:
 - You are talking to engineers (DevOps, SecOps, Platform). Be direct and technical.
-- When asked about a specific workload, namespace, or IAM role — reference it by exact name.
-- For remediations, give specific kubectl or AWS CLI commands when possible.
-- For blast radius questions, trace the chain: which pods → which SAs → which IAM roles → which AWS services.
-- Keep answers focused and concise. No unnecessary preamble.
-- If asked about something not in the scan data, say so clearly.`
+- You have COMPLETE cluster data above — always use it to answer questions about services, workloads, bindings, RBAC, and IAM.
+- When asked "which resources are bound to X" or "what selects Y" — look at serviceBindings, ingressRoutes, rbacBindings above and give a precise answer.
+- For remediations, give specific kubectl or AWS CLI commands.
+- If something is genuinely not in the scan data, say so clearly and briefly.
+- Keep answers focused. No unnecessary preamble.`
 }
 
 serve(async (req) => {
@@ -117,7 +147,7 @@ serve(async (req) => {
   }
 
   const messages: ChatMessage[] = [
-    ...history.slice(-12), // last 12 turns (6 exchanges) for context window
+    ...history.slice(-12),
     { role: 'user', content: message },
   ]
 
