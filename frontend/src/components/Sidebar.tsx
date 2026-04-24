@@ -159,7 +159,7 @@ export function Sidebar({ blastRadius, selectedNode, data, onClose, onFocusNode,
                       ? <KeyRound size={14} className="text-violet-400" />
                       : <Shield size={14} className="text-cyan-400" />
                 }
-                <span className="text-[11px] font-mono font-semibold text-slate-200">
+                <span className="text-sm font-mono font-semibold text-slate-200">
                   {blastRadius ? 'BLAST RADIUS' : 'NODE DETAILS'}
                 </span>
               </div>
@@ -173,21 +173,21 @@ export function Sidebar({ blastRadius, selectedNode, data, onClose, onFocusNode,
               {/* Selected node meta */}
               {selectedNode && (
                 <section>
-                  <h3 className="text-[10px] font-mono font-semibold text-slate-400 uppercase tracking-widest mb-2">
+                  <h3 className="text-xs font-mono font-semibold text-slate-400 uppercase tracking-widest mb-2">
                     {nodeTypeLabel[selectedNode.type] ?? selectedNode.type}
                   </h3>
                   <div className="space-y-1.5">
-                    <div className="text-[13px] font-mono font-semibold text-slate-100">{selectedNode.label}</div>
+                    <div className="text-sm font-mono font-semibold text-slate-100">{selectedNode.label}</div>
                     {selectedNode.namespace && (
-                      <div className="text-[10px] font-mono text-slate-400">
+                      <div className="text-xs font-mono text-slate-400">
                         namespace: <span className="text-violet-400">{selectedNode.namespace}</span>
                       </div>
                     )}
                     {selectedNode.metadata?.arn && (
-                      <div className="text-[9px] font-mono text-slate-400 break-all">{selectedNode.metadata.arn}</div>
+                      <div className="text-xs font-mono text-slate-400 break-all">{selectedNode.metadata.arn}</div>
                     )}
                     {selectedNode.metadata?.replicas && (
-                      <div className="text-[10px] font-mono text-slate-400">
+                      <div className="text-xs font-mono text-slate-400">
                         replicas: <span className="text-blue-400">{selectedNode.metadata.replicas}</span>
                       </div>
                     )}
@@ -200,11 +200,11 @@ export function Sidebar({ blastRadius, selectedNode, data, onClose, onFocusNode,
                 <section>
                   <div className="flex items-center gap-2 mb-2">
                     <ShieldCheck size={10} className="text-slate-400" />
-                    <h3 className="text-[10px] font-mono font-semibold text-slate-400 uppercase tracking-widest flex-1">
+                    <h3 className="text-xs font-mono font-semibold text-slate-400 uppercase tracking-widest flex-1">
                       IAM Permissions
                     </h3>
                     {permissions.length > 0 && (
-                      <span className="text-[9px] font-mono text-slate-400">{permissions.length} total</span>
+                      <span className="text-xs font-mono text-slate-400">{permissions.length} total</span>
                     )}
                   </div>
 
@@ -216,13 +216,13 @@ export function Sidebar({ blastRadius, selectedNode, data, onClose, onFocusNode,
                         value={permSearch}
                         onChange={e => setPermSearch(e.target.value)}
                         placeholder="Filter permissions…"
-                        className="w-full bg-slate-900/60 border border-slate-700/60 rounded-lg pl-7 pr-3 py-1.5 text-[11px] font-mono text-slate-300 placeholder-slate-600 focus:outline-none focus:border-cyan-500/40 focus:bg-slate-900 transition-colors"
+                        className="w-full bg-slate-900/60 border border-slate-700/60 rounded-lg pl-7 pr-3 py-1.5 text-sm font-mono text-slate-300 placeholder-slate-600 focus:outline-none focus:border-cyan-500/40 focus:bg-slate-900 transition-colors"
                       />
                     </div>
                   )}
 
                   {groupedPermissions.size === 0 ? (
-                    <div className="text-[11px] font-mono text-slate-400 py-2">
+                    <div className="text-sm font-mono text-slate-400 py-2">
                       {permSearch ? 'No matches' : 'No IAM permissions found'}
                     </div>
                   ) : (
@@ -231,9 +231,9 @@ export function Sidebar({ blastRadius, selectedNode, data, onClose, onFocusNode,
                         <div key={service}>
                           {/* service group header */}
                           <div className="flex items-center gap-1.5 mb-1.5">
-                            <div className="text-[9px] font-mono font-bold text-slate-400 uppercase tracking-widest">{service}</div>
+                            <div className="text-xs font-mono font-bold text-slate-400 uppercase tracking-widest">{service}</div>
                             <div className="flex-1 h-px bg-slate-800" />
-                            <span className="text-[9px] font-mono text-slate-400">{rows.length}</span>
+                            <span className="text-xs font-mono text-slate-400">{rows.length}</span>
                           </div>
 
                           <div className="space-y-1.5">
@@ -242,14 +242,14 @@ export function Sidebar({ blastRadius, selectedNode, data, onClose, onFocusNode,
                               return (
                                 <div key={i} className="rounded-lg border border-white/5 bg-white/3 p-2.5 space-y-1.5">
                                   <div className="flex items-center justify-between gap-2">
-                                    <span className="text-[11px] font-mono font-semibold text-slate-200 truncate">{row.resourceLabel}</span>
-                                    <span className={`shrink-0 text-[9px] font-mono px-1.5 py-0.5 rounded border font-bold ${badge.cls}`}>
+                                    <span className="text-sm font-mono font-semibold text-slate-200 truncate">{row.resourceLabel}</span>
+                                    <span className={`shrink-0 text-[10px] font-mono px-1.5 py-0.5 rounded border font-bold ${badge.cls}`}>
                                       {badge.label}
                                     </span>
                                   </div>
                                   <div className="flex flex-wrap gap-1">
                                     {row.actions.map(a => (
-                                      <span key={a} className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700 max-w-full truncate">
+                                      <span key={a} className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700 max-w-full truncate">
                                         {a}
                                       </span>
                                     ))}
@@ -270,7 +270,7 @@ export function Sidebar({ blastRadius, selectedNode, data, onClose, onFocusNode,
                 <section>
                   <div className="flex items-center gap-2 mb-2">
                     <Crosshair size={10} className="text-cyan-500" />
-                    <h3 className="text-[10px] font-mono font-semibold text-slate-400 uppercase tracking-widest">
+                    <h3 className="text-xs font-mono font-semibold text-slate-400 uppercase tracking-widest">
                       Direct Access Map
                     </h3>
                   </div>
@@ -286,8 +286,8 @@ export function Sidebar({ blastRadius, selectedNode, data, onClose, onFocusNode,
                           <span className="text-slate-400 group-hover:text-cyan-400 transition-colors">
                             <ServiceIcon service={p.service} />
                           </span>
-                          <span className="text-[11px] font-mono text-slate-300 truncate flex-1">{p.resourceLabel}</span>
-                          <span className={`shrink-0 text-[9px] font-mono px-1.5 py-0.5 rounded border font-bold ${badge.cls}`}>
+                          <span className="text-sm font-mono text-slate-300 truncate flex-1">{p.resourceLabel}</span>
+                          <span className={`shrink-0 text-[10px] font-mono px-1.5 py-0.5 rounded border font-bold ${badge.cls}`}>
                             {badge.label}
                           </span>
                           <Crosshair size={9} className="shrink-0 text-slate-400 group-hover:text-cyan-500 transition-colors" />
@@ -304,16 +304,16 @@ export function Sidebar({ blastRadius, selectedNode, data, onClose, onFocusNode,
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
                       <ShieldAlert size={10} className="text-orange-400" />
-                      <h3 className="text-[10px] font-mono font-semibold text-slate-400 uppercase tracking-widest">
+                      <h3 className="text-xs font-mono font-semibold text-slate-400 uppercase tracking-widest">
                         Security Findings
                       </h3>
-                      <span className="text-[9px] font-mono px-1.5 py-0.5 rounded-full bg-orange-500/15 text-orange-400">
+                      <span className="text-xs font-mono px-1.5 py-0.5 rounded-full bg-orange-500/15 text-orange-400">
                         {nodeFindings.length}
                       </span>
                     </div>
                     {onViewFindings && (
                       <button onClick={onViewFindings}
-                        className="text-[10px] font-mono text-slate-400 hover:text-cyan-400 transition-colors">
+                        className="text-xs font-mono text-slate-400 hover:text-cyan-400 transition-colors">
                         view all →
                       </button>
                     )}
@@ -322,17 +322,17 @@ export function Sidebar({ blastRadius, selectedNode, data, onClose, onFocusNode,
                     {nodeFindings.slice(0, 5).map((f, i) => (
                       <div key={i} className="rounded-lg border border-white/5 bg-white/3 px-3 py-2 space-y-0.5">
                         <div className="flex items-center gap-2">
-                          <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded"
+                          <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded"
                             style={{ background: `${SEV_COLOR[f.severity]}18`, color: SEV_COLOR[f.severity] }}>
                             {f.severity.toUpperCase()}
                           </span>
-                          <span className="text-[10px] font-mono text-slate-400 truncate">{f.type}</span>
+                          <span className="text-xs font-mono text-slate-400 truncate">{f.type}</span>
                         </div>
-                        <p className="text-[11px] text-slate-300 leading-snug">{f.description}</p>
+                        <p className="text-sm text-slate-300 leading-snug">{f.description}</p>
                       </div>
                     ))}
                     {nodeFindings.length > 5 && (
-                      <div className="text-[11px] font-mono text-slate-400 pl-1">
+                      <div className="text-sm font-mono text-slate-400 pl-1">
                         +{nodeFindings.length - 5} more findings
                       </div>
                     )}
@@ -344,32 +344,32 @@ export function Sidebar({ blastRadius, selectedNode, data, onClose, onFocusNode,
               {blastRadius && (
                 <>
                   <section>
-                    <h3 className="text-[10px] font-mono font-semibold text-slate-400 uppercase tracking-widest mb-2">
+                    <h3 className="text-xs font-mono font-semibold text-slate-400 uppercase tracking-widest mb-2">
                       Impact Summary
                     </h3>
                     <div className="grid grid-cols-2 gap-2">
                       <div className="rounded-lg border border-red-500/30 bg-red-950/20 p-3 text-center">
                         <div className="text-2xl font-mono font-bold text-red-400">{blastRadius.fullTargets.length}</div>
-                        <div className="text-[9px] font-mono text-red-500 mt-1">FULL ACCESS</div>
+                        <div className="text-xs font-mono text-red-500 mt-1">FULL ACCESS</div>
                       </div>
                       <div className="rounded-lg border border-yellow-500/30 bg-yellow-950/20 p-3 text-center">
                         <div className="text-2xl font-mono font-bold text-yellow-400">{blastRadius.writeTargets.length}</div>
-                        <div className="text-[9px] font-mono text-yellow-500 mt-1">WRITE ACCESS</div>
+                        <div className="text-xs font-mono text-yellow-500 mt-1">WRITE ACCESS</div>
                       </div>
                     </div>
                   </section>
 
                   {blastRadius.fullTargets.length > 0 && (
                     <section>
-                      <h3 className="text-[10px] font-mono font-semibold text-red-500 uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                      <h3 className="text-xs font-mono font-semibold text-red-500 uppercase tracking-widest mb-2 flex items-center gap-1.5">
                         <AlertTriangle size={10} />
                         Full Access Targets
                       </h3>
                       <div className="space-y-1">
                         {blastRadius.fullTargets.map(n => (
                           <div key={n.id} className="flex items-center justify-between py-2 px-3 rounded-lg bg-white/5 border border-white/5">
-                            <span className="text-[11px] font-mono text-slate-300 truncate max-w-[60%]">{n.label}</span>
-                            <span className={`text-[9px] font-mono px-2 py-0.5 rounded border font-bold ${accessBadge.full.cls}`}>FULL</span>
+                            <span className="text-sm font-mono text-slate-300 truncate max-w-[60%]">{n.label}</span>
+                            <span className={`text-[10px] font-mono px-2 py-0.5 rounded border font-bold ${accessBadge.full.cls}`}>FULL</span>
                           </div>
                         ))}
                       </div>
@@ -378,14 +378,14 @@ export function Sidebar({ blastRadius, selectedNode, data, onClose, onFocusNode,
 
                   {blastRadius.writeTargets.length > 0 && (
                     <section>
-                      <h3 className="text-[10px] font-mono font-semibold text-yellow-500 uppercase tracking-widest mb-2">
+                      <h3 className="text-xs font-mono font-semibold text-yellow-500 uppercase tracking-widest mb-2">
                         Write Access Targets
                       </h3>
                       <div className="space-y-1">
                         {blastRadius.writeTargets.map(n => (
                           <div key={n.id} className="flex items-center justify-between py-2 px-3 rounded-lg bg-white/5 border border-white/5">
-                            <span className="text-[11px] font-mono text-slate-300 truncate max-w-[60%]">{n.label}</span>
-                            <span className={`text-[9px] font-mono px-2 py-0.5 rounded border font-bold ${accessBadge.write.cls}`}>WRITE</span>
+                            <span className="text-sm font-mono text-slate-300 truncate max-w-[60%]">{n.label}</span>
+                            <span className={`text-[10px] font-mono px-2 py-0.5 rounded border font-bold ${accessBadge.write.cls}`}>WRITE</span>
                           </div>
                         ))}
                       </div>
@@ -393,10 +393,10 @@ export function Sidebar({ blastRadius, selectedNode, data, onClose, onFocusNode,
                   )}
 
                   <section>
-                    <h3 className="text-[10px] font-mono font-semibold text-slate-400 uppercase tracking-widest mb-2">
+                    <h3 className="text-xs font-mono font-semibold text-slate-400 uppercase tracking-widest mb-2">
                       Reachable Nodes
                     </h3>
-                    <div className="text-[11px] font-mono text-slate-300">
+                    <div className="text-sm font-mono text-slate-300">
                       {blastRadius.reachableNodeIds.size} nodes across{' '}
                       {blastRadius.reachableEdgeIds.size} permission paths
                     </div>

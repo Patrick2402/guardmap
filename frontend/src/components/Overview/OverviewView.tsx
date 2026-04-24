@@ -174,7 +174,7 @@ function SevStrip({ counts }: { counts: { critical: number; high: number; medium
               style={{ background: count > 0 ? color : 'transparent' }}
             />
           </div>
-          <span className="text-sm font-mono font-bold w-6 text-right" style={{ color: count > 0 ? color : '#1e293b' }}>
+          <span className="text-base font-mono font-bold w-6 text-right" style={{ color: count > 0 ? color : '#1e293b' }}>
             {count}
           </span>
         </div>
@@ -240,8 +240,8 @@ function NsTile({ ns, wls, ps, svcs, ings, hasNetpol, danger, issues, onNavigate
           <div key={l} className="flex flex-col items-center py-1.5 rounded-xl"
             style={{ background: 'rgba(255,255,255,0.04)' }}>
             <span style={{ color: c }}>{icon}</span>
-            <span className="text-sm font-mono font-bold mt-0.5" style={{ color: c }}>{v}</span>
-            <span className="text-[10px] font-sans text-slate-400 leading-none mt-0.5">{l}</span>
+            <span className="text-base font-mono font-bold mt-0.5" style={{ color: c }}>{v}</span>
+            <span className="text-xs font-sans text-slate-400 leading-none mt-0.5">{l}</span>
           </div>
         ))}
       </div>

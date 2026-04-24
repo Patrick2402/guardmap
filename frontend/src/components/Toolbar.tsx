@@ -18,7 +18,7 @@ export function Toolbar({ search, onSearch, namespaces, activeNs, onNsChange }: 
           value={search}
           onChange={(e) => onSearch(e.target.value)}
           placeholder="search nodes..."
-          className="bg-transparent text-[11px] font-mono text-slate-300 placeholder-slate-600 outline-none w-40"
+          className="bg-transparent text-sm font-mono text-slate-300 placeholder-slate-600 outline-none w-40"
         />
         {search && (
           <button onClick={() => onSearch('')} className="text-slate-400 hover:text-slate-300 transition-colors">
@@ -33,7 +33,7 @@ export function Toolbar({ search, onSearch, namespaces, activeNs, onNsChange }: 
           <SlidersHorizontal size={11} className="text-slate-400 shrink-0" />
           <button
             onClick={() => onNsChange(null)}
-            className={`px-2 py-0.5 rounded-md text-[10px] font-mono transition-colors ${
+            className={`px-2 py-0.5 rounded-md text-xs font-mono transition-colors ${
               activeNs === null ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40' : 'text-slate-400 hover:text-slate-300'
             }`}
           >
@@ -43,7 +43,7 @@ export function Toolbar({ search, onSearch, namespaces, activeNs, onNsChange }: 
             <button
               key={ns}
               onClick={() => onNsChange(activeNs === ns ? null : ns)}
-              className={`px-2 py-0.5 rounded-md text-[10px] font-mono transition-colors ${
+              className={`px-2 py-0.5 rounded-md text-xs font-mono transition-colors ${
                 activeNs === ns ? 'bg-violet-500/20 text-violet-300 border border-violet-500/40' : 'text-slate-400 hover:text-slate-300'
               }`}
             >
