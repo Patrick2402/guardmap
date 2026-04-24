@@ -9,6 +9,7 @@ interface Props {
   data: GraphData
   findings?: DbFinding[]
   onClose: () => void
+  onFinding?: (f: DbFinding) => void
 }
 
 // ── Visual config ──────────────────────────────────────────────────────────────
@@ -231,7 +232,7 @@ function RuleRow({ rule }: { rule: string }) {
 
 // ── Modal ─────────────────────────────────────────────────────────────────────
 
-export function RBACDetails({ node, data, findings = [], onClose }: Props) {
+export function RBACDetails({ node, data, findings = [], onClose, onFinding }: Props) {
   const scrollRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -397,14 +398,24 @@ export function RBACDetails({ node, data, findings = [], onClose }: Props) {
                   </div>
                   <div className="space-y-2">
                     {relatedFindings.map((f, i) => (
-                      <div key={i} className={`flex gap-3 p-3.5 rounded-xl border ${FINDING_SEV[f.severity] ?? FINDING_SEV.low}`}>
+                      <button key={i}
+                        onClick={() => { onFinding?.(f); onClose() }}
+                        className={`w-full text-left flex gap-3 p-3.5 rounded-xl border transition-all ${
+                          onFinding
+                            ? 'cursor-pointer hover:brightness-125 hover:scale-[1.01]'
+                            : 'cursor-default'
+                        } ${FINDING_SEV[f.severity] ?? FINDING_SEV.low}`}
+                        style={{ transition: 'filter 0.15s, transform 0.15s' }}>
                         <span className="text-[10px] font-mono font-bold uppercase mt-0.5 shrink-0">{f.severity}</span>
-                        <div className="min-w-0">
-                          <div className="text-sm font-mono text-slate-200 leading-snug">{f.type}</div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="text-sm font-mono text-slate-200 leading-snug">{f.type}</div>
+                            {onFinding && <span className="text-[9px] font-mono text-slate-500 shrink-0">view →</span>}
+                          </div>
                           <div className="text-xs font-sans text-slate-400 mt-1 leading-relaxed">{f.description}</div>
                           <div className="text-[10px] font-mono text-slate-600 mt-1.5">{f.resource}</div>
                         </div>
-                      </div>
+                      </button>
                     ))}
                   </div>
                 </div>

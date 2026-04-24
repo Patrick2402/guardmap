@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
+import { useLocation } from 'react-router-dom'
 import type { DbFinding } from '../../hooks/useGraphData'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
@@ -732,6 +733,25 @@ export function FindingsView({ data, dbFindings, onNavigate }: FindingsViewProps
   const [selected, setSelected]     = useState<Finding | null>(null)
   const [attackPath, setAttackPath] = useState<Finding | null>(null)
   const [page, setPage]             = useState(1)
+
+  const location = useLocation()
+  useEffect(() => {
+    const focusFinding = (location.state as { focusFinding?: DbFinding } | null)?.focusFinding
+    if (!focusFinding || !findings.length) return
+    // Reset filters so the finding is visible
+    setCatFilter('all')
+    setSevFilter(new Set(['critical', 'high', 'medium', 'low']))
+    setNsFilter('all')
+    setSearch('')
+    setPage(1)
+    // Find and select the matching finding
+    const converted = convertDbFindings([focusFinding])[0]
+    const match = findings.find(f =>
+      f.severity === converted.severity &&
+      (f.title === converted.title || f.nodeLabel === converted.nodeLabel)
+    )
+    if (match) setSelected(match)
+  }, [location.state]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const namespaces = useMemo(() =>
     [...new Set(findings.map(f => f.namespace).filter((ns): ns is string => !!ns))].sort()

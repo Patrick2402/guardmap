@@ -294,6 +294,11 @@ function ClusterView() {
     navigate(`/${newTab}`, { state: { focusNodeId: nodeId ?? null } })
   }, [navigate])
 
+  const handleNavigateToFinding = useCallback((f: import('./hooks/useGraphData').DbFinding) => {
+    setSelectedNode(null); setBlastStartId(null); setSearch('')
+    navigate('/findings', { state: { focusFinding: f } })
+  }, [navigate])
+
   const handleNodeClick = useCallback((node: GraphNode | null) => {
     setSelectedNode(node)
     if (node && (WORKLOAD_TYPES.includes(node.type) || node.type === 'pod')) {
@@ -457,7 +462,7 @@ function ClusterView() {
               )}
 
               {activeTab === 'topology'   && <TopologyView   data={data} focusNodeId={pendingFocusNodeId} />}
-              {activeTab === 'rbac'       && <RBACView       data={data} focusNodeId={pendingFocusNodeId} findings={scanMeta?.findings} />}
+              {activeTab === 'rbac'       && <RBACView       data={data} focusNodeId={pendingFocusNodeId} findings={scanMeta?.findings} onFinding={handleNavigateToFinding} />}
               {activeTab === 'findings'   && <FindingsView   data={data} dbFindings={scanMeta?.findings} onNavigate={handleNavigate} />}
               {activeTab === 'benchmarks' && <BenchmarksView data={data} dbFindings={scanMeta?.findings} onNavigate={handleNavigate} />}
               {activeTab === 'explorer'   && <ExplorerView   data={data} clusterName={clusterName} initialTypeFilter={explorerInitialFilter} />}

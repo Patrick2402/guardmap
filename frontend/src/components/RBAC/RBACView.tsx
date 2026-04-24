@@ -5,7 +5,12 @@ import { GraphData, GraphNode } from '../../types'
 import { DbFinding } from '../../hooks/useGraphData'
 import { RBACDetails } from './RBACDetails'
 
-interface RBACViewProps { data: GraphData; focusNodeId?: string | null; findings?: DbFinding[] }
+interface RBACViewProps {
+  data: GraphData
+  focusNodeId?: string | null
+  findings?: DbFinding[]
+  onFinding?: (f: DbFinding) => void
+}
 
 const SYSTEM_NS   = new Set(['kube-system','kube-public','kube-node-lease','ingress-nginx','cert-manager'])
 const ROLE_TYPES  = new Set(['k8s_role','k8s_clusterrole'])
@@ -174,7 +179,7 @@ function SACard({ node, boundRoles, onClick, selected }: {
 
 // ── Main ──────────────────────────────────────────────────────────────────────
 
-export function RBACView({ data, focusNodeId, findings }: RBACViewProps) {
+export function RBACView({ data, focusNodeId, findings, onFinding }: RBACViewProps) {
   const [selectedNode, setSelectedNode] = useState<GraphNode | null>(null)
   const [activeNs, setActiveNs]         = useState<string | null>(null)
 
@@ -357,7 +362,7 @@ export function RBACView({ data, focusNodeId, findings }: RBACViewProps) {
         </AnimatePresence>
       </div>
 
-      <RBACDetails node={selectedNode} data={data} findings={findings} onClose={() => setSelectedNode(null)} />
+      <RBACDetails node={selectedNode} data={data} findings={findings} onClose={() => setSelectedNode(null)} onFinding={onFinding} />
     </div>
   )
 }
