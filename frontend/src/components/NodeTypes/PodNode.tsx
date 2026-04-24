@@ -57,12 +57,12 @@ export const PodNode = memo(({ data }: NodeProps<PodData>) => {
     <div
       className={`relative rounded-xl border transition-all duration-300 cursor-pointer select-none overflow-hidden
         ${dimmed ? 'opacity-20 scale-95' : 'opacity-100'} ${borderCls} backdrop-blur-sm`}
-      style={{ minWidth: 190, background: selected ? 'rgba(8,47,73,0.7)' : 'rgba(8,47,73,0.4)' }}
+      style={{ minWidth: 210, background: selected ? 'rgba(8,47,73,0.7)' : 'rgba(8,47,73,0.4)' }}
     >
       <div className="flex items-center gap-1.5 px-2.5 pt-1.5 pb-1 border-b border-cyan-500/15"
         style={{ background: 'rgba(6,182,212,0.08)' }}>
         <Container size={9} className="text-cyan-500" />
-        <span className="text-[9px] font-mono font-bold text-cyan-500 tracking-widest uppercase">Pod</span>
+        <span className="text-xs font-mono font-bold text-cyan-500 tracking-widest uppercase">Pod</span>
         <div className="ml-auto flex items-center gap-1">
           {secBadges.map(b => (
             <span key={b.label} className={`text-[7px] font-mono font-bold px-1 py-px rounded border ${b.cls}`}>
@@ -84,8 +84,8 @@ export const PodNode = memo(({ data }: NodeProps<PodData>) => {
       </div>
 
       <div className="px-2.5 py-1.5">
-        <div className="text-[12px] font-mono font-semibold text-cyan-200 leading-tight truncate">{label}</div>
-        <div className="text-[9px] font-mono text-slate-400 mt-0.5">{namespace}</div>
+        <div className="text-sm font-mono font-semibold text-cyan-200 leading-tight truncate">{label}</div>
+        <div className="text-xs font-mono text-slate-400 mt-0.5">{namespace}</div>
       </div>
 
       <Handle type="source" position={Position.Right} className="!w-2 !h-2 !bg-cyan-500 !border-cyber-bg" />

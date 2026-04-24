@@ -25,21 +25,21 @@ export const IAMRoleNode = memo(({ data }: NodeProps<RoleData>) => {
         }
         backdrop-blur-sm
       `}
-      style={{ minWidth: 190, background: 'rgba(69,26,3,0.4)' }}
+      style={{ minWidth: 210, background: 'rgba(69,26,3,0.4)' }}
     >
       {/* type header strip */}
       <div className="flex items-center gap-1.5 px-2.5 pt-1.5 pb-1 border-b border-amber-500/15 rounded-t-xl"
         style={{ background: 'rgba(245,158,11,0.07)' }}>
         <ShieldCheck size={9} className="text-amber-400" />
-        <span className="text-[9px] font-mono font-bold text-amber-400 tracking-widest uppercase">IAM Role</span>
+        <span className="text-xs font-mono font-bold text-amber-400 tracking-widest uppercase">IAM Role</span>
         {hovered && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping" />}
       </div>
 
       {/* content */}
       <div className="px-2.5 py-1.5">
-        <div className="text-[12px] font-mono font-semibold text-amber-200 leading-tight truncate">{label}</div>
+        <div className="text-sm font-mono font-semibold text-amber-200 leading-tight truncate">{label}</div>
         {roleShortName && (
-          <div className="text-[9px] font-mono text-slate-400 mt-0.5 truncate max-w-[160px]">{roleShortName}</div>
+          <div className="text-xs font-mono text-slate-400 mt-0.5 truncate max-w-[180px]">{roleShortName}</div>
         )}
       </div>
 
@@ -52,11 +52,11 @@ export const IAMRoleNode = memo(({ data }: NodeProps<RoleData>) => {
           bg-slate-900/95 border border-amber-500/30 rounded-lg shadow-xl backdrop-blur-sm
           px-3 py-2.5 min-w-[160px]
         ">
-          <div className="text-[9px] font-mono text-amber-400 uppercase tracking-wider mb-1.5 font-bold">
+          <div className="text-xs font-mono text-amber-400 uppercase tracking-wider mb-1.5 font-bold">
             Top Permissions
           </div>
           {topActions.map(a => (
-            <div key={a} className="text-[10px] font-mono text-slate-300 truncate max-w-[180px] py-0.5">
+            <div key={a} className="text-xs font-mono text-slate-300 truncate max-w-[180px] py-0.5">
               {a}
             </div>
           ))}

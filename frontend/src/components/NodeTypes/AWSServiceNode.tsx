@@ -52,13 +52,13 @@ export const AWSServiceNode = memo(({ data }: NodeProps<AWSData>) => {
         ${borderCls}
         backdrop-blur-sm
       `}
-      style={{ minWidth: 190, background: cfg.bodyBg }}
+      style={{ minWidth: 210, background: cfg.bodyBg }}
     >
       {/* type header strip */}
       <div className="flex items-center gap-1.5 px-2.5 pt-1.5 pb-1 border-b rounded-t-xl"
         style={{ background: cfg.headerBg, borderColor: 'rgba(255,255,255,0.06)' }}>
         <span className={cfg.headerText}><ServiceIcon service={service} size={9} /></span>
-        <span className={`text-[9px] font-mono font-bold tracking-widest uppercase ${cfg.headerText}`}>
+        <span className={`text-xs font-mono font-bold tracking-widest uppercase ${cfg.headerText}`}>
           {serviceLabel}
         </span>
         {maxAccessLevel && (
@@ -68,9 +68,9 @@ export const AWSServiceNode = memo(({ data }: NodeProps<AWSData>) => {
 
       {/* content */}
       <div className="px-2.5 py-1.5">
-        <div className={`text-[12px] font-mono font-semibold leading-tight truncate ${cfg.nameText}`}>{label}</div>
+        <div className={`text-sm font-mono font-semibold leading-tight truncate ${cfg.nameText}`}>{label}</div>
         {arn && (
-          <div className="text-[9px] font-mono text-slate-400 mt-0.5 truncate max-w-[160px]">{arn}</div>
+          <div className="text-xs font-mono text-slate-400 mt-0.5 truncate max-w-[180px]">{arn}</div>
         )}
       </div>
 
@@ -83,11 +83,11 @@ export const AWSServiceNode = memo(({ data }: NodeProps<AWSData>) => {
           bg-slate-900/95 border border-slate-700 rounded-lg shadow-xl backdrop-blur-sm
           px-3 py-2.5 min-w-[160px]
         ">
-          <div className={`text-[9px] font-mono uppercase tracking-wider mb-1.5 font-bold ${cfg.headerText}`}>
+          <div className={`text-xs font-mono uppercase tracking-wider mb-1.5 font-bold ${cfg.headerText}`}>
             {serviceLabel} Permissions
           </div>
           {topActions.map(a => (
-            <div key={a} className="text-[10px] font-mono text-slate-300 truncate max-w-[180px] py-0.5">
+            <div key={a} className="text-xs font-mono text-slate-300 truncate max-w-[180px] py-0.5">
               {a}
             </div>
           ))}

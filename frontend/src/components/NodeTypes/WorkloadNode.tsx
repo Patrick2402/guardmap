@@ -85,14 +85,14 @@ export const WorkloadNode = memo(({ data }: NodeProps<WorkloadData>) => {
         ${secBadges.some(b => b.label === 'PRIV' || b.label === 'ROOT') ? 'border-red-500/50' : cfg.border} hover:brightness-110
         backdrop-blur-sm
       `}
-      style={{ minWidth: 190, background: cfg.bodyBg }}
+      style={{ minWidth: 210, background: cfg.bodyBg }}
     >
       <Handle type="target" position={Position.Left}  className="!w-2 !h-2 !bg-slate-600 !border-cyber-bg" />
 
       <div className="flex items-center gap-1.5 px-2.5 pt-1.5 pb-1 border-b"
         style={{ background: cfg.headerBg, borderColor: 'rgba(255,255,255,0.06)' }}>
         <span className={cfg.headerText}><Icon size={9} /></span>
-        <span className={`text-[9px] font-mono font-bold tracking-widest uppercase ${cfg.headerText}`}>
+        <span className={`text-xs font-mono font-bold tracking-widest uppercase ${cfg.headerText}`}>
           {cfg.kind}
         </span>
         <div className="ml-auto flex items-center gap-1">
@@ -106,8 +106,8 @@ export const WorkloadNode = memo(({ data }: NodeProps<WorkloadData>) => {
       </div>
 
       <div className="px-2.5 py-1.5">
-        <div className={`text-[12px] font-mono font-semibold leading-tight truncate ${cfg.nameText}`}>{label}</div>
-        <div className="text-[9px] font-mono text-slate-400 mt-0.5">
+        <div className={`text-sm font-mono font-semibold leading-tight truncate ${cfg.nameText}`}>{label}</div>
+        <div className="text-xs font-mono text-slate-400 mt-0.5">
           {namespace}{subLabel ? <span className="ml-2 text-teal-600">{subLabel}</span> : null}
         </div>
       </div>
