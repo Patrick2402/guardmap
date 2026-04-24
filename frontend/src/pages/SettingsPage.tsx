@@ -915,16 +915,6 @@ function NotificationsTab({ orgId }: { orgId: string }) {
               : 'Enter a Slack Incoming Webhook URL below to enable alerts'}
           </div>
         </div>
-        {isConfigured && (
-          <button
-            onClick={() => setEnabled(v => !v)}
-            title={enabled ? 'Disable alerts' : 'Enable alerts'}
-            className="shrink-0 transition-colors"
-            style={{ color: enabled ? '#22c55e' : '#475569' }}
-          >
-            {enabled ? <ToggleRight size={28} /> : <ToggleLeft size={28} />}
-          </button>
-        )}
       </div>
 
       {/* What triggers an alert */}
@@ -977,6 +967,22 @@ function NotificationsTab({ orgId }: { orgId: string }) {
             onFocus={e => e.currentTarget.style.borderColor = 'rgba(0,212,255,0.35)'}
             onBlur={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'}
           />
+        </div>
+
+        {/* Enable toggle */}
+        <div className="flex items-center justify-between py-1">
+          <div>
+            <div className="text-sm font-sans text-slate-300">Enable alerts</div>
+            <div className="text-xs font-sans text-slate-400 mt-0.5">Send Slack messages after each scan</div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setEnabled(v => !v)}
+            className="shrink-0 transition-colors"
+            style={{ color: enabled ? '#22c55e' : '#475569' }}
+          >
+            {enabled ? <ToggleRight size={32} /> : <ToggleLeft size={32} />}
+          </button>
         </div>
 
         {/* Channel name (optional) */}
