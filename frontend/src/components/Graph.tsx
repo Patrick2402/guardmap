@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ChevronRight, Cloud, Shield, Zap, Search, X, SlidersHorizontal } from 'lucide-react'
+import { ChevronRight, Cloud, Shield, Zap, Search } from 'lucide-react'
 import { GraphData, GraphNode, BlastRadiusResult, WORKLOAD_TYPES } from '../types'
+import { DbFinding } from '../hooks/useGraphData'
+import { IRSAChainModal } from './IRSAChainModal'
 
 interface GraphProps {
   data: GraphData
@@ -11,6 +13,8 @@ interface GraphProps {
   search?: string
   activeNs?: string | null
   focusNodeId?: string | null
+  findings?: DbFinding[]
+  onFinding?: (f: DbFinding) => void
 }
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -48,7 +52,7 @@ function buildChains(data: GraphData): IRSAChain[] {
 
   for (const e of data.edges) {
     if (e.label === 'uses')    podToSa.set(e.source, e.target)
-    if (e.label === 'IRSA →')  saToRole.set(e.source, e.target)
+    if (e.label === 'IRSA →' || e.label === 'assumes (IRSA)')  saToRole.set(e.source, e.target)
     if (e.source.startsWith('role:') && e.target.startsWith('svc:')) {
       if (!roleToSvcs.has(e.source)) roleToSvcs.set(e.source, [])
       roleToSvcs.get(e.source)!.push({ id: e.target, accessLevel: e.accessLevel ?? 'read', actions: e.actions ?? [] })
@@ -221,8 +225,9 @@ function IRSAChainCard({ chain, selected, dimmed, onClick }: {
 
 // ── Main ──────────────────────────────────────────────────────────────────────
 
-export function Graph({ data, blastRadius, onNodeClick, onFocusReady, search = '', activeNs = null, focusNodeId }: GraphProps) {
+export function Graph({ data, blastRadius, onNodeClick, onFocusReady, search = '', activeNs = null, focusNodeId, findings, onFinding }: GraphProps) {
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [modalChain, setModalChain] = useState<IRSAChain | null>(null)
   const cardRefs = useRef<Map<string, HTMLDivElement>>(new Map())
 
   // Register focus callback (scroll to card)
@@ -291,6 +296,7 @@ export function Graph({ data, blastRadius, onNodeClick, onFocusReady, search = '
     const next = selectedId === node.id ? null : node.id
     setSelectedId(next)
     onNodeClick(next ? node : null)
+    if (next) setModalChain(chain)
   }
 
   return (
@@ -368,6 +374,15 @@ export function Graph({ data, blastRadius, onNodeClick, onFocusReady, search = '
           </motion.div>
         </AnimatePresence>
       </div>
+
+      {modalChain && (
+        <IRSAChainModal
+          chain={modalChain}
+          findings={findings}
+          onClose={() => { setModalChain(null); setSelectedId(null); onNodeClick(null) }}
+          onFinding={onFinding}
+        />
+      )}
     </div>
   )
 }

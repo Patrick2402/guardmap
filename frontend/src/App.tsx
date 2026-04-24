@@ -451,6 +451,8 @@ function ClusterView() {
                       data={data} blastRadius={blastRadius} onNodeClick={handleNodeClick}
                       onFocusReady={fn => { focusFnRef.current = fn }} search={search} activeNs={activeNs}
                       focusNodeId={activeTab === 'graph' ? pendingFocusNodeId : null}
+                      findings={scanMeta?.findings}
+                      onFinding={handleNavigateToFinding}
                     />
                   </div>
                   <Legend />
