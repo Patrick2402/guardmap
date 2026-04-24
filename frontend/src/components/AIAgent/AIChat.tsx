@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, KeyboardEvent } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Sparkles, X, Send, Trash2, AlertCircle, Loader2, ChevronDown } from 'lucide-react'
+import ReactMarkdown from 'react-markdown'
 import { GraphData } from '../../types'
 import { DbFinding } from '../../hooks/useGraphData'
 import { useAIChat, ChatMessage } from '../../hooks/useAIChat'
@@ -30,7 +31,6 @@ function MessageBubble({ msg }: { msg: ChatMessage }) {
       transition={{ duration: 0.2 }}
       className={`flex gap-2.5 ${isUser ? 'flex-row-reverse' : 'flex-row'}`}
     >
-      {/* Avatar */}
       {!isUser && (
         <div className="shrink-0 w-6 h-6 rounded-lg flex items-center justify-center mt-0.5"
           style={{ background: 'linear-gradient(135deg, rgba(34,211,238,0.2) 0%, rgba(167,139,250,0.2) 100%)', border: '1px solid rgba(34,211,238,0.25)' }}>
@@ -38,17 +38,40 @@ function MessageBubble({ msg }: { msg: ChatMessage }) {
         </div>
       )}
 
-      <div className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 text-sm font-sans leading-relaxed whitespace-pre-wrap ${
-        isUser
-          ? 'rounded-tr-sm text-slate-100'
-          : 'rounded-tl-sm text-slate-200'
-      }`}
+      <div
+        className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 text-sm font-sans leading-relaxed ${
+          isUser ? 'rounded-tr-sm text-slate-100' : 'rounded-tl-sm text-slate-200'
+        }`}
         style={isUser
           ? { background: 'rgba(34,211,238,0.12)', border: '1px solid rgba(34,211,238,0.2)' }
           : { background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }
         }
       >
-        {msg.content}
+        {isUser ? (
+          <span>{msg.content}</span>
+        ) : (
+          <ReactMarkdown
+            components={{
+              p:    ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
+              strong: ({ children }) => <strong className="font-semibold text-slate-100">{children}</strong>,
+              em:   ({ children }) => <em className="italic text-slate-300">{children}</em>,
+              ul:   ({ children }) => <ul className="list-disc list-inside space-y-0.5 mb-2 last:mb-0">{children}</ul>,
+              ol:   ({ children }) => <ol className="list-decimal list-inside space-y-0.5 mb-2 last:mb-0">{children}</ol>,
+              li:   ({ children }) => <li className="text-slate-300">{children}</li>,
+              code: ({ children, className }) => {
+                const isBlock = className?.includes('language-')
+                return isBlock
+                  ? <code className="block bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs font-mono text-cyan-300 overflow-x-auto my-2 whitespace-pre">{children}</code>
+                  : <code className="bg-black/30 border border-white/10 rounded px-1.5 py-0.5 text-xs font-mono text-cyan-300">{children}</code>
+              },
+              pre:  ({ children }) => <>{children}</>,
+              h3:   ({ children }) => <h3 className="font-semibold text-slate-100 mt-2 mb-1">{children}</h3>,
+              blockquote: ({ children }) => <blockquote className="border-l-2 border-cyan-500/40 pl-3 text-slate-400 italic my-1">{children}</blockquote>,
+            }}
+          >
+            {msg.content}
+          </ReactMarkdown>
+        )}
       </div>
     </motion.div>
   )

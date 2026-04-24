@@ -1,7 +1,7 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 
 const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY') ?? ''
-const MODEL = 'claude-sonnet-4-6'
+const MODEL = 'claude-haiku-4-5-20251001'
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
