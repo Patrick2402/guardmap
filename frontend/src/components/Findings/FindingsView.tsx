@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   ShieldAlert, ShieldCheck, Network, Key, Lock,
   ArrowRight, AlertTriangle, XCircle, Info, X,
-  Wrench, FileText, Target, ChevronRight, ChevronLeft, Search, GitGraph,
+  Wrench, FileText, Target, ChevronRight, ChevronLeft, Search, GitGraph, Clipboard,
 } from 'lucide-react'
 import { GraphData } from '../../types'
 import { TabId } from '../Nav'
@@ -565,11 +565,25 @@ function FindingSheet({ finding, onClose, onNavigate, onAttackPath }: {
           </div>
 
           <div>
-            <div className="flex items-center gap-2 mb-3">
-              <Wrench size={13} style={{ color: sev.color }} />
-              <span className="text-xs font-sans uppercase tracking-wider font-semibold" style={{ color: sev.color }}>
-                How to fix it
-              </span>
+            <div className="flex items-center justify-between gap-2 mb-3">
+              <div className="flex items-center gap-2">
+                <Wrench size={13} style={{ color: sev.color }} />
+                <span className="text-xs font-sans uppercase tracking-wider font-semibold" style={{ color: sev.color }}>
+                  How to fix it
+                </span>
+              </div>
+              <button
+                onClick={() => {
+                  const text = finding.remediation.map((s, i) => `${i + 1}. ${s}`).join('\n')
+                  navigator.clipboard.writeText(text)
+                }}
+                className="flex items-center gap-1.5 text-[11px] font-mono text-slate-400 hover:text-slate-200 transition-colors px-2 py-1 rounded-lg"
+                style={{ background: 'rgba(255,255,255,0.04)' }}
+                title="Copy remediation steps"
+              >
+                <Clipboard size={11} />
+                Copy steps
+              </button>
             </div>
             <div className="space-y-2">
               {finding.remediation.map((step, i) => (
@@ -856,7 +870,7 @@ export function FindingsView({ data, dbFindings, onNavigate }: FindingsViewProps
               style={{
                 background: 'rgba(255,255,255,0.04)',
                 border: nsFilter !== 'all' ? '1px solid rgba(255,255,255,0.12)' : '1px solid rgba(255,255,255,0.06)',
-                color: nsFilter !== 'all' ? '#e2e8f0' : '#64748b',
+                color: nsFilter !== 'all' ? '#e2e8f0' : '#94a3b8',
               }}
             >
               <option value="all">All namespaces</option>

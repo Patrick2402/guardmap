@@ -380,13 +380,14 @@ interface OverviewViewProps {
   onNavigate: (tab: TabId, nodeId?: string) => void
   onNavigateToExplorer?: (filter: NodeType | 'all') => void
   scanMeta?: ScanMeta | null
+  isMock?: boolean
 }
 
 function fmtScanTime(iso: string): string {
   return new Date(iso).toLocaleString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })
 }
 
-export function OverviewView({ data, onNavigate, onNavigateToExplorer, scanMeta }: OverviewViewProps) {
+export function OverviewView({ data, onNavigate, onNavigateToExplorer, scanMeta, isMock }: OverviewViewProps) {
   const stats = useClusterStats(data ?? EMPTY_GRAPH)
   const { sev: graphSev } = stats
   const riskyWorkloads = useTopRiskyWorkloads(data ?? EMPTY_GRAPH, scanMeta?.findings ?? [])
@@ -454,11 +455,18 @@ export function OverviewView({ data, onNavigate, onNavigateToExplorer, scanMeta 
                   <span className="text-sm font-sans text-emerald-400">All checks passed</span>
                 </div>
               )}
-              {scanMeta && (
+              {scanMeta ? (
                 <div className="mt-2 flex items-center gap-3 text-[11px] text-slate-400 font-mono">
                   <span>Scanned {fmtScanTime(scanMeta.scannedAt)}</span>
                   {scanMeta.durationMs && <span>{scanMeta.durationMs}ms</span>}
                 </div>
+              ) : isMock ? (
+                <div className="mt-2 flex items-center gap-2 text-[11px] font-mono">
+                  <span className="px-1.5 py-0.5 rounded text-amber-400 font-bold" style={{ background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.2)' }}>MOCK</span>
+                  <span className="text-slate-400">Demo data · connect a cluster to see live results</span>
+                </div>
+              ) : (
+                <div className="mt-2 text-[11px] font-mono text-slate-400">No scan yet — agent will submit results on next run</div>
               )}
               <button
                 onClick={() => onNavigate('graph')}

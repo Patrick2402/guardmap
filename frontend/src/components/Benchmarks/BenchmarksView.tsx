@@ -549,7 +549,11 @@ export function BenchmarksView({ data, dbFindings, onNavigate }: BenchmarksViewP
                           ) : covered ? (
                             <span className="text-[10px] font-mono text-slate-400">clean</span>
                           ) : (
-                            <span className="text-[10px] font-mono text-slate-400">no rule</span>
+                            <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-lg"
+                              title="Requires cluster-level access (admission controller, audit logs, or runtime agent) — not detectable from K8s API alone"
+                              style={{ background: 'rgba(100,116,139,0.12)', color: '#64748b', border: '1px solid rgba(100,116,139,0.2)', cursor: 'help' }}>
+                              N/A
+                            </span>
                           )}
                           <ChevronRight size={13} className="text-slate-400" />
                         </div>
@@ -574,7 +578,7 @@ export function BenchmarksView({ data, dbFindings, onNavigate }: BenchmarksViewP
             </div>
             <div className="flex items-center gap-2">
               <MinusCircle size={12} className="text-slate-400" />
-              <span className="text-xs font-sans text-slate-400">No detection rule — coverage gap</span>
+              <span className="text-xs font-sans text-slate-400">N/A — requires runtime/admission access</span>
             </div>
             <span className="ml-auto text-[10px] font-mono text-slate-400">click any row for full details</span>
           </div>

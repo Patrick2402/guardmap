@@ -408,7 +408,7 @@ function ClusterView() {
 
           {activeTab === 'overview' && !loading && (
             <motion.div key="overview" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="absolute inset-0">
-              <OverviewView data={data} scanMeta={scanMeta ?? undefined} onNavigate={handleNavigate} onNavigateToExplorer={f => { setExplorerInitialFilter(f); handleNavigate('explorer') }} />
+              <OverviewView data={data} scanMeta={scanMeta ?? undefined} isMock={dataSource === 'mock'} onNavigate={handleNavigate} onNavigateToExplorer={f => { setExplorerInitialFilter(f); handleNavigate('explorer') }} />
             </motion.div>
           )}
 

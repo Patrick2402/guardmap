@@ -84,8 +84,25 @@ function Trend({ current, previous }: { current: number; previous: number | unde
   )
 }
 
-// ── Empty state ───────────────────────────────────────────────────────────────
-function EmptyState({ isMock }: { isMock: boolean }) {
+// ── Mock scan history for demo mode ──────────────────────────────────────────
+function makeMockScans() {
+  const base = Date.now()
+  const day = 86_400_000
+  return [
+    { id: 'm1', scannedAt: new Date(base - 0 * day).toISOString(),      securityScore: 58, criticalCount: 2, highCount: 5, mediumCount: 8, lowCount: 3, durationMs: 1240 },
+    { id: 'm2', scannedAt: new Date(base - 1 * day).toISOString(),      securityScore: 61, criticalCount: 2, highCount: 4, mediumCount: 7, lowCount: 4, durationMs: 1180 },
+    { id: 'm3', scannedAt: new Date(base - 2 * day).toISOString(),      securityScore: 54, criticalCount: 3, highCount: 6, mediumCount: 9, lowCount: 2, durationMs: 1310 },
+    { id: 'm4', scannedAt: new Date(base - 4 * day).toISOString(),      securityScore: 49, criticalCount: 4, highCount: 7, mediumCount: 10, lowCount: 1, durationMs: 1290 },
+    { id: 'm5', scannedAt: new Date(base - 7 * day).toISOString(),      securityScore: 44, criticalCount: 5, highCount: 8, mediumCount: 11, lowCount: 2, durationMs: 1450 },
+    { id: 'm6', scannedAt: new Date(base - 10 * day).toISOString(),     securityScore: 51, criticalCount: 3, highCount: 7, mediumCount: 9,  lowCount: 3, durationMs: 1190 },
+    { id: 'm7', scannedAt: new Date(base - 14 * day).toISOString(),     securityScore: 38, criticalCount: 6, highCount: 9, mediumCount: 12, lowCount: 0, durationMs: 1560 },
+  ]
+}
+
+const MOCK_SCANS = makeMockScans()
+
+// ── Empty state (live mode only) ──────────────────────────────────────────────
+function EmptyState() {
   return (
     <div className="absolute inset-0 flex flex-col items-center justify-center gap-4">
       <div className="w-14 h-14 rounded-2xl flex items-center justify-center"
@@ -93,13 +110,9 @@ function EmptyState({ isMock }: { isMock: boolean }) {
         <Activity size={24} className="text-slate-400" />
       </div>
       <div className="text-center">
-        <div className="text-sm font-sans font-semibold text-slate-400">
-          {isMock ? 'History not available for demo' : 'No scan history yet'}
-        </div>
+        <div className="text-sm font-sans font-semibold text-slate-400">No scan history yet</div>
         <div className="text-xs font-sans text-slate-400 mt-1 max-w-xs leading-relaxed">
-          {isMock
-            ? 'Connect a live cluster to see scan trends and historical data.'
-            : 'Run your first scan by triggering the agent CronJob or waiting for the scheduled run.'}
+          Run your first scan by triggering the agent CronJob or waiting for the scheduled run.
         </div>
       </div>
     </div>
@@ -113,10 +126,15 @@ interface HistoryViewProps {
 
 export function HistoryView({ source }: HistoryViewProps) {
   const clusterId = source === 'mock' ? null : source.clusterId
-  const { scans, loading } = useScanHistory(clusterId)
+  const { scans: liveScans, loading } = useScanHistory(clusterId)
   const [selectedId, setSelectedId] = useState<string | null>(null)
 
   const isMock = source === 'mock'
+  const scans = isMock ? MOCK_SCANS : liveScans
+
+  if (!isMock && !loading && scans.length === 0) {
+    return <div className="absolute inset-0"><EmptyState /></div>
+  }
 
   // Chart data — oldest first for the trend line
   const chartData = [...scans].reverse().map(s => ({
@@ -132,17 +150,18 @@ export function HistoryView({ source }: HistoryViewProps) {
   const bestScore = scans.length ? Math.max(...scans.map(s => s.securityScore)) : 0
   const totalCrit = scans.reduce((a, s) => a + s.criticalCount, 0)
 
-  if (isMock || (!loading && scans.length === 0)) {
-    return (
-      <div className="absolute inset-0">
-        <EmptyState isMock={isMock} />
-      </div>
-    )
-  }
-
   return (
     <div className="absolute inset-0 overflow-auto">
       <div className="max-w-5xl mx-auto px-6 py-6 space-y-6">
+
+        {/* ── Mock banner ── */}
+        {isMock && (
+          <div className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-[11px] font-mono"
+            style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)' }}>
+            <span className="font-bold text-amber-400">DEMO DATA</span>
+            <span className="text-slate-400">Connect a live cluster to see real scan history and trends.</span>
+          </div>
+        )}
 
         {/* ── Summary cards ── */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">

@@ -686,7 +686,7 @@ export function ExplorerView({ data, clusterName = 'mock-cluster', initialTypeFi
                 { key: 'label',     label: 'Name'       },
                 { key: 'namespace', label: 'Namespace'  },
                 { key: 'type',      label: 'Kind'       },
-                { key: 'access',    label: 'Max Access' },
+                { key: 'access',    label: 'AWS Access' },
               ] as { key: SortKey; label: string }[]).map(col => (
                 <th key={col.key} onClick={() => toggleSort(col.key)}
                   className="text-left px-5 py-2.5 text-[10px] font-mono font-semibold text-slate-400 uppercase tracking-widest cursor-pointer hover:text-slate-300 transition-colors select-none">

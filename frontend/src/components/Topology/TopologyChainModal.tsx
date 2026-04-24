@@ -588,6 +588,7 @@ export function TopologyChainModal({ node, data, onClose }: TopologyChainModalPr
   const showChain = chain && chain.kind !== 'fallback' && (
     chain.steps.length > 1 || (chain.branches && chain.branches.length > 0)
   )
+  const isIsolated = chain && chain.kind !== 'fallback' && !showChain
 
   return (
     <AnimatePresence>
@@ -766,8 +767,19 @@ export function TopologyChainModal({ node, data, onClose }: TopologyChainModalPr
                 </div>
               )}
 
+              {/* Isolated node notice */}
+              {isIsolated && (
+                <div className="mx-6 mt-4 mb-2 flex items-center gap-3 px-4 py-3 rounded-xl"
+                  style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                  <span className="text-slate-400 shrink-0">⬡</span>
+                  <p className="text-[12px] font-sans text-slate-400">
+                    No topology connections found — this resource has no edges in the current graph view.
+                  </p>
+                </div>
+              )}
+
               {/* Fallback connections */}
-              {!showChain && <ConnSection node={node} data={data} />}
+              {!showChain && !isIsolated && <ConnSection node={node} data={data} />}
 
               <div className="h-4" />
             </div>

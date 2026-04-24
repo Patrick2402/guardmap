@@ -29,7 +29,7 @@ export function Nav({ active, onChange, findingCount }: NavProps) {
           key={tab.id}
           onClick={() => onChange(tab.id)}
           className="relative px-3 py-1.5 rounded-lg text-[12px] font-sans font-medium transition-colors duration-200 flex items-center gap-1.5"
-          style={{ color: active === tab.id ? '#e2e8f0' : '#64748b' }}
+          style={{ color: active === tab.id ? '#e2e8f0' : '#94a3b8' }}
         >
           {active === tab.id && (
             <motion.div
