@@ -627,14 +627,14 @@ export function TopologyChainModal({ node, data, onClose }: TopologyChainModalPr
               style={{ borderBottom: '1px solid rgba(255,255,255,0.06)', background: `${cfg.color}08` }}>
               <cfg.Icon size={14} style={{ color: cfg.color }} />
               <div className="flex-1 min-w-0">
-                <div className="text-[10px] font-mono font-bold uppercase tracking-widest mb-0.5" style={{ color: cfg.color }}>
+                <div className="text-xs font-mono font-bold uppercase tracking-widest mb-0.5" style={{ color: cfg.color }}>
                   {cfg.label}
                 </div>
-                <div className="text-[16px] font-mono font-bold text-slate-100 truncate">{node.label}</div>
+                <div className="text-lg font-mono font-bold text-slate-100 truncate">{node.label}</div>
                 {node.namespace && (
                   <div className="flex items-center gap-1.5 mt-0.5">
                     <Hash size={9} className="text-slate-400" />
-                    <span className="text-[10px] font-mono text-slate-400">{node.namespace}</span>
+                    <span className="text-xs font-mono text-slate-400">{node.namespace}</span>
                   </div>
                 )}
               </div>
@@ -653,7 +653,7 @@ export function TopologyChainModal({ node, data, onClose }: TopologyChainModalPr
               {/* Chain visualization */}
               {showChain && chain && (
                 <div className="px-6 pt-5 pb-4">
-                  <div className="text-[9px] font-mono font-bold uppercase tracking-widest text-slate-400 mb-3">
+                  <div className="text-xs font-mono font-bold uppercase tracking-widest text-slate-400 mb-3">
                     {CHAIN_TITLE[chain.kind]}
                   </div>
 
@@ -664,7 +664,7 @@ export function TopologyChainModal({ node, data, onClose }: TopologyChainModalPr
                       <div className="flex items-start gap-2 mb-4 px-3 py-2.5 rounded-xl"
                         style={{ background: `${cfg.color}08`, border: `1px solid ${cfg.color}18` }}>
                         <span className="text-[10px] font-mono font-bold shrink-0 mt-px" style={{ color: cfg.color }}>?</span>
-                        <p className="text-[11px] font-sans text-slate-400 leading-relaxed">{desc}</p>
+                        <p className="text-sm font-sans text-slate-400 leading-relaxed">{desc}</p>
                       </div>
                     ) : null
                   })()}
@@ -779,7 +779,19 @@ export function TopologyChainModal({ node, data, onClose }: TopologyChainModalPr
               )}
 
               {/* Fallback connections */}
-              {!showChain && !isIsolated && <ConnSection node={node} data={data} />}
+              {!showChain && !isIsolated && (
+                data.edges.filter(e => e.source === node.id || e.target === node.id).length === 0
+                  ? (
+                    <div className="mx-6 mt-4 mb-2 flex items-center gap-3 px-4 py-3 rounded-xl"
+                      style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                      <span className="text-slate-400 shrink-0">⬡</span>
+                      <p className="text-sm font-sans text-slate-400">
+                        No connections found in topology — this resource has no edges in the current graph view.
+                      </p>
+                    </div>
+                  )
+                  : <ConnSection node={node} data={data} />
+              )}
 
               <div className="h-4" />
             </div>
@@ -787,7 +799,7 @@ export function TopologyChainModal({ node, data, onClose }: TopologyChainModalPr
             {/* Footer */}
             <div className="flex items-center justify-between px-6 py-3 shrink-0"
               style={{ borderTop: '1px solid rgba(255,255,255,0.05)', background: 'rgba(255,255,255,0.015)' }}>
-              <p className="text-[10px] font-mono text-slate-400">
+              <p className="text-xs font-mono text-slate-400">
                 {showChain
                   ? 'Path reconstructed from live graph · scroll right for full chain'
                   : 'Click any node in the topology to inspect it'}

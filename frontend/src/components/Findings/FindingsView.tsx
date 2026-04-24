@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   ShieldAlert, ShieldCheck, Network, Key, Lock,
   ArrowRight, AlertTriangle, XCircle, Info, X,
-  Wrench, FileText, Target, ChevronRight, ChevronLeft, Search, GitGraph, Clipboard,
+  Wrench, FileText, Target, ChevronRight, ChevronLeft, Search, GitGraph, Clipboard, Check,
 } from 'lucide-react'
 import { GraphData } from '../../types'
 import { TabId } from '../Nav'
@@ -443,6 +443,21 @@ function FindingSheet({ finding, onClose, onNavigate, onAttackPath }: {
   const sev = SEV_CFG[finding.severity]
   const cat = CAT_CFG[finding.category]
   const isCode = (s: string) => s.startsWith('kubectl') || s.startsWith('apiVersion') || s.includes('\n')
+  const [copiedAll, setCopiedAll] = useState(false)
+  const [copiedStep, setCopiedStep] = useState<number | null>(null)
+
+  function copyAll() {
+    const text = finding.remediation.map((s, i) => `${i + 1}. ${s}`).join('\n')
+    navigator.clipboard.writeText(text)
+    setCopiedAll(true)
+    setTimeout(() => setCopiedAll(false), 2000)
+  }
+
+  function copyStep(step: string, idx: number) {
+    navigator.clipboard.writeText(step)
+    setCopiedStep(idx)
+    setTimeout(() => setCopiedStep(null), 2000)
+  }
 
   return (
     <AnimatePresence>
@@ -573,26 +588,33 @@ function FindingSheet({ finding, onClose, onNavigate, onAttackPath }: {
                 </span>
               </div>
               <button
-                onClick={() => {
-                  const text = finding.remediation.map((s, i) => `${i + 1}. ${s}`).join('\n')
-                  navigator.clipboard.writeText(text)
-                }}
-                className="flex items-center gap-1.5 text-[11px] font-mono text-slate-400 hover:text-slate-200 transition-colors px-2 py-1 rounded-lg"
-                style={{ background: 'rgba(255,255,255,0.04)' }}
-                title="Copy remediation steps"
+                onClick={copyAll}
+                className="flex items-center gap-1.5 text-xs font-mono transition-colors px-2 py-1 rounded-lg"
+                style={{ background: 'rgba(255,255,255,0.04)', color: copiedAll ? '#34d399' : '#94a3b8' }}
+                title="Copy all remediation steps"
               >
-                <Clipboard size={11} />
-                Copy steps
+                {copiedAll ? <Check size={11} /> : <Clipboard size={11} />}
+                {copiedAll ? 'Copied!' : 'Copy steps'}
               </button>
             </div>
             <div className="space-y-2">
               {finding.remediation.map((step, i) => (
                 <div key={i}>
                   {isCode(step) ? (
-                    <pre className="text-xs font-mono text-slate-300 p-3 rounded-xl overflow-x-auto leading-relaxed"
-                      style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>
-                      {step}
-                    </pre>
+                    <div className="relative group/code">
+                      <pre className="text-xs font-mono text-slate-300 p-3 rounded-xl overflow-x-auto leading-relaxed"
+                        style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                        {step}
+                      </pre>
+                      <button
+                        onClick={() => copyStep(step, i)}
+                        className="absolute top-2 right-2 flex items-center gap-1 px-1.5 py-1 rounded-lg text-[10px] font-mono opacity-0 group-hover/code:opacity-100 transition-all"
+                        style={{ background: 'rgba(255,255,255,0.08)', color: copiedStep === i ? '#34d399' : '#94a3b8' }}
+                      >
+                        {copiedStep === i ? <Check size={9} /> : <Clipboard size={9} />}
+                        {copiedStep === i ? 'Copied' : 'Copy'}
+                      </button>
+                    </div>
                   ) : (
                     <div className="flex items-start gap-3">
                       <div className="w-5 h-5 rounded-full flex items-center justify-center shrink-0 mt-0.5 text-[10px] font-mono font-bold"
