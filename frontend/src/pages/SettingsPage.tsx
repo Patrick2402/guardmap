@@ -5,17 +5,18 @@ import {
   Shield, ChevronRight, ArrowLeft, Settings, Users, FileText,
   Building2, Mail, Trash2, RefreshCw, Loader2, AlertCircle,
   CheckCircle2, Copy, Check, Crown, Code2, Eye, UserPlus,
-  Link, X, ShieldAlert, Save, Clock, TriangleAlert,
+  Link, X, ShieldAlert, Save, Clock, TriangleAlert, Bell,
+  ExternalLink, Zap, ToggleLeft, ToggleRight,
 } from 'lucide-react'
 import { supabase, db } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import { GuardMapSymbol } from '../components/GuardMapLogo'
 import { OrgSwitcher } from '../components/OrgSwitcher'
-import type { Invitation, AuditLog, Organization } from '../lib/database.types'
+import type { Invitation, AuditLog, Organization, NotificationChannel } from '../lib/database.types'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-type Tab = 'members' | 'invitations' | 'audit' | 'org'
+type Tab = 'members' | 'invitations' | 'audit' | 'org' | 'notifications'
 
 interface OrgMemberDetail {
   user_id: string
@@ -785,6 +786,275 @@ function OrgTab({ orgId }: { orgId: string }) {
   )
 }
 
+// ── Notifications Tab ─────────────────────────────────────────────────────────
+
+function NotificationsTab({ orgId }: { orgId: string }) {
+  const [channel, setChannel]       = useState<NotificationChannel | null>(null)
+  const [loading, setLoading]       = useState(true)
+  const [webhookUrl, setWebhookUrl] = useState('')
+  const [channelName, setChannelName] = useState('')
+  const [enabled, setEnabled]       = useState(true)
+  const [saving, setSaving]         = useState(false)
+  const [saved, setSaved]           = useState(false)
+  const [saveError, setSaveError]   = useState<string | null>(null)
+  const [testing, setTesting]       = useState(false)
+  const [testResult, setTestResult] = useState<'ok' | 'error' | null>(null)
+  const [testError, setTestError]   = useState<string | null>(null)
+
+  useEffect(() => {
+    db.notificationChannels()
+      .select('*')
+      .eq('organization_id', orgId)
+      .eq('type', 'slack')
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data) {
+          setChannel(data as NotificationChannel)
+          setWebhookUrl(data.webhook_url ?? '')
+          setChannelName(data.channel_name ?? '')
+          setEnabled(data.enabled ?? true)
+        }
+        setLoading(false)
+      })
+  }, [orgId])
+
+  async function handleSave(e: FormEvent) {
+    e.preventDefault()
+    setSaving(true); setSaveError(null); setSaved(false)
+    try {
+      const row = {
+        organization_id: orgId,
+        type: 'slack' as const,
+        webhook_url: webhookUrl.trim(),
+        channel_name: channelName.trim() || null,
+        enabled,
+        updated_at: new Date().toISOString(),
+      }
+      let err
+      if (channel) {
+        ;({ error: err } = await db.notificationChannels().update(row).eq('id', channel.id))
+      } else {
+        ;({ error: err } = await db.notificationChannels().insert(row))
+      }
+      if (err) throw err
+      setSaved(true)
+      setTimeout(() => setSaved(false), 2500)
+      // Refresh
+      const { data } = await db.notificationChannels()
+        .select('*').eq('organization_id', orgId).eq('type', 'slack').maybeSingle()
+      if (data) setChannel(data as NotificationChannel)
+    } catch (e: unknown) {
+      setSaveError(e instanceof Error ? e.message : 'Failed to save')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function handleTest() {
+    if (!webhookUrl.trim()) return
+    setTesting(true); setTestResult(null); setTestError(null)
+    try {
+      const { data, error } = await supabase.rpc('test_slack_notification', {
+        p_org_id: orgId,
+        p_webhook_url: webhookUrl.trim(),
+      })
+      if (error) throw error
+      const ok = (data as { ok: boolean; error?: string })?.ok
+      if (ok) {
+        setTestResult('ok')
+      } else {
+        setTestResult('error')
+        setTestError((data as { ok: boolean; error?: string })?.error ?? 'Unknown error')
+      }
+    } catch (e: unknown) {
+      setTestResult('error')
+      setTestError(e instanceof Error ? e.message : 'Test failed')
+    } finally {
+      setTesting(false)
+      setTimeout(() => setTestResult(null), 5000)
+    }
+  }
+
+  if (loading) return <div className="flex justify-center py-12"><Loader2 size={20} className="text-slate-400 animate-spin" /></div>
+
+  const isConfigured = !!channel?.webhook_url
+  const isDirty = webhookUrl !== (channel?.webhook_url ?? '') ||
+                  channelName !== (channel?.channel_name ?? '') ||
+                  enabled !== (channel?.enabled ?? true)
+
+  return (
+    <div className="space-y-6 max-w-xl">
+      <div>
+        <div className="text-base font-sans font-semibold text-slate-100">Slack Alerts</div>
+        <div className="text-xs font-sans text-slate-400 mt-0.5">
+          Get notified in Slack when new security findings are detected in your cluster
+        </div>
+      </div>
+
+      {/* Status badge */}
+      <div className="flex items-center gap-3 p-4 rounded-2xl"
+        style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.05)' }}>
+        <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+          style={{ background: isConfigured && enabled ? 'rgba(34,197,94,0.1)' : 'rgba(100,116,139,0.1)' }}>
+          <Bell size={16} style={{ color: isConfigured && enabled ? '#22c55e' : '#64748b' }} />
+        </div>
+        <div className="flex-1">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-sans font-semibold text-slate-200">Slack</span>
+            <span className="text-[11px] font-mono font-bold px-2 py-0.5 rounded-lg"
+              style={{
+                background: isConfigured && enabled ? 'rgba(34,197,94,0.12)' : 'rgba(100,116,139,0.1)',
+                color: isConfigured && enabled ? '#22c55e' : '#94a3b8',
+              }}>
+              {isConfigured && enabled ? 'ACTIVE' : isConfigured ? 'DISABLED' : 'NOT SET UP'}
+            </span>
+          </div>
+          <div className="text-xs font-sans text-slate-400 mt-0.5">
+            {isConfigured
+              ? `Webhook configured${channel?.channel_name ? ` · #${channel.channel_name}` : ''}`
+              : 'Enter a Slack Incoming Webhook URL below to enable alerts'}
+          </div>
+        </div>
+        {isConfigured && (
+          <button
+            onClick={() => setEnabled(v => !v)}
+            title={enabled ? 'Disable alerts' : 'Enable alerts'}
+            className="shrink-0 transition-colors"
+            style={{ color: enabled ? '#22c55e' : '#475569' }}
+          >
+            {enabled ? <ToggleRight size={28} /> : <ToggleLeft size={28} />}
+          </button>
+        )}
+      </div>
+
+      {/* What triggers an alert */}
+      <div className="rounded-2xl p-4 space-y-2"
+        style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}>
+        <div className="text-xs font-sans font-semibold text-slate-400 uppercase tracking-wider mb-3">
+          Alert triggers
+        </div>
+        {[
+          { icon: '🔴', label: 'New critical finding detected', always: true },
+          { icon: '🟠', label: 'New high severity finding detected', always: true },
+          { icon: '📊', label: 'Security score changes between scans', always: true },
+          { icon: '📋', label: 'Top 10 new findings listed in message', always: false },
+        ].map(t => (
+          <div key={t.label} className="flex items-center gap-3">
+            <span className="text-base leading-none">{t.icon}</span>
+            <span className="text-xs font-sans text-slate-300 flex-1">{t.label}</span>
+            <span className="text-[10px] font-mono text-slate-400">
+              {t.always ? 'always' : 'included'}
+            </span>
+          </div>
+        ))}
+      </div>
+
+      {/* Webhook form */}
+      <form onSubmit={handleSave} className="space-y-4 p-5 rounded-2xl"
+        style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.05)' }}>
+        <div className="text-sm font-sans font-semibold text-slate-300">Webhook configuration</div>
+
+        {/* Webhook URL */}
+        <div className="space-y-1.5">
+          <label className="text-xs font-sans text-slate-400">
+            Incoming Webhook URL
+            <a
+              href="https://api.slack.com/messaging/webhooks"
+              target="_blank" rel="noreferrer"
+              className="ml-1.5 text-cyan-500 hover:text-cyan-400 transition-colors inline-flex items-center gap-0.5"
+            >
+              How to create one <ExternalLink size={10} />
+            </a>
+          </label>
+          <input
+            type="url"
+            value={webhookUrl}
+            onChange={e => setWebhookUrl(e.target.value)}
+            placeholder="https://hooks.slack.com/services/T.../B.../..."
+            required
+            className="w-full px-3.5 py-2.5 rounded-xl text-sm font-mono text-slate-200 placeholder-slate-600 outline-none"
+            style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}
+            onFocus={e => e.currentTarget.style.borderColor = 'rgba(0,212,255,0.35)'}
+            onBlur={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'}
+          />
+        </div>
+
+        {/* Channel name (optional) */}
+        <div className="space-y-1.5">
+          <label className="text-xs font-sans text-slate-400">Channel name (optional, for display only)</label>
+          <input
+            type="text"
+            value={channelName}
+            onChange={e => setChannelName(e.target.value)}
+            placeholder="#security-alerts"
+            className="w-full px-3.5 py-2.5 rounded-xl text-sm font-sans text-slate-200 placeholder-slate-600 outline-none"
+            style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}
+            onFocus={e => e.currentTarget.style.borderColor = 'rgba(0,212,255,0.35)'}
+            onBlur={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'}
+          />
+        </div>
+
+        {saveError && (
+          <div className="flex items-center gap-2 text-xs font-sans text-red-400">
+            <AlertCircle size={12} />{saveError}
+          </div>
+        )}
+
+        {/* Actions */}
+        <div className="flex gap-3 pt-1">
+          <button
+            type="submit"
+            disabled={saving || !webhookUrl.trim() || !isDirty}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-sans font-semibold transition-all"
+            style={{
+              background: saved ? 'rgba(16,185,129,0.12)' : 'rgba(0,212,255,0.1)',
+              border: `1px solid ${saved ? 'rgba(16,185,129,0.25)' : 'rgba(0,212,255,0.2)'}`,
+              color: saved ? '#34d399' : '#22d3ee',
+              opacity: (!webhookUrl.trim() || !isDirty) ? 0.4 : 1,
+            }}
+          >
+            {saving ? <Loader2 size={13} className="animate-spin" /> : saved ? <CheckCircle2 size={13} /> : <Save size={13} />}
+            {saved ? 'Saved!' : 'Save'}
+          </button>
+
+          <button
+            type="button"
+            onClick={handleTest}
+            disabled={testing || !webhookUrl.trim()}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-sans font-semibold transition-all"
+            style={{
+              background: testResult === 'ok' ? 'rgba(34,197,94,0.12)' : testResult === 'error' ? 'rgba(239,68,68,0.1)' : 'rgba(255,255,255,0.05)',
+              border: `1px solid ${testResult === 'ok' ? 'rgba(34,197,94,0.3)' : testResult === 'error' ? 'rgba(239,68,68,0.25)' : 'rgba(255,255,255,0.08)'}`,
+              color: testResult === 'ok' ? '#22c55e' : testResult === 'error' ? '#f87171' : '#94a3b8',
+              opacity: !webhookUrl.trim() ? 0.4 : 1,
+            }}
+          >
+            {testing
+              ? <Loader2 size={13} className="animate-spin" />
+              : testResult === 'ok' ? <CheckCircle2 size={13} />
+              : testResult === 'error' ? <AlertCircle size={13} />
+              : <Zap size={13} />
+            }
+            {testResult === 'ok' ? 'Message sent!' : testResult === 'error' ? 'Failed' : 'Send test'}
+          </button>
+        </div>
+
+        {testError && (
+          <div className="flex items-center gap-2 text-xs font-sans text-red-400 mt-1">
+            <AlertCircle size={12} />{testError}
+          </div>
+        )}
+      </form>
+
+      {/* Help */}
+      <div className="text-xs font-sans text-slate-400 leading-relaxed px-1">
+        Alerts are sent by the GuardMap agent after each scan — only <span className="text-slate-300">new findings</span> (not seen in the previous scan) trigger a notification.
+        The agent must have the <span className="font-mono text-slate-300">GUARDMAP_DASHBOARD_URL</span> env var set for the "View in GuardMap" button to appear in messages.
+      </div>
+    </div>
+  )
+}
+
 // ── Main SettingsPage ─────────────────────────────────────────────────────────
 
 export function SettingsPage() {
@@ -818,10 +1088,11 @@ export function SettingsPage() {
   }
 
   const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
-    { id: 'members',     label: 'Members',      icon: <Users size={13} /> },
-    { id: 'invitations', label: 'Invitations',   icon: <Mail size={13} /> },
-    { id: 'audit',       label: 'Audit log',     icon: <FileText size={13} /> },
-    { id: 'org',         label: 'Organization',  icon: <Building2 size={13} /> },
+    { id: 'members',       label: 'Members',       icon: <Users size={13} /> },
+    { id: 'invitations',   label: 'Invitations',    icon: <Mail size={13} /> },
+    { id: 'notifications', label: 'Notifications',  icon: <Bell size={13} /> },
+    { id: 'audit',         label: 'Audit log',      icon: <FileText size={13} /> },
+    { id: 'org',           label: 'Organization',   icon: <Building2 size={13} /> },
   ]
 
   return (
@@ -888,7 +1159,7 @@ export function SettingsPage() {
               className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-sans font-medium transition-all"
               style={tab === t.id
                 ? { background: 'rgba(255,255,255,0.08)', color: '#e2e8f0' }
-                : { color: '#475569' }
+                : { color: '#94a3b8' }
               }
             >
               {t.icon}
@@ -900,10 +1171,11 @@ export function SettingsPage() {
         {/* Tab content */}
         <AnimatePresence mode="wait">
           <motion.div key={tab} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}>
-            {tab === 'members'     && <MembersTab orgId={orgId} isAdmin={isAdmin} currentUserId={userId} />}
-            {tab === 'invitations' && <InvitationsTab orgId={orgId} />}
-            {tab === 'audit'       && <AuditLogTab orgId={orgId} />}
-            {tab === 'org'         && <OrgTab orgId={orgId} />}
+            {tab === 'members'       && <MembersTab orgId={orgId} isAdmin={isAdmin} currentUserId={userId} />}
+            {tab === 'invitations'   && <InvitationsTab orgId={orgId} />}
+            {tab === 'notifications' && <NotificationsTab orgId={orgId} />}
+            {tab === 'audit'         && <AuditLogTab orgId={orgId} />}
+            {tab === 'org'           && <OrgTab orgId={orgId} />}
           </motion.div>
         </AnimatePresence>
       </div>
