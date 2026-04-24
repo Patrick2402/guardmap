@@ -1,43 +1,7 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import ReactFlow, {
-  Background, Controls, MiniMap, BackgroundVariant,
-  Node, Edge, NodeMouseHandler, ReactFlowInstance,
-} from 'reactflow'
-import 'reactflow/dist/style.css'
-
-import { GraphData, GraphNode, GraphEdge, AccessLevel, WORKLOAD_TYPES } from '../types'
-import { BlastRadiusResult } from '../types'
-import { applyNamespacedLayout } from '../utils/layout'
-import { useFocusNode } from '../hooks/useFocusNode'
-import { PodNode }              from './NodeTypes/PodNode'
-import { ServiceAccountNode }   from './NodeTypes/ServiceAccountNode'
-import { IAMRoleNode }          from './NodeTypes/IAMRoleNode'
-import { AWSServiceNode }       from './NodeTypes/AWSServiceNode'
-import { WorkloadNode }         from './NodeTypes/WorkloadNode'
-import { NamespaceGroupNode }   from './NodeTypes/NamespaceGroupNode'
-import { PermissionEdge }       from './EdgeTypes/PermissionEdge'
-import { OffscreenOverlay }     from './OffscreenOverlay'
-
-const nodeTypes = {
-  pod:             PodNode,
-  serviceaccount:  ServiceAccountNode,
-  iam_role:        IAMRoleNode,
-  aws_service:     AWSServiceNode,
-  deployment:      WorkloadNode,
-  statefulset:     WorkloadNode,
-  daemonset:       WorkloadNode,
-  job:             WorkloadNode,
-  cronjob:         WorkloadNode,
-  namespaceGroup:  NamespaceGroupNode,
-}
-
-const edgeTypes = { permission: PermissionEdge }
-
-const ACCESS_PRIORITY: Record<string, number> = { full: 3, write: 2, read: 1 }
-
-export interface GraphHandle {
-  focusNodes: (nodeIds: string[]) => void
-}
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { ChevronRight, Cloud, Shield, Zap, Search, X, SlidersHorizontal } from 'lucide-react'
+import { GraphData, GraphNode, BlastRadiusResult, WORKLOAD_TYPES } from '../types'
 
 interface GraphProps {
   data: GraphData
@@ -49,368 +13,361 @@ interface GraphProps {
   focusNodeId?: string | null
 }
 
-function FocusController({ nodeId }: { nodeId?: string | null }) {
-  useFocusNode(nodeId)
-  return null
+// ── Constants ─────────────────────────────────────────────────────────────────
+
+const NS_PRIORITY: Record<string, number> = { production: 0, prod: 0, staging: 1, default: 2 }
+
+const ACCESS_META: Record<string, { label: string; color: string; bg: string; border: string }> = {
+  full:  { label: 'FULL',  color: '#f87171', bg: 'rgba(239,68,68,0.1)',  border: 'rgba(239,68,68,0.3)'  },
+  write: { label: 'WRITE', color: '#fb923c', bg: 'rgba(249,115,22,0.1)', border: 'rgba(249,115,22,0.3)' },
+  read:  { label: 'READ',  color: '#4ade80', bg: 'rgba(74,222,128,0.08)',border: 'rgba(74,222,128,0.2)' },
 }
 
-function maxAccessForNode(nodeId: string, edges: GraphEdge[]): AccessLevel | null {
-  const inc = edges.filter(e => e.target === nodeId && e.accessLevel)
-  if (inc.some(e => e.accessLevel === 'full'))  return 'full'
-  if (inc.some(e => e.accessLevel === 'write')) return 'write'
-  if (inc.some(e => e.accessLevel === 'read'))  return 'read'
-  return null
+const WORKLOAD_TYPE_META: Record<string, { label: string; color: string; bg: string; border: string }> = {
+  deployment:  { label: 'DEPLOYMENT',  color: '#60a5fa', bg: 'rgba(59,130,246,0.08)',  border: 'rgba(59,130,246,0.2)'  },
+  statefulset: { label: 'STATEFULSET', color: '#a78bfa', bg: 'rgba(139,92,246,0.08)',  border: 'rgba(139,92,246,0.2)'  },
+  daemonset:   { label: 'DAEMONSET',   color: '#fb923c', bg: 'rgba(249,115,22,0.08)',  border: 'rgba(249,115,22,0.2)'  },
+  job:         { label: 'JOB',         color: '#34d399', bg: 'rgba(52,211,153,0.08)',  border: 'rgba(52,211,153,0.2)'  },
+  cronjob:     { label: 'CRONJOB',     color: '#2dd4bf', bg: 'rgba(45,212,191,0.08)',  border: 'rgba(45,212,191,0.2)'  },
 }
 
-// BFS both directions from a starting node ID over given edges
-function buildConnectedSet(startId: string, edges: GraphEdge[]): Set<string> {
-  const nodeIds = new Set<string>([startId])
+// ── Data builder ──────────────────────────────────────────────────────────────
 
-  const fwd = [startId]
-  while (fwd.length) {
-    const cur = fwd.shift()!
-    edges.forEach(e => {
-      if (e.source === cur && !nodeIds.has(e.target)) { nodeIds.add(e.target); fwd.push(e.target) }
+interface IRSAChain {
+  workload:       GraphNode
+  serviceAccount: GraphNode | null
+  iamRole:        GraphNode | null
+  awsServices:    Array<{ node: GraphNode; accessLevel: string; actions: string[] }>
+}
+
+function buildChains(data: GraphData): IRSAChain[] {
+  const nodeById   = new Map(data.nodes.map(n => [n.id, n]))
+  const podToSa    = new Map<string, string>()   // pod → sa
+  const saToRole   = new Map<string, string>()   // sa → role
+  const roleToSvcs = new Map<string, Array<{ id: string; accessLevel: string; actions: string[] }>>()
+
+  for (const e of data.edges) {
+    if (e.label === 'uses')    podToSa.set(e.source, e.target)
+    if (e.label === 'IRSA →')  saToRole.set(e.source, e.target)
+    if (e.source.startsWith('role:') && e.target.startsWith('svc:')) {
+      if (!roleToSvcs.has(e.source)) roleToSvcs.set(e.source, [])
+      roleToSvcs.get(e.source)!.push({ id: e.target, accessLevel: e.accessLevel ?? 'read', actions: e.actions ?? [] })
+    }
+  }
+
+  const chains: IRSAChain[] = []
+  const seen = new Set<string>()
+
+  for (const e of data.edges) {
+    if (e.label !== 'manages') continue
+    const workload = nodeById.get(e.source)
+    const pod      = nodeById.get(e.target)
+    if (!workload || !WORKLOAD_TYPES.includes(workload.type as typeof WORKLOAD_TYPES[number])) continue
+    if (!pod || pod.type !== 'pod') continue
+
+    const saId   = podToSa.get(pod.id)
+    const roleId = saId ? saToRole.get(saId) : undefined
+
+    const key = `${workload.id}:${roleId ?? 'none'}`
+    if (seen.has(key)) continue
+    seen.add(key)
+
+    const awsServices = roleId
+      ? (roleToSvcs.get(roleId) ?? []).map(s => ({
+          node: nodeById.get(s.id)!,
+          accessLevel: s.accessLevel,
+          actions: s.actions,
+        })).filter(s => s.node)
+      : []
+
+    chains.push({
+      workload,
+      serviceAccount: saId   ? nodeById.get(saId)   ?? null : null,
+      iamRole:        roleId ? nodeById.get(roleId)  ?? null : null,
+      awsServices,
     })
   }
 
-  const bwd = [startId]
-  const bwdSeen = new Set([startId])
-  while (bwd.length) {
-    const cur = bwd.shift()!
-    edges.forEach(e => {
-      if (e.target === cur && !bwdSeen.has(e.source)) {
-        bwdSeen.add(e.source); nodeIds.add(e.source); bwd.push(e.source)
-      }
-    })
+  // Also include workloads with no pods/SA (standalone)
+  for (const n of data.nodes) {
+    if (!WORKLOAD_TYPES.includes(n.type as typeof WORKLOAD_TYPES[number])) continue
+    const hasChain = chains.some(c => c.workload.id === n.id)
+    if (!hasChain) {
+      chains.push({ workload: n, serviceAccount: null, iamRole: null, awsServices: [] })
+    }
   }
 
-  return nodeIds
+  return chains
 }
 
-const ALWAYS_HIDDEN = new Set(['pod', 'k8s_service', 'ingress', 'networkpolicy'])
+// ── IRSAChainCard ─────────────────────────────────────────────────────────────
+
+function IRSAChainCard({ chain, selected, dimmed, onClick }: {
+  chain: IRSAChain; selected: boolean; dimmed: boolean; onClick: () => void
+}) {
+  const { workload, serviceAccount, iamRole, awsServices } = chain
+  const tm  = WORKLOAD_TYPE_META[workload.type] ?? WORKLOAD_TYPE_META.deployment
+  const rep   = workload.metadata?.replicas ? parseInt(workload.metadata.replicas) : null
+  const avail = workload.metadata?.available ? parseInt(workload.metadata.available) : null
+  const healthy = rep !== null && avail !== null ? avail >= rep : null
+  const hasIAM  = iamRole !== null
+
+  // Max access level across all services
+  const maxAccess = awsServices.reduce<string>((m, s) => {
+    if (s.accessLevel === 'full')  return 'full'
+    if (s.accessLevel === 'write' && m !== 'full') return 'write'
+    return m
+  }, 'read')
+  const riskMeta = hasIAM ? (ACCESS_META[maxAccess] ?? ACCESS_META.read) : null
+
+  return (
+    <motion.button
+      onClick={onClick}
+      whileHover={{ y: -2, scale: 1.005 }}
+      whileTap={{ scale: 0.995 }}
+      transition={{ duration: 0.15 }}
+      className="w-full text-left rounded-2xl p-5 flex flex-col gap-4 transition-all"
+      style={{
+        opacity: dimmed ? 0.25 : 1,
+        background: selected
+          ? (riskMeta ? riskMeta.bg : 'rgba(34,211,238,0.08)')
+          : 'rgba(255,255,255,0.02)',
+        border: `1px solid ${selected
+          ? (riskMeta ? riskMeta.border : 'rgba(34,211,238,0.25)')
+          : 'rgba(255,255,255,0.06)'}`,
+        boxShadow: selected ? `0 0 24px ${riskMeta?.bg ?? 'rgba(34,211,238,0.08)'}` : undefined,
+      }}
+    >
+      {/* Workload header */}
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <span className="shrink-0 text-[9px] font-mono font-bold px-1.5 py-0.5 rounded-md"
+            style={{ color: tm.color, background: tm.bg, border: `1px solid ${tm.border}` }}>
+            {tm.label}
+          </span>
+          {healthy === true  && <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />}
+          {healthy === false && <span className="w-1.5 h-1.5 rounded-full bg-red-400 shrink-0 animate-pulse" />}
+          {riskMeta && (
+            <span className="shrink-0 text-[9px] font-mono font-bold px-1.5 py-0.5 rounded-md"
+              style={{ color: riskMeta.color, background: riskMeta.bg, border: `1px solid ${riskMeta.border}` }}>
+              {riskMeta.label}
+            </span>
+          )}
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          {rep !== null && (
+            <span className="text-[10px] font-mono text-slate-500">{avail ?? '?'}/{rep}</span>
+          )}
+          <ChevronRight size={13} className="text-slate-600" />
+        </div>
+      </div>
+
+      {/* Name */}
+      <div>
+        <div className="font-sans font-bold text-base text-slate-100 truncate" title={workload.label}>
+          {workload.label}
+        </div>
+        <div className="text-[11px] font-mono text-slate-500 mt-0.5">{workload.namespace}</div>
+      </div>
+
+      {/* IRSA chain */}
+      {(serviceAccount || iamRole) && (
+        <div className="flex items-center gap-2 flex-wrap">
+          {serviceAccount && (
+            <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl"
+              style={{ background: 'rgba(99,102,241,0.08)', border: '1px solid rgba(99,102,241,0.2)' }}>
+              <Shield size={10} className="text-indigo-400 shrink-0" />
+              <span className="text-[11px] font-mono text-indigo-300 truncate max-w-[140px]">{serviceAccount.label}</span>
+            </div>
+          )}
+          {serviceAccount && iamRole && (
+            <span className="text-[10px] font-mono text-slate-600">→</span>
+          )}
+          {iamRole && (
+            <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl"
+              style={{ background: 'rgba(251,191,36,0.08)', border: '1px solid rgba(251,191,36,0.2)' }}>
+              <Zap size={10} className="text-amber-400 shrink-0" />
+              <span className="text-[11px] font-mono text-amber-300 truncate max-w-[160px]">{iamRole.label}</span>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* AWS services */}
+      {awsServices.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {awsServices.map(s => {
+            const am = ACCESS_META[s.accessLevel] ?? ACCESS_META.read
+            return (
+              <div key={s.node.id} className="flex items-center gap-1 px-2 py-1 rounded-lg"
+                style={{ background: am.bg, border: `1px solid ${am.border}` }}>
+                <Cloud size={9} style={{ color: am.color }} className="shrink-0" />
+                <span className="text-[10px] font-mono truncate max-w-[100px]" style={{ color: am.color }}>
+                  {s.node.label}
+                </span>
+              </div>
+            )
+          })}
+        </div>
+      )}
+
+      {/* No IAM */}
+      {!hasIAM && (
+        <div className="text-[10px] font-mono text-slate-600">no IRSA binding</div>
+      )}
+    </motion.button>
+  )
+}
+
+// ── Main ──────────────────────────────────────────────────────────────────────
 
 export function Graph({ data, blastRadius, onNodeClick, onFocusReady, search = '', activeNs = null, focusNodeId }: GraphProps) {
-  const [selectedId, setSelectedId]   = useState<string | null>(null)
-  const [hoveredId, setHoveredId]     = useState<string | null>(null)
-  const [rfInstance, setRfInstance]   = useState<ReactFlowInstance | null>(null)
-  const [viewport, setViewport]       = useState({ x: 0, y: 0, zoom: 1 })
-  const [containerSize, setContainerSize] = useState({ width: 0, height: 0 })
-  const containerRef = useRef<HTMLDivElement>(null)
-  const blastActive  = blastRadius !== null
+  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const cardRefs = useRef<Map<string, HTMLDivElement>>(new Map())
 
-  // Measure container for OffscreenOverlay
+  // Register focus callback (scroll to card)
   useEffect(() => {
-    const el = containerRef.current
-    if (!el) return
-    const ro = new ResizeObserver(entries => {
-      const { width, height } = entries[0].contentRect
-      setContainerSize({ width, height })
-    })
-    ro.observe(el)
-    return () => ro.disconnect()
-  }, [])
-
-  // Register external focus callback
-  useEffect(() => {
-    if (!rfInstance || !onFocusReady) return
+    if (!onFocusReady) return
     onFocusReady((nodeIds: string[]) => {
-      rfInstance.fitView({ nodes: nodeIds.map(id => ({ id })), duration: 600, padding: 0.25 })
+      const id = nodeIds[0]
+      const el = cardRefs.current.get(id)
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
     })
-  }, [rfInstance, onFocusReady])
+  }, [onFocusReady])
 
-  // Re-fit view when namespace filter changes
-  useEffect(() => {
-    if (!rfInstance) return
-    const t = setTimeout(() => rfInstance.fitView({ padding: 0.15, duration: 600 }), 100)
-    return () => clearTimeout(t)
-  }, [activeNs, rfInstance])
-
-  // Select + highlight node when navigating from Findings
+  // Auto-select from Findings navigation
   useEffect(() => {
     if (!focusNodeId) return
     setSelectedId(focusNodeId)
-    const graphNode = data.nodes.find(n => n.id === focusNodeId) ?? null
-    onNodeClick(graphNode)
+    const node = data.nodes.find(n => n.id === focusNodeId) ?? null
+    onNodeClick(node)
+    setTimeout(() => {
+      const el = cardRefs.current.get(focusNodeId)
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }, 100)
   }, [focusNodeId]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ── 1. Filter nodes ───────────────────────────────────────────────────────
-  const filteredNodes = useMemo(() => data.nodes.filter(n => {
-    if (ALWAYS_HIDDEN.has(n.type)) return false
-    if (activeNs && n.namespace && n.namespace !== activeNs && n.type !== 'iam_role' && n.type !== 'aws_service') return false
+  const chains = useMemo(() => buildChains(data), [data])
+
+  // Filter + search
+  const filtered = useMemo(() => chains.filter(c => {
+    if (activeNs && c.workload.namespace !== activeNs) return false
+    if (search) {
+      const q = search.toLowerCase()
+      const hit =
+        c.workload.label.toLowerCase().includes(q) ||
+        c.serviceAccount?.label.toLowerCase().includes(q) ||
+        c.iamRole?.label.toLowerCase().includes(q) ||
+        c.awsServices.some(s => s.node.label.toLowerCase().includes(q))
+      if (!hit) return false
+    }
     return true
-  }), [data.nodes, activeNs])
+  }), [chains, activeNs, search])
 
-  const filteredIds = useMemo(() => new Set(filteredNodes.map(n => n.id)), [filteredNodes])
-
-  // ── 2. Build visible edges (transitive workload→SA) ───────────────────────
-  const visibleEdges = useMemo(() => {
-    const podToSa = new Map<string, string>()
-    data.edges.forEach(e => {
-      if (e.source.startsWith('pod:') && e.target.startsWith('sa:')) podToSa.set(e.source, e.target)
-    })
-
-    const seen = new Set<string>()
-    const result: GraphEdge[] = []
-
-    data.edges.forEach(e => {
-      if (e.source.startsWith('pod:') || e.target.startsWith('pod:')) return
-      if (e.label === 'manages' || e.label === 'selects' || e.label === 'routes →') return
-      if (!filteredIds.has(e.source) || !filteredIds.has(e.target)) return
-      result.push(e)
-      seen.add(e.id)
-    })
-
-    filteredNodes.forEach(w => {
-      if (!WORKLOAD_TYPES.includes(w.type)) return
-      const saIds = new Set<string>()
-      data.edges
-        .filter(e => e.source === w.id && e.label === 'manages')
-        .forEach(e => { const sa = podToSa.get(e.target); if (sa) saIds.add(sa) })
-      saIds.forEach(saId => {
-        if (!filteredIds.has(saId)) return
-        const tid = `workload-sa:${w.id}→${saId}`
-        if (seen.has(tid)) return
-        seen.add(tid)
-        result.push({ id: tid, source: w.id, target: saId, label: 'uses SA' })
-      })
-    })
-
-    return result
-  }, [data.edges, filteredNodes, filteredIds])
-
-  // ── 3. Deduplicate edges: one per (source, target) ────────────────────────
-  const dedupedEdges = useMemo(() => {
-    type Entry = { primaryEdge: GraphEdge; count: number; allActions: string[]; allIds: string[] }
-    const map = new Map<string, Entry>()
-
-    visibleEdges.forEach(e => {
-      const key = `${e.source}__${e.target}`
-      const actions = e.actions ?? []
-      const ex = map.get(key)
-      if (!ex) {
-        map.set(key, { primaryEdge: e, count: 1, allActions: [...actions], allIds: [e.id] })
-      } else {
-        const ep = ACCESS_PRIORITY[e.accessLevel ?? ''] ?? 0
-        const xp = ACCESS_PRIORITY[ex.primaryEdge.accessLevel ?? ''] ?? 0
-        map.set(key, {
-          primaryEdge: ep > xp ? e : ex.primaryEdge,
-          count: ex.count + 1,
-          allActions: [...new Set([...ex.allActions, ...actions])],
-          allIds: [...ex.allIds, e.id],
-        })
-      }
-    })
-
-    return [...map.values()]
-  }, [visibleEdges])
-
-  // ── 4. Hover & selection path BFS ─────────────────────────────────────────
-  const hoveredConnected = useMemo<Set<string> | null>(() =>
-    hoveredId ? buildConnectedSet(hoveredId, visibleEdges) : null,
-    [hoveredId, visibleEdges])
-
-  const selectedConnected = useMemo<Set<string> | null>(() =>
-    selectedId ? buildConnectedSet(selectedId, visibleEdges) : null,
-    [selectedId, visibleEdges])
-
-  // Active focus set: selection takes priority over hover
-  const activeFocusSet = selectedConnected ?? hoveredConnected
-
-  // ── 5. Top 3 actions per node for tooltips ────────────────────────────────
-  const topActionsMap = useMemo(() => {
-    const map = new Map<string, string[]>()
-    visibleEdges.forEach(e => {
-      if (!e.accessLevel) return
-      const actions = e.actions ?? (e.label ? [e.label] : [])
-      ;[e.source, e.target].forEach(nid => {
-        if (!map.has(nid)) map.set(nid, [])
-        map.get(nid)!.push(...actions)
-      })
-    })
-    return new Map([...map.entries()].map(([k, v]) => [k, [...new Set(v)].slice(0, 3)]))
-  }, [visibleEdges])
-
-  // ── 6. Build RF nodes ─────────────────────────────────────────────────────
-  const rfNodes: Node[] = useMemo(() => filteredNodes.map(n => {
-    const searchMatch = !search || n.label.toLowerCase().includes(search.toLowerCase()) || n.namespace?.toLowerCase().includes(search.toLowerCase())
-    const blastDimmed  = blastActive && !blastRadius!.reachableNodeIds.has(n.id)
-    const focusDimmed  = activeFocusSet !== null && !activeFocusSet.has(n.id)
-    const dimmed       = (!!search && !searchMatch) || blastDimmed || focusDimmed
-
-    const blastHighlight = blastActive && blastRadius!.reachableNodeIds.has(n.id) &&
-      n.type === 'aws_service' &&
-      (blastRadius!.writeTargets.some(t => t.id === n.id) || blastRadius!.fullTargets.some(t => t.id === n.id))
-
-    return {
-      id:      n.id,
-      type:    n.type,
-      zIndex:  activeFocusSet?.has(n.id) ? 10 : 1,
-      position: { x: 0, y: 0 },
-      data: {
-        label:          n.label,
-        namespace:      n.namespace ?? '',
-        arn:            n.metadata?.arn ?? '',
-        service:        n.metadata?.service ?? '',
-        nodeType:       n.type,
-        replicas:       n.metadata?.replicas,
-        schedule:       n.metadata?.schedule,
-        succeeded:      n.metadata?.succeeded,
-        completions:    n.metadata?.completions,
-        activeJobs:     n.metadata?.activeJobs,
-        maxAccessLevel: maxAccessForNode(n.id, visibleEdges),
-        topActions:     topActionsMap.get(n.id) ?? [],
-        selected:       n.id === selectedId,
-        hovered:        hoveredId === n.id,
-        dimmed,
-        blastActive,
-        blastHighlight,
-      },
+  // Group by namespace
+  const byNs = useMemo(() => {
+    const m = new Map<string, IRSAChain[]>()
+    for (const c of filtered) {
+      const ns = c.workload.namespace ?? 'default'
+      if (!m.has(ns)) m.set(ns, [])
+      m.get(ns)!.push(c)
     }
-  }), [filteredNodes, blastRadius, blastActive, selectedId, hoveredId, activeFocusSet, search, visibleEdges, topActionsMap])
+    return m
+  }, [filtered])
 
-  // ── 7. Build RF edges ─────────────────────────────────────────────────────
-  const rfEdges: Edge[] = useMemo(() =>
-    dedupedEdges.map(({ primaryEdge: e, count, allActions, allIds }) => {
-      const isReachable    = blastActive && allIds.some(id => blastRadius!.reachableEdgeIds.has(id))
-      const hoverConnected = activeFocusSet !== null &&
-        !!activeFocusSet.has(e.source) && !!activeFocusSet.has(e.target)
-      return {
-        id:     e.id,
-        source: e.source,
-        target: e.target,
-        type:   'permission',
-        zIndex: hoverConnected ? 10 : 1,
-        data: {
-          label:         count > 1 ? `${count} actions` : e.label,
-          accessLevel:   e.accessLevel,
-          mergedCount:   count,
-          mergedActions: allActions,
-          dimmed:        (blastActive && !isReachable) || (activeFocusSet !== null && !hoverConnected),
-          highlighted:   isReachable || hoverConnected,
-        },
-      }
-    }),
-    [dedupedEdges, blastRadius, blastActive, activeFocusSet])
+  const namespaces = useMemo(() =>
+    [...byNs.keys()].sort((a, b) => {
+      const ap = NS_PRIORITY[a] ?? 99, bp = NS_PRIORITY[b] ?? 99
+      return ap !== bp ? ap - bp : a.localeCompare(b)
+    }), [byNs])
 
-  // ── 8. Layout ─────────────────────────────────────────────────────────────
-  const { groupNodes, positionedNodes } = useMemo(
-    () => applyNamespacedLayout(rfNodes, rfEdges),
-    [rfNodes, rfEdges])
+  // Stats
+  const iamCount  = chains.filter(c => c.iamRole).length
+  const fullCount = chains.filter(c => c.awsServices.some(s => s.accessLevel === 'full')).length
+  const writeCount= chains.filter(c => c.awsServices.some(s => s.accessLevel === 'write') && !c.awsServices.some(s => s.accessLevel === 'full')).length
 
-  // Apply group dimming: groups with no connected child get dimmed
-  const allNodes = useMemo(() => {
-    if (!activeFocusSet) return [...groupNodes, ...positionedNodes]
-
-    const connectedGroups = new Set<string>()
-    positionedNodes.forEach(n => {
-      if (activeFocusSet.has(n.id) && n.parentId) connectedGroups.add(n.parentId)
-    })
-
-    return [
-      ...groupNodes.map(g => ({
-        ...g,
-        data: { ...g.data, dimmed: !connectedGroups.has(g.id) },
-      })),
-      ...positionedNodes,
-    ]
-  }, [groupNodes, positionedNodes, activeFocusSet])
-
-  // Absolute-positioned nodes for OffscreenOverlay (no parentId)
-  const absoluteNodes = useMemo(
-    () => positionedNodes.filter(n => !n.parentId),
-    [positionedNodes])
-
-  // ── 9. Interaction ────────────────────────────────────────────────────────
-  const handleNodeClick: NodeMouseHandler = useCallback((_evt, node) => {
-    const graphNode = data.nodes.find(n => n.id === node.id) ?? null
-    setSelectedId(node.id)
-    onNodeClick(graphNode)
-
-    // Auto-zoom: fitView on clicked node + its full connected path
-    if (rfInstance) {
-      const connected = buildConnectedSet(node.id, visibleEdges)
-      rfInstance.fitView({
-        nodes: [...connected].map(id => ({ id })),
-        duration: 800,
-        padding: 0.15,
-      })
-    }
-  }, [data.nodes, onNodeClick, visibleEdges, rfInstance])
-
-  const handlePaneClick = useCallback(() => {
-    setSelectedId(null)
-    onNodeClick(null)
-  }, [onNodeClick])
-
-  const handleNodeMouseEnter: NodeMouseHandler = useCallback((_evt, node) => {
-    setHoveredId(node.id)
-  }, [])
-
-  const handleNodeMouseLeave = useCallback(() => {
-    setHoveredId(null)
-  }, [])
-
-  const handleInit = useCallback((instance: ReactFlowInstance) => {
-    setRfInstance(instance)
-    setViewport(instance.getViewport())
-  }, [])
-
-  const handleMove = useCallback((_evt: unknown, vp: { x: number; y: number; zoom: number }) => {
-    setViewport(vp)
-  }, [])
-
-  const focusNode = useCallback((nodeId: string) => {
-    rfInstance?.fitView({ nodes: [{ id: nodeId }], duration: 600, padding: 0.3 })
-  }, [rfInstance])
+  function handleClick(chain: IRSAChain) {
+    const node = chain.workload
+    const next = selectedId === node.id ? null : node.id
+    setSelectedId(next)
+    onNodeClick(next ? node : null)
+  }
 
   return (
-    <div ref={containerRef} className="relative w-full h-full">
-      <ReactFlow
-        nodes={allNodes}
-        edges={rfEdges}
-        nodeTypes={nodeTypes}
-        edgeTypes={edgeTypes}
-        onNodeClick={handleNodeClick}
-        onPaneClick={handlePaneClick}
-        onNodeMouseEnter={handleNodeMouseEnter}
-        onNodeMouseLeave={handleNodeMouseLeave}
-        onInit={handleInit}
-        onMove={handleMove}
-        fitView
-        fitViewOptions={{ padding: 0.15 }}
-        minZoom={0.05}
-        maxZoom={2}
-        proOptions={{ hideAttribution: true }}
-      >
-        <FocusController nodeId={focusNodeId} />
-        <Background variant={BackgroundVariant.Dots} gap={24} size={1} color="#1a2840" />
-        <Controls className="!border-cyber-border !bg-cyber-panel/80 !rounded-xl overflow-hidden" showInteractive={false} />
-        <MiniMap
-          nodeColor={n => {
-            if (n.type === 'serviceaccount') return '#7c3aed'
-            if (n.type === 'iam_role')       return '#b45309'
-            if (n.type === 'deployment')     return '#1d4ed8'
-            if (n.type === 'statefulset')    return '#7e22ce'
-            if (n.type === 'daemonset')      return '#c2410c'
-            if (n.type === 'namespaceGroup') return '#0f172a'
-            return '#374151'
-          }}
-          className="!border-cyber-border !bg-cyber-panel/90 !rounded-xl"
-          maskColor="rgba(8,12,20,0.7)"
-        />
-      </ReactFlow>
+    <div className="absolute inset-0 flex flex-col overflow-hidden">
 
-      {/* Ghost connection indicators for off-screen connected nodes */}
-      {activeFocusSet && (
-        <OffscreenOverlay
-          nodes={absoluteNodes}
-          viewport={viewport}
-          containerSize={containerSize}
-          connectedNodeIds={activeFocusSet}
-          onFocusNode={focusNode}
-        />
-      )}
+      {/* Stat bar */}
+      <div className="shrink-0 flex items-center gap-5 px-5 py-2 border-b border-cyber-border/30 bg-cyber-panel/30 backdrop-blur-sm flex-wrap">
+        <div className="flex items-center gap-1.5">
+          <span className="text-lg font-mono font-bold text-blue-400">{chains.length}</span>
+          <span className="text-sm font-sans text-slate-400">workloads</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="text-lg font-mono font-bold text-amber-400">{iamCount}</span>
+          <span className="text-sm font-sans text-slate-400">with IRSA</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="text-lg font-mono font-bold text-red-400">{fullCount}</span>
+          <span className="text-sm font-sans text-slate-400">full access</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="text-lg font-mono font-bold text-orange-400">{writeCount}</span>
+          <span className="text-sm font-sans text-slate-400">write access</span>
+        </div>
+
+        {blastRadius && (
+          <div className="flex items-center gap-2 ml-2 px-3 py-1 rounded-xl border border-yellow-500/35 bg-yellow-950/25">
+            <Zap size={11} className="text-yellow-400" />
+            <span className="text-xs font-sans font-semibold text-yellow-300">
+              Blast radius — {blastRadius.fullTargets.length} full · {blastRadius.writeTargets.length} write
+            </span>
+          </div>
+        )}
+
+        <span className="ml-auto text-xs font-mono text-slate-500">click workload to inspect IAM permissions</span>
+      </div>
+
+      {/* Content */}
+      <div className="flex-1 overflow-y-auto px-6 py-5 space-y-8 scrollbar-none">
+        {filtered.length === 0 && (
+          <div className="flex flex-col items-center justify-center h-48 gap-3">
+            <Search size={20} className="text-slate-600" />
+            <p className="text-sm font-sans text-slate-500">No workloads match your search</p>
+          </div>
+        )}
+
+        <AnimatePresence mode="wait">
+          <motion.div key={activeNs ?? 'all'}
+            initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+            transition={{ duration: 0.18 }} className="space-y-8">
+            {namespaces.map(ns => {
+              const nsChains = byNs.get(ns) ?? []
+              return (
+                <div key={ns} className="space-y-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-2 h-2 rounded-full bg-blue-400/60" />
+                    <span className="text-sm font-sans font-semibold text-slate-300">{ns}</span>
+                    <span className="text-xs font-mono text-slate-600">{nsChains.length} workloads</span>
+                    <div className="flex-1 h-px" style={{ background: 'rgba(255,255,255,0.05)' }} />
+                  </div>
+                  <div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))' }}>
+                    {nsChains.map(c => (
+                      <div key={c.workload.id} ref={el => { if (el) cardRefs.current.set(c.workload.id, el) }}>
+                        <IRSAChainCard
+                          chain={c}
+                          selected={selectedId === c.workload.id}
+                          dimmed={blastRadius !== null && !blastRadius.reachableNodeIds.has(c.workload.id)}
+                          onClick={() => handleClick(c)}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )
+            })}
+          </motion.div>
+        </AnimatePresence>
+      </div>
     </div>
   )
 }

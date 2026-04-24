@@ -1,269 +1,357 @@
-import { useMemo, useCallback, useState, useEffect, useRef } from 'react'
-import ReactFlow, {
-  Background, BackgroundVariant, Controls, MiniMap,
-  Node, Edge, NodeMouseHandler, ReactFlowInstance,
-} from 'reactflow'
-import 'reactflow/dist/style.css'
-
+import { useState, useMemo, useEffect } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { ChevronRight, ShieldAlert, Shield, Users } from 'lucide-react'
 import { GraphData, GraphNode } from '../../types'
-import { ServiceAccountNode } from '../NodeTypes/ServiceAccountNode'
-import { RBACRoleNode }       from '../NodeTypes/RBACRoleNode'
-import { RBACBindingNode }    from '../NodeTypes/RBACBindingNode'
-import { PermissionEdge }     from '../EdgeTypes/PermissionEdge'
-import { RBACDetails }        from './RBACDetails'
-import { applyRBACLayout }    from '../../utils/rbacLayout'
-
-const ColumnHeader = ({ data }: { data: { label: string } }) => (
-  <div className="text-xs font-mono font-bold text-slate-400 uppercase tracking-[0.2em] pointer-events-none select-none whitespace-nowrap">
-    {data.label}
-  </div>
-)
-
-const nodeTypes = {
-  serviceaccount:         ServiceAccountNode,
-  k8s_role:               RBACRoleNode,
-  k8s_clusterrole:        RBACRoleNode,
-  k8s_rolebinding:        RBACBindingNode,
-  k8s_clusterrolebinding: RBACBindingNode,
-  columnHeader:           ColumnHeader,
-}
-
-const edgeTypes = { rbac: PermissionEdge }
-
-const RBAC_NODE_TYPES = new Set([
-  'serviceaccount',
-  'k8s_role', 'k8s_clusterrole', 'k8s_rolebinding', 'k8s_clusterrolebinding',
-])
-const RBAC_EDGE_LABELS = new Set(['bound →', 'grants →'])
-const SYSTEM_NS = new Set(['kube-system', 'kube-public', 'kube-node-lease', 'ingress-nginx', 'cert-manager'])
-
-function bfsConnected(startId: string, edges: GraphData['edges']): Set<string> {
-  const visited = new Set<string>([startId])
-  const queue = [startId]
-  while (queue.length) {
-    const cur = queue.shift()!
-    for (const e of edges) {
-      if (e.source === cur && !visited.has(e.target)) {
-        visited.add(e.target); queue.push(e.target)
-      }
-      if (e.target === cur && !visited.has(e.source)) {
-        visited.add(e.source); queue.push(e.source)
-      }
-    }
-  }
-  return visited
-}
-
-const DANGER_COLOR: Record<string, string> = {
-  critical: '#ef4444',
-  high:     '#f97316',
-  medium:   '#eab308',
-  low:      '#64748b',
-}
+import { RBACDetails } from './RBACDetails'
 
 interface RBACViewProps { data: GraphData; focusNodeId?: string | null }
 
+const SYSTEM_NS   = new Set(['kube-system','kube-public','kube-node-lease','ingress-nginx','cert-manager'])
+const ROLE_TYPES  = new Set(['k8s_role','k8s_clusterrole'])
+const BIND_TYPES  = new Set(['k8s_rolebinding','k8s_clusterrolebinding'])
+
+const DANGER: Record<string, { label: string; color: string; bg: string; border: string; dot: string }> = {
+  critical: { label: 'CRITICAL', color: '#f87171', bg: 'rgba(239,68,68,0.1)',   border: 'rgba(239,68,68,0.3)',   dot: 'bg-red-400'    },
+  high:     { label: 'HIGH',     color: '#fb923c', bg: 'rgba(249,115,22,0.1)',  border: 'rgba(249,115,22,0.3)',  dot: 'bg-orange-400' },
+  medium:   { label: 'MEDIUM',   color: '#facc15', bg: 'rgba(234,179,8,0.1)',   border: 'rgba(234,179,8,0.3)',   dot: 'bg-yellow-400' },
+  low:      { label: 'LOW',      color: '#94a3b8', bg: 'rgba(148,163,184,0.06)',border: 'rgba(148,163,184,0.15)',dot: 'bg-slate-500'  },
+}
+
+const DANGER_ORDER: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 }
+const NS_PRIORITY: Record<string, number>  = { production: 0, prod: 0, staging: 1, default: 2 }
+
+// ── Role Card ─────────────────────────────────────────────────────────────────
+
+function RoleCard({ node, onClick, selected }: { node: GraphNode; onClick: () => void; selected: boolean }) {
+  const d    = DANGER[node.metadata?.danger ?? 'low'] ?? DANGER.low
+  const isCluster = node.type === 'k8s_clusterrole'
+  const rules = node.metadata?.rules ? parseInt(node.metadata.rules) : null
+
+  return (
+    <motion.button
+      onClick={onClick}
+      whileHover={{ y: -2, scale: 1.01 }}
+      whileTap={{ scale: 0.98 }}
+      transition={{ duration: 0.15 }}
+      className="w-full text-left rounded-2xl p-4 flex flex-col gap-2.5 transition-all"
+      style={{
+        background: selected ? d.bg : 'rgba(255,255,255,0.02)',
+        border: `1px solid ${selected ? d.border : 'rgba(255,255,255,0.06)'}`,
+      }}
+    >
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded-md"
+            style={{ color: d.color, background: d.bg, border: `1px solid ${d.border}` }}>
+            {d.label}
+          </span>
+          {isCluster && (
+            <span className="text-[9px] font-mono px-1.5 py-0.5 rounded-md text-slate-500"
+              style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+              CLUSTER
+            </span>
+          )}
+        </div>
+        {rules !== null && (
+          <span className="text-[10px] font-mono text-slate-500 shrink-0">{rules} rules</span>
+        )}
+      </div>
+      <div className="font-sans font-semibold text-sm text-slate-200 truncate" title={node.label}>
+        {node.label}
+      </div>
+      <div className="flex items-center justify-between">
+        <span className="text-[10px] font-mono text-slate-600">{node.namespace || 'cluster-wide'}</span>
+        <ChevronRight size={12} className="text-slate-600" />
+      </div>
+    </motion.button>
+  )
+}
+
+// ── Binding Card ──────────────────────────────────────────────────────────────
+
+function BindingCard({ node, roleNode, onClick, selected }: {
+  node: GraphNode; roleNode: GraphNode | null; onClick: () => void; selected: boolean
+}) {
+  const d = roleNode ? (DANGER[roleNode.metadata?.danger ?? 'low'] ?? DANGER.low) : DANGER.low
+  const isCluster = node.type === 'k8s_clusterrolebinding'
+
+  return (
+    <motion.button
+      onClick={onClick}
+      whileHover={{ y: -2, scale: 1.01 }}
+      whileTap={{ scale: 0.98 }}
+      transition={{ duration: 0.15 }}
+      className="w-full text-left rounded-2xl p-4 flex flex-col gap-2.5 transition-all"
+      style={{
+        background: selected ? 'rgba(139,92,246,0.08)' : 'rgba(255,255,255,0.02)',
+        border: `1px solid ${selected ? 'rgba(139,92,246,0.25)' : 'rgba(255,255,255,0.06)'}`,
+      }}
+    >
+      <div className="flex items-center gap-2">
+        <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded-md text-violet-400"
+          style={{ background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.25)' }}>
+          {isCluster ? 'CLUSTERBINDING' : 'ROLEBINDING'}
+        </span>
+      </div>
+      <div className="font-sans font-semibold text-sm text-slate-200 truncate" title={node.label}>
+        {node.label}
+      </div>
+      {node.metadata?.roleRef && (
+        <div className="flex items-center gap-1.5">
+          <span className="text-[10px] font-mono text-slate-500">binds →</span>
+          <span className="text-[10px] font-mono truncate max-w-[140px]"
+            style={{ color: d.color }}>
+            {node.metadata.roleRef}
+          </span>
+        </div>
+      )}
+      <div className="flex items-center justify-between">
+        <span className="text-[10px] font-mono text-slate-600">{node.namespace || 'cluster-wide'}</span>
+        <ChevronRight size={12} className="text-slate-600" />
+      </div>
+    </motion.button>
+  )
+}
+
+// ── SA Card ───────────────────────────────────────────────────────────────────
+
+function SACard({ node, boundRoles, onClick, selected }: {
+  node: GraphNode; boundRoles: GraphNode[]; onClick: () => void; selected: boolean
+}) {
+  const maxDanger = boundRoles.reduce((m, r) => {
+    const o = DANGER_ORDER[r.metadata?.danger ?? 'low'] ?? 3
+    return o < (DANGER_ORDER[m] ?? 3) ? (r.metadata?.danger ?? 'low') : m
+  }, 'low')
+  const d = DANGER[maxDanger] ?? DANGER.low
+
+  return (
+    <motion.button
+      onClick={onClick}
+      whileHover={{ y: -2, scale: 1.01 }}
+      whileTap={{ scale: 0.98 }}
+      transition={{ duration: 0.15 }}
+      className="w-full text-left rounded-2xl p-4 flex flex-col gap-2.5 transition-all"
+      style={{
+        background: selected ? 'rgba(99,102,241,0.08)' : 'rgba(255,255,255,0.02)',
+        border: `1px solid ${selected ? 'rgba(99,102,241,0.25)' : 'rgba(255,255,255,0.06)'}`,
+      }}
+    >
+      <div className="flex items-center justify-between">
+        <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded-md text-indigo-400"
+          style={{ background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.25)' }}>
+          SERVICE ACCOUNT
+        </span>
+        {boundRoles.length > 0 && (
+          <span className={`w-1.5 h-1.5 rounded-full ${d.dot} shrink-0`} />
+        )}
+      </div>
+      <div className="font-sans font-semibold text-sm text-slate-200 truncate" title={node.label}>
+        {node.label}
+      </div>
+      {boundRoles.length > 0 && (
+        <div className="flex flex-wrap gap-1">
+          {boundRoles.slice(0, 3).map(r => (
+            <span key={r.id} className="text-[9px] font-mono px-1.5 py-0.5 rounded truncate max-w-[120px]"
+              style={{ color: (DANGER[r.metadata?.danger ?? 'low'] ?? DANGER.low).color, background: (DANGER[r.metadata?.danger ?? 'low'] ?? DANGER.low).bg }}>
+              {r.label}
+            </span>
+          ))}
+          {boundRoles.length > 3 && (
+            <span className="text-[9px] font-mono text-slate-500">+{boundRoles.length - 3}</span>
+          )}
+        </div>
+      )}
+      <div className="flex items-center justify-between">
+        <span className="text-[10px] font-mono text-slate-600">{node.namespace || 'cluster-wide'}</span>
+        <ChevronRight size={12} className="text-slate-600" />
+      </div>
+    </motion.button>
+  )
+}
+
+// ── Main ──────────────────────────────────────────────────────────────────────
+
 export function RBACView({ data, focusNodeId }: RBACViewProps) {
   const [selectedNode, setSelectedNode] = useState<GraphNode | null>(null)
-  const [hoveredId, setHoveredId]       = useState<string | null>(null)
-  const [rfReady,   setRfReady]         = useState(false)
-  const rfRef = useRef<ReactFlowInstance | null>(null)
+  const [activeNs, setActiveNs]         = useState<string | null>(null)
 
-  // Select node when navigating from Findings
   useEffect(() => {
     if (!focusNodeId) return
     const node = data.nodes.find(n => n.id === focusNodeId) ?? null
-    if (node) setSelectedNode(node)
+    if (node) { setSelectedNode(node); setActiveNs(node.namespace ?? null) }
   }, [focusNodeId]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Focus + zoom to node after ReactFlow is ready
-  useEffect(() => {
-    if (!focusNodeId || !rfReady) return
-    let cancelled = false
-    const inst = rfRef.current!
-    const tryFocus = (attempt = 0) => {
-      if (cancelled) return
-      const node = inst.getNodes().find(n => n.id === focusNodeId)
-      if (node) {
-        inst.fitView({ nodes: [{ id: focusNodeId }], duration: 600, padding: 0.4, maxZoom: 1.8 })
-      } else if (attempt < 20) {
-        setTimeout(() => tryFocus(attempt + 1), 100)
+  // Index: binding → role node, sa → bound roles
+  const { rbacNodes, bindingToRole, saToRoles, namespaces } = useMemo(() => {
+    const rbacNodes = data.nodes.filter(n =>
+      (ROLE_TYPES.has(n.type) || BIND_TYPES.has(n.type) || n.type === 'serviceaccount') &&
+      !SYSTEM_NS.has(n.namespace ?? '')
+    )
+    const nodeById = new Map(data.nodes.map(n => [n.id, n]))
+
+    // binding → role it references (via 'grants →' edge target)
+    const bindingToRole = new Map<string, GraphNode>()
+    // sa → roles it's bound to (via binding chain)
+    const saToRoles = new Map<string, GraphNode[]>()
+
+    for (const e of data.edges) {
+      if (e.label === 'grants →') {
+        const role = nodeById.get(e.target)
+        if (role) bindingToRole.set(e.source, role)
+      }
+      if (e.label === 'bound →') {
+        // sa → binding
+        const binding = nodeById.get(e.target)
+        const role = binding ? bindingToRole.get(binding.id) : null
+        if (role) {
+          if (!saToRoles.has(e.source)) saToRoles.set(e.source, [])
+          if (!saToRoles.get(e.source)!.find(r => r.id === role.id))
+            saToRoles.get(e.source)!.push(role)
+        }
       }
     }
-    const t = setTimeout(() => tryFocus(0), 150)
-    return () => { cancelled = true; clearTimeout(t) }
-  }, [focusNodeId, rfReady])
 
-  const rbacNodes = useMemo(() =>
-    data.nodes.filter(n =>
-      RBAC_NODE_TYPES.has(n.type) &&
-      !SYSTEM_NS.has(n.namespace ?? '')
-    ),
-    [data.nodes])
+    const nsList = [...new Set(rbacNodes.filter(n => n.namespace).map(n => n.namespace!))]
+      .sort((a, b) => {
+        const ap = NS_PRIORITY[a] ?? 99, bp = NS_PRIORITY[b] ?? 99
+        return ap !== bp ? ap - bp : a.localeCompare(b)
+      })
 
-  const rbacIds = useMemo(() => new Set(rbacNodes.map(n => n.id)), [rbacNodes])
+    return { rbacNodes, bindingToRole, saToRoles, namespaces: nsList }
+  }, [data])
 
-  const rbacEdges = useMemo(() =>
-    data.edges.filter(e =>
-      RBAC_EDGE_LABELS.has(e.label ?? '') &&
-      rbacIds.has(e.source) &&
-      rbacIds.has(e.target)
-    ), [data.edges, rbacIds])
-
-  const connectedIds = useMemo(() =>
-    hoveredId ? bfsConnected(hoveredId, rbacEdges) : null,
-    [hoveredId, rbacEdges])
-
-  const rfNodesBase: Node[] = useMemo(() =>
-    rbacNodes.map(n => ({
-      id:   n.id,
-      type: n.type,
-      position: { x: 0, y: 0 },
-      data: {
-        label:     n.label,
-        namespace: n.namespace ?? '',
-        nodeType:  n.type,
-        replicas:  n.metadata?.replicas,
-        danger:    n.metadata?.danger,
-        rules:     n.metadata?.rules,
-        roleRef:   n.metadata?.roleRef,
-        roleKind:  n.metadata?.roleKind,
-        dimmed:    false,
-      },
-    })), [rbacNodes])
-
-  const { positionedNodes } = useMemo(
-    () => applyRBACLayout(rfNodesBase, rbacEdges),
-    [rfNodesBase, rbacEdges])
-
-  // Column header nodes (non-interactive labels)
-  const headerNodes: Node[] = useMemo(() => [
-    { id: '__hdr_sa',   type: 'columnHeader', position: { x: 0,   y: -36 }, data: { label: 'SERVICE ACCOUNTS' }, selectable: false, focusable: false, draggable: false },
-    { id: '__hdr_bind', type: 'columnHeader', position: { x: 330, y: -36 }, data: { label: 'BINDINGS'         }, selectable: false, focusable: false, draggable: false },
-    { id: '__hdr_role', type: 'columnHeader', position: { x: 660, y: -36 }, data: { label: 'ROLES'            }, selectable: false, focusable: false, draggable: false },
-  ], [])
-
-  const allNodes = useMemo(() => {
-    const active = connectedIds
-    return [
-      ...headerNodes,
-      ...positionedNodes.map(n => ({
-        ...n,
-        data: {
-          ...n.data,
-          dimmed:   active ? !active.has(n.id) : false,
-          selected: n.id === selectedNode?.id,
-        },
-      })),
-    ]
-  }, [headerNodes, positionedNodes, connectedIds, selectedNode])
-
-  const rfEdges: Edge[] = useMemo(() =>
-    rbacEdges.map(e => {
-      const isGrants  = e.label === 'grants →'
-      const isBound   = e.label === 'bound →'
-      const isActive  = connectedIds
-        ? connectedIds.has(e.source) && connectedIds.has(e.target)
-        : true
-
-      // Determine danger level from target role node
-      const targetNode = rbacNodes.find(n => n.id === e.target)
-      const danger = targetNode?.metadata?.danger ?? 'low'
-      const color  = isGrants ? (DANGER_COLOR[danger] ?? '#64748b') : '#8b5cf6'
-
-      return {
-        id:     e.id,
-        source: e.source,
-        target: e.target,
-        type:   'rbac',
-        zIndex: isActive ? 10 : 1,
-        data: {
-          label:       e.label,
-          accessLevel: isGrants ? (danger === 'critical' || danger === 'high' ? 'full' : danger === 'medium' ? 'write' : 'read') : 'uses',
-          dimmed:      !isActive,
-          highlighted: isActive && !!connectedIds,
-          mergedCount: 1,
-          mergedActions: [],
-        },
-      }
-    }), [rbacEdges, connectedIds, rbacNodes])
-
-  const handleNodeClick: NodeMouseHandler = useCallback((_evt, node) => {
-    if (node.id.startsWith('ns-group:')) return
-    const graphNode = data.nodes.find(n => n.id === node.id) ?? null
-    setSelectedNode(prev => prev?.id === graphNode?.id ? null : graphNode)
-  }, [data.nodes])
-
-  const handleMouseEnter: NodeMouseHandler = useCallback((_evt, node) => {
-    if (!node.id.startsWith('ns-group:')) setHoveredId(node.id)
-  }, [])
-
-  const handleMouseLeave: NodeMouseHandler = useCallback(() => setHoveredId(null), [])
-
-  // Stats
   const stats = useMemo(() => {
-    const roles = rbacNodes.filter(n => n.type === 'k8s_role' || n.type === 'k8s_clusterrole')
+    const roles = rbacNodes.filter(n => ROLE_TYPES.has(n.type))
     return {
-      bindings:  rbacNodes.filter(n => n.type === 'k8s_rolebinding' || n.type === 'k8s_clusterrolebinding').length,
-      roles:     roles.length,
-      critical:  roles.filter(n => n.metadata?.danger === 'critical').length,
-      high:      roles.filter(n => n.metadata?.danger === 'high').length,
+      bindings: rbacNodes.filter(n => BIND_TYPES.has(n.type)).length,
+      roles:    roles.length,
+      critical: roles.filter(n => n.metadata?.danger === 'critical').length,
+      high:     roles.filter(n => n.metadata?.danger === 'high').length,
     }
   }, [rbacNodes])
 
+  const byNs = useMemo(() => {
+    const m = new Map<string, GraphNode[]>()
+    for (const n of rbacNodes) {
+      const ns = n.namespace || '_cluster'
+      if (!m.has(ns)) m.set(ns, [])
+      m.get(ns)!.push(n)
+    }
+    return m
+  }, [rbacNodes])
+
+  const visibleNs = activeNs ? [activeNs] : namespaces
+
+  function select(n: GraphNode) {
+    setSelectedNode(prev => prev?.id === n.id ? null : n)
+  }
+
   return (
-    <div className="absolute inset-0">
+    <div className="absolute inset-0 flex flex-col overflow-hidden">
+
       {/* Stat bar */}
-      <div className="absolute top-0 left-0 right-0 z-10 px-5 py-1.5 border-b border-cyber-border/30 bg-cyber-panel/30 backdrop-blur-sm flex items-center gap-5">
+      <div className="shrink-0 flex items-center gap-5 px-5 py-2 border-b border-cyber-border/30 bg-cyber-panel/30 backdrop-blur-sm">
         {[
-          { label: 'bindings',  value: stats.bindings, color: 'text-violet-400' },
-          { label: 'roles',     value: stats.roles,    color: 'text-slate-300'  },
-          { label: 'critical',  value: stats.critical, color: 'text-red-400'    },
-          { label: 'high risk', value: stats.high,     color: 'text-orange-400' },
-        ].map(({ label, value, color }) => (
+          { label: 'bindings',  value: stats.bindings, color: 'text-violet-400', icon: <Users size={13} />          },
+          { label: 'roles',     value: stats.roles,    color: 'text-slate-300',  icon: <Shield size={13} />         },
+          { label: 'critical',  value: stats.critical, color: 'text-red-400',    icon: <ShieldAlert size={13} />    },
+          { label: 'high risk', value: stats.high,     color: 'text-orange-400', icon: <ShieldAlert size={13} />    },
+        ].map(({ label, value, color, icon }) => (
           <div key={label} className="flex items-center gap-1.5">
             <span className={`text-lg font-mono font-bold ${color}`}>{value}</span>
             <span className="text-sm font-sans text-slate-400">{label}</span>
           </div>
         ))}
-        <span className="ml-auto text-xs font-mono text-slate-400 hidden md:block">
-          hover to trace · click for details
-        </span>
+        <span className="ml-auto text-xs font-mono text-slate-500">click any resource for details</span>
       </div>
 
-      <div className="absolute inset-0 pt-8">
-        <ReactFlow
-          nodes={allNodes}
-          edges={rfEdges}
-          nodeTypes={nodeTypes}
-          edgeTypes={edgeTypes}
-          onNodeClick={handleNodeClick}
-          onNodeMouseEnter={handleMouseEnter}
-          onNodeMouseLeave={handleMouseLeave}
-          onPaneClick={() => { setSelectedNode(null); setHoveredId(null) }}
-          onInit={(instance) => { rfRef.current = instance; setRfReady(true) }}
-          fitView
-          fitViewOptions={{ padding: 0.08 }}
-          minZoom={0.03}
-          maxZoom={2}
-          proOptions={{ hideAttribution: true }}
-          elevateEdgesOnSelect
-        >
-          <Background variant={BackgroundVariant.Dots} gap={24} size={1} color="#1a2840" />
-          <Controls className="!border-cyber-border !bg-cyber-panel/80 !rounded-xl overflow-hidden" showInteractive={false} />
-          <MiniMap
-            nodeColor={n => {
-              if (n.type === 'k8s_role')              return '#ef4444'
-              if (n.type === 'k8s_clusterrole')       return '#f97316'
-              if (n.type === 'k8s_rolebinding')       return '#8b5cf6'
-              if (n.type === 'k8s_clusterrolebinding') return '#a78bfa'
-              if (n.type === 'serviceaccount')        return '#6366f1'
-              return '#1e293b'
-            }}
-            className="!border-cyber-border !bg-cyber-panel/90 !rounded-xl"
-            maskColor="rgba(8,12,20,0.7)"
-          />
-        </ReactFlow>
+      {/* Namespace tabs */}
+      <div className="shrink-0 flex items-center gap-1 px-5 py-2 border-b border-cyber-border/20 overflow-x-auto scrollbar-none">
+        <button onClick={() => setActiveNs(null)}
+          className={`shrink-0 px-3 py-1 rounded-lg text-xs font-mono transition-all ${
+            activeNs === null ? 'bg-cyan-500/15 text-cyan-300 border border-cyan-500/30' : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'
+          }`}>all namespaces</button>
+        {namespaces.map(ns => (
+          <button key={ns} onClick={() => setActiveNs(activeNs === ns ? null : ns)}
+            className={`shrink-0 px-3 py-1 rounded-lg text-xs font-mono transition-all ${
+              activeNs === ns ? 'bg-violet-500/15 text-violet-300 border border-violet-500/30' : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'
+            }`}>{ns}</button>
+        ))}
+      </div>
+
+      {/* Content */}
+      <div className="flex-1 overflow-y-auto px-6 py-5 space-y-8 scrollbar-none">
+        <AnimatePresence mode="wait">
+          <motion.div key={activeNs ?? 'all'}
+            initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+            transition={{ duration: 0.18 }} className="space-y-8">
+            {visibleNs.map(ns => {
+              const nodes = byNs.get(ns) ?? []
+              const roles    = nodes.filter(n => ROLE_TYPES.has(n.type))
+                .sort((a,b) => (DANGER_ORDER[a.metadata?.danger??'low']??3) - (DANGER_ORDER[b.metadata?.danger??'low']??3))
+              const bindings = nodes.filter(n => BIND_TYPES.has(n.type))
+              const sas      = nodes.filter(n => n.type === 'serviceaccount')
+              if (!roles.length && !bindings.length && !sas.length) return null
+
+              return (
+                <div key={ns} className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-2 h-2 rounded-full bg-violet-400/60" />
+                    <span className="text-sm font-sans font-semibold text-slate-300">{ns}</span>
+                    <span className="text-xs font-mono text-slate-600">{nodes.length} resources</span>
+                    <div className="flex-1 h-px" style={{ background: 'rgba(255,255,255,0.05)' }} />
+                  </div>
+
+                  {/* Roles */}
+                  {roles.length > 0 && (
+                    <div>
+                      <p className="text-[10px] font-mono text-slate-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                        <Shield size={9} /> Roles & ClusterRoles
+                      </p>
+                      <div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(230px, 1fr))' }}>
+                        {roles.map(n => (
+                          <RoleCard key={n.id} node={n} onClick={() => select(n)} selected={selectedNode?.id === n.id} />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Bindings */}
+                  {bindings.length > 0 && (
+                    <div>
+                      <p className="text-[10px] font-mono text-slate-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                        <Users size={9} /> Bindings
+                      </p>
+                      <div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(230px, 1fr))' }}>
+                        {bindings.map(n => (
+                          <BindingCard key={n.id} node={n}
+                            roleNode={bindingToRole.get(n.id) ?? null}
+                            onClick={() => select(n)} selected={selectedNode?.id === n.id} />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Service Accounts */}
+                  {sas.length > 0 && (
+                    <div>
+                      <p className="text-[10px] font-mono text-slate-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                        <Users size={9} /> Service Accounts
+                      </p>
+                      <div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(230px, 1fr))' }}>
+                        {sas.map(n => (
+                          <SACard key={n.id} node={n}
+                            boundRoles={saToRoles.get(n.id) ?? []}
+                            onClick={() => select(n)} selected={selectedNode?.id === n.id} />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </motion.div>
+        </AnimatePresence>
       </div>
 
       <RBACDetails node={selectedNode} data={data} onClose={() => setSelectedNode(null)} />
