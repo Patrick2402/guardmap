@@ -493,7 +493,7 @@ function FindingSheet({ finding, onClose, onNavigate, onAttackPath }: {
                 {cat.icon} {cat.label}
               </span>
               {finding.namespace && (
-                <span className="text-xs font-mono text-slate-500 px-2 py-0.5 rounded-lg"
+                <span className="text-xs font-mono text-slate-400 px-2 py-0.5 rounded-lg"
                   style={{ background: 'rgba(255,255,255,0.05)' }}>
                   {finding.namespace}
                 </span>
@@ -530,7 +530,7 @@ function FindingSheet({ finding, onClose, onNavigate, onAttackPath }: {
             )}
             <button
               onClick={onClose}
-              className="w-8 h-8 rounded-xl flex items-center justify-center text-slate-500 hover:text-slate-200 transition-colors"
+              className="w-8 h-8 rounded-xl flex items-center justify-center text-slate-400 hover:text-slate-200 transition-colors"
               style={{ background: 'rgba(255,255,255,0.04)' }}
             >
               <X size={15} />
@@ -541,14 +541,14 @@ function FindingSheet({ finding, onClose, onNavigate, onAttackPath }: {
         <div className="flex-1 overflow-y-auto px-6 py-4 space-y-5">
           <div className="flex items-start gap-3 p-3.5 rounded-xl"
             style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)' }}>
-            <Target size={14} className="text-slate-500 shrink-0 mt-0.5" />
+            <Target size={14} className="text-slate-400 shrink-0 mt-0.5" />
             <div>
-              <div className="text-xs font-sans text-slate-500 uppercase tracking-wider mb-1">Affected resource</div>
+              <div className="text-xs font-sans text-slate-400 uppercase tracking-wider mb-1">Affected resource</div>
               <div className="flex items-center gap-2 flex-wrap">
                 {finding.namespace && (
                   <>
                     <span className="text-sm font-mono text-slate-400">{finding.namespace}</span>
-                    <ChevronRight size={12} className="text-slate-700" />
+                    <ChevronRight size={12} className="text-slate-400" />
                   </>
                 )}
                 <span className="text-sm font-mono font-semibold text-slate-200">{finding.nodeLabel}</span>
@@ -558,8 +558,8 @@ function FindingSheet({ finding, onClose, onNavigate, onAttackPath }: {
 
           <div>
             <div className="flex items-center gap-2 mb-2">
-              <FileText size={13} className="text-slate-500" />
-              <span className="text-xs font-sans text-slate-500 uppercase tracking-wider">What is this?</span>
+              <FileText size={13} className="text-slate-400" />
+              <span className="text-xs font-sans text-slate-400 uppercase tracking-wider">What is this?</span>
             </div>
             <p className="text-sm font-sans text-slate-300 leading-relaxed">{finding.description}</p>
           </div>
@@ -765,7 +765,7 @@ export function FindingsView({ data, dbFindings, onNavigate }: FindingsViewProps
                   <span className="text-lg font-mono font-bold" style={{ color: counts[s] > 0 ? cfg.color : '#1e293b' }}>
                     {counts[s]}
                   </span>
-                  <span className="text-xs font-sans text-slate-500 hidden sm:block">{cfg.label}</span>
+                  <span className="text-xs font-sans text-slate-400 hidden sm:block">{cfg.label}</span>
                 </div>
               )
             })}
@@ -835,7 +835,7 @@ export function FindingsView({ data, dbFindings, onNavigate }: FindingsViewProps
           </div>
 
           <div className="flex-1 relative min-w-[160px] max-w-[280px]">
-            <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-600 pointer-events-none" />
+            <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
             <input
               value={search}
               onChange={e => { setSearch(e.target.value); setPage(1) }}
@@ -867,7 +867,7 @@ export function FindingsView({ data, dbFindings, onNavigate }: FindingsViewProps
           {hasActiveFilters && (
             <button
               onClick={() => { setCatFilter('all'); setSevFilter(new Set(['critical', 'high', 'medium', 'low'])); setNsFilter('all'); setSearch(''); setPage(1) }}
-              className="text-xs font-sans text-slate-600 hover:text-slate-400 transition-colors whitespace-nowrap px-2 py-1 rounded-lg"
+              className="text-xs font-sans text-slate-400 hover:text-slate-400 transition-colors whitespace-nowrap px-2 py-1 rounded-lg"
               style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)' }}
             >
               Reset filters
@@ -881,7 +881,7 @@ export function FindingsView({ data, dbFindings, onNavigate }: FindingsViewProps
         {visible.length === 0 && (
           <div className="flex flex-col items-center justify-center py-20 gap-3">
             <ShieldCheck size={36} className="text-emerald-500/30" />
-            <p className="text-base font-sans text-slate-600">
+            <p className="text-base font-sans text-slate-400">
               {hasActiveFilters ? 'No findings match the current filters' : 'No findings in this category'}
             </p>
           </div>
@@ -931,12 +931,12 @@ export function FindingsView({ data, dbFindings, onNavigate }: FindingsViewProps
                           {cat.icon} {cat.label}
                         </span>
                         {f.namespace && (
-                          <span className="text-xs font-mono text-slate-500 px-2 py-0.5 rounded-lg"
+                          <span className="text-xs font-mono text-slate-400 px-2 py-0.5 rounded-lg"
                             style={{ background: 'rgba(255,255,255,0.04)' }}>
                             {f.namespace}
                           </span>
                         )}
-                        <span className="text-xs font-mono text-slate-500 px-2 py-0.5 rounded-lg truncate max-w-[200px]"
+                        <span className="text-xs font-mono text-slate-400 px-2 py-0.5 rounded-lg truncate max-w-[200px]"
                           style={{ background: 'rgba(255,255,255,0.03)' }}>
                           {f.nodeLabel}
                         </span>
@@ -953,9 +953,9 @@ export function FindingsView({ data, dbFindings, onNavigate }: FindingsViewProps
                           Attack Path
                         </button>
                       )}
-                      <div className="flex items-center gap-1 text-xs font-sans text-slate-500">
+                      <div className="flex items-center gap-1 text-xs font-sans text-slate-400">
                         <span className="hidden sm:block">Details</span>
-                        <ChevronRight size={14} className="text-slate-700" />
+                        <ChevronRight size={14} className="text-slate-400" />
                       </div>
                     </div>
                   </div>
@@ -983,7 +983,7 @@ export function FindingsView({ data, dbFindings, onNavigate }: FindingsViewProps
       {totalPages > 1 && (
         <div className="sticky bottom-0 flex items-center justify-between px-6 py-3 max-w-5xl mx-auto"
           style={{ background: 'rgba(8,12,20,0.92)', backdropFilter: 'blur(16px)', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-          <span className="text-xs font-sans text-slate-500">
+          <span className="text-xs font-sans text-slate-400">
             Showing <span className="text-slate-300 font-medium">{fromIdx}–{toIdx}</span> of <span className="text-slate-300 font-medium">{visible.length}</span> findings
           </span>
 
@@ -1006,7 +1006,7 @@ export function FindingsView({ data, dbFindings, onNavigate }: FindingsViewProps
                   return acc
                 }, [])
                 .map((p, i) => p === '...'
-                  ? <span key={`e${i}`} className="text-xs text-slate-600 px-1">…</span>
+                  ? <span key={`e${i}`} className="text-xs text-slate-400 px-1">…</span>
                   : <button
                       key={p}
                       onClick={() => { setPage(p as number); window.scrollTo(0, 0) }}

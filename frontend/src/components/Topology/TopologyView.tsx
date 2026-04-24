@@ -391,12 +391,12 @@ export function TopologyView({ data, focusNodeId }: TopologyViewProps) {
         ] as const).map(({ label, value, color }) => (
           <div key={label} className="flex items-center gap-1.5">
             <span className={`text-sm font-mono font-bold ${color}`}>{value}</span>
-            <span className="text-[10px] font-mono text-slate-600">{label}</span>
+            <span className="text-[10px] font-mono text-slate-400">{label}</span>
           </div>
         ))}
 
         {/* Hint */}
-        <span className="ml-auto text-[9px] font-mono text-slate-600 hidden md:block">
+        <span className="ml-auto text-[9px] font-mono text-slate-400 hidden md:block">
           {selectedNode
             ? `${selectedNode.label} · showing connections · click again or background to clear`
             : 'click any resource to reveal connections'}
@@ -408,7 +408,7 @@ export function TopologyView({ data, focusNodeId }: TopologyViewProps) {
           className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-[10px] font-mono transition-all ${
             showPods
               ? 'border-cyan-500/50 bg-cyan-950/40 text-cyan-300'
-              : 'border-cyber-border bg-cyber-panel text-slate-500 hover:text-slate-300'
+              : 'border-cyber-border bg-cyber-panel text-slate-400 hover:text-slate-300'
           }`}
         >
           <Layers size={10} />
@@ -421,7 +421,7 @@ export function TopologyView({ data, focusNodeId }: TopologyViewProps) {
           className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-[10px] font-mono transition-all ${
             showConfigs
               ? 'border-amber-500/50 bg-amber-950/40 text-amber-300'
-              : 'border-cyber-border bg-cyber-panel text-slate-500 hover:text-slate-300'
+              : 'border-cyber-border bg-cyber-panel text-slate-400 hover:text-slate-300'
           }`}
         >
           <KeyRound size={10} />
@@ -432,7 +432,7 @@ export function TopologyView({ data, focusNodeId }: TopologyViewProps) {
       {/* ── Edge legend — only when a node is selected ──────────────────── */}
       {selectedNode && (
         <div className="absolute left-4 bottom-4 z-10 rounded-xl border border-cyber-border bg-cyber-panel/80 backdrop-blur-sm px-3.5 py-2.5 space-y-1">
-          <div className="text-[8px] font-mono text-slate-600 uppercase tracking-widest mb-1.5">Connections</div>
+          <div className="text-[8px] font-mono text-slate-400 uppercase tracking-widest mb-1.5">Connections</div>
           {Object.entries(EDGE_COLOR).map(([label, color]) => (
             <div key={label} className="flex items-center gap-2">
               <div className="w-4 h-px" style={{ background: color }} />

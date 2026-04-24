@@ -158,7 +158,7 @@ function MembersTab({ orgId, isAdmin, currentUserId }: {
       <div className="flex items-center justify-between">
         <div>
           <div className="text-base font-sans font-semibold text-slate-100">Team members</div>
-          <div className="text-xs font-sans text-slate-500 mt-0.5">{members.length} member{members.length !== 1 ? 's' : ''}</div>
+          <div className="text-xs font-sans text-slate-400 mt-0.5">{members.length} member{members.length !== 1 ? 's' : ''}</div>
         </div>
         {isAdmin && (
           <button
@@ -198,13 +198,13 @@ function MembersTab({ orgId, isAdmin, currentUserId }: {
                   </div>
                   <div className="flex items-center gap-2 p-3 rounded-xl font-mono text-xs text-slate-400 break-all"
                     style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>
-                    <Link size={11} className="text-slate-600 shrink-0" />
+                    <Link size={11} className="text-slate-400 shrink-0" />
                     <span className="flex-1 break-all">{inviteLink}</span>
                     <CopyButton text={inviteLink} />
                   </div>
                   <button
                     onClick={() => { setShowInvite(false); setInviteLink(null) }}
-                    className="text-xs font-sans text-slate-500 hover:text-slate-300 transition-colors"
+                    className="text-xs font-sans text-slate-400 hover:text-slate-300 transition-colors"
                   >
                     Done
                   </button>
@@ -253,7 +253,7 @@ function MembersTab({ orgId, isAdmin, currentUserId }: {
 
       {/* Members list */}
       {loading ? (
-        <div className="flex justify-center py-12"><Loader2 size={20} className="text-slate-700 animate-spin" /></div>
+        <div className="flex justify-center py-12"><Loader2 size={20} className="text-slate-400 animate-spin" /></div>
       ) : (
         <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.06)' }}>
           {members.map((m, i) => (
@@ -272,11 +272,11 @@ function MembersTab({ orgId, isAdmin, currentUserId }: {
                 <div className="text-sm font-sans font-medium text-slate-200 truncate">
                   {m.display_name ?? m.email}
                   {m.user_id === currentUserId && (
-                    <span className="ml-2 text-[10px] font-sans text-slate-600">(you)</span>
+                    <span className="ml-2 text-[10px] font-sans text-slate-400">(you)</span>
                   )}
                 </div>
                 {m.display_name && (
-                  <div className="text-xs font-sans text-slate-600 truncate">{m.email}</div>
+                  <div className="text-xs font-sans text-slate-400 truncate">{m.email}</div>
                 )}
               </div>
 
@@ -302,7 +302,7 @@ function MembersTab({ orgId, isAdmin, currentUserId }: {
               )}
 
               {/* Joined */}
-              <div className="text-xs font-sans text-slate-600 shrink-0 hidden sm:block">
+              <div className="text-xs font-sans text-slate-400 shrink-0 hidden sm:block">
                 {formatDate(m.joined_at)}
               </div>
 
@@ -310,7 +310,7 @@ function MembersTab({ orgId, isAdmin, currentUserId }: {
               {isAdmin && m.user_id !== currentUserId && (
                 <button
                   onClick={() => handleRemove(m.user_id, m.email)}
-                  className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-700 hover:text-red-400 transition-colors shrink-0"
+                  className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-red-400 transition-colors shrink-0"
                   style={{ background: 'rgba(255,255,255,0.04)' }}
                   title="Remove from org"
                 >
@@ -355,16 +355,16 @@ function InvitationsTab({ orgId }: { orgId: string }) {
     <div className="space-y-4">
       <div>
         <div className="text-base font-sans font-semibold text-slate-100">Pending invitations</div>
-        <div className="text-xs font-sans text-slate-500 mt-0.5">Invitations expire after 7 days</div>
+        <div className="text-xs font-sans text-slate-400 mt-0.5">Invitations expire after 7 days</div>
       </div>
 
       {loading ? (
-        <div className="flex justify-center py-12"><Loader2 size={20} className="text-slate-700 animate-spin" /></div>
+        <div className="flex justify-center py-12"><Loader2 size={20} className="text-slate-400 animate-spin" /></div>
       ) : invites.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-14 rounded-2xl gap-3"
           style={{ background: 'rgba(255,255,255,0.02)', border: '1px dashed rgba(255,255,255,0.07)' }}>
-          <Mail size={22} className="text-slate-700" />
-          <div className="text-sm font-sans text-slate-600">No pending invitations</div>
+          <Mail size={22} className="text-slate-400" />
+          <div className="text-sm font-sans text-slate-400">No pending invitations</div>
         </div>
       ) : (
         <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.06)' }}>
@@ -380,7 +380,7 @@ function InvitationsTab({ orgId }: { orgId: string }) {
 
               <div className="flex-1 min-w-0">
                 <div className="text-sm font-sans text-slate-200 truncate">{inv.email}</div>
-                <div className="text-xs font-sans text-slate-600 mt-0.5 flex items-center gap-2">
+                <div className="text-xs font-sans text-slate-400 mt-0.5 flex items-center gap-2">
                   <Clock size={10} />
                   Expires {formatDate(inv.expires_at)}
                 </div>
@@ -392,7 +392,7 @@ function InvitationsTab({ orgId }: { orgId: string }) {
 
               <button
                 onClick={() => handleCancel(inv.id)}
-                className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-700 hover:text-red-400 transition-colors shrink-0"
+                className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-red-400 transition-colors shrink-0"
                 style={{ background: 'rgba(255,255,255,0.04)' }}
                 title="Cancel invitation"
               >
@@ -443,20 +443,20 @@ function AuditLogTab({ orgId }: { orgId: string }) {
       <div className="flex items-center justify-between">
         <div>
           <div className="text-base font-sans font-semibold text-slate-100">Audit log</div>
-          <div className="text-xs font-sans text-slate-500 mt-0.5">All admin actions in this organization</div>
+          <div className="text-xs font-sans text-slate-400 mt-0.5">All admin actions in this organization</div>
         </div>
-        <button onClick={() => load(true)} className="text-slate-600 hover:text-slate-400 transition-colors">
+        <button onClick={() => load(true)} className="text-slate-400 hover:text-slate-400 transition-colors">
           <RefreshCw size={13} />
         </button>
       </div>
 
       {loading && logs.length === 0 ? (
-        <div className="flex justify-center py-12"><Loader2 size={20} className="text-slate-700 animate-spin" /></div>
+        <div className="flex justify-center py-12"><Loader2 size={20} className="text-slate-400 animate-spin" /></div>
       ) : logs.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-14 rounded-2xl gap-3"
           style={{ background: 'rgba(255,255,255,0.02)', border: '1px dashed rgba(255,255,255,0.07)' }}>
-          <FileText size={22} className="text-slate-700" />
-          <div className="text-sm font-sans text-slate-600">No audit events yet</div>
+          <FileText size={22} className="text-slate-400" />
+          <div className="text-sm font-sans text-slate-400">No audit events yet</div>
         </div>
       ) : (
         <>
@@ -474,16 +474,16 @@ function AuditLogTab({ orgId }: { orgId: string }) {
                       {ACTION_LABELS[log.action] ?? log.action}
                     </span>
                     {log.resource_name && (
-                      <span className="text-xs font-mono text-slate-500 truncate max-w-[200px]">
+                      <span className="text-xs font-mono text-slate-400 truncate max-w-[200px]">
                         {log.resource_name}
                       </span>
                     )}
                   </div>
-                  <div className="text-xs font-sans text-slate-600 mt-0.5">
+                  <div className="text-xs font-sans text-slate-400 mt-0.5">
                     {log.actor_email ?? 'System'} · {timeAgo(log.created_at)}
                   </div>
                 </div>
-                <div className="text-xs font-sans text-slate-700 shrink-0 hidden sm:block">
+                <div className="text-xs font-sans text-slate-400 shrink-0 hidden sm:block">
                   {formatDate(log.created_at)}
                 </div>
               </div>
@@ -494,7 +494,7 @@ function AuditLogTab({ orgId }: { orgId: string }) {
             <button
               onClick={() => load(false)}
               disabled={loading}
-              className="w-full py-2.5 rounded-xl text-sm font-sans text-slate-500 hover:text-slate-300 transition-colors flex items-center justify-center gap-2"
+              className="w-full py-2.5 rounded-xl text-sm font-sans text-slate-400 hover:text-slate-300 transition-colors flex items-center justify-center gap-2"
               style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}
             >
               {loading ? <Loader2 size={13} className="animate-spin" /> : null}
@@ -565,7 +565,7 @@ function OrgTab({ orgId }: { orgId: string }) {
     enterprise: { label: 'Enterprise', color: '#f59e0b', bg: 'rgba(245,158,11,0.12)' },
   }
 
-  if (loading) return <div className="flex justify-center py-12"><Loader2 size={20} className="text-slate-700 animate-spin" /></div>
+  if (loading) return <div className="flex justify-center py-12"><Loader2 size={20} className="text-slate-400 animate-spin" /></div>
   if (!org) return null
 
   const plan = PLAN_META[org.plan] ?? PLAN_META.free
@@ -574,7 +574,7 @@ function OrgTab({ orgId }: { orgId: string }) {
     <div className="space-y-6 max-w-xl">
       <div>
         <div className="text-base font-sans font-semibold text-slate-100">Organization settings</div>
-        <div className="text-xs font-sans text-slate-500 mt-0.5">Manage your organization details and plan</div>
+        <div className="text-xs font-sans text-slate-400 mt-0.5">Manage your organization details and plan</div>
       </div>
 
       {/* Plan badge */}
@@ -592,7 +592,7 @@ function OrgTab({ orgId }: { orgId: string }) {
               {plan.label.toUpperCase()}
             </span>
           </div>
-          <div className="text-xs font-sans text-slate-600 mt-0.5">
+          <div className="text-xs font-sans text-slate-400 mt-0.5">
             {org.max_clusters} clusters · {org.max_members} members · slug: {org.slug}
           </div>
         </div>
@@ -643,7 +643,7 @@ function OrgTab({ orgId }: { orgId: string }) {
         <div className="flex items-center justify-between gap-4">
           <div>
             <div className="text-sm font-sans font-medium text-slate-300">Delete this organization</div>
-            <div className="text-xs font-sans text-slate-600 mt-0.5">
+            <div className="text-xs font-sans text-slate-400 mt-0.5">
               Permanently deletes all clusters, scan history, API keys, and members. This cannot be undone.
             </div>
           </div>
@@ -690,12 +690,12 @@ function OrgTab({ orgId }: { orgId: string }) {
                 </div>
                 <div>
                   <div className="text-base font-sans font-bold text-slate-100">Delete organization</div>
-                  <div className="text-sm font-sans text-slate-500 mt-0.5">
+                  <div className="text-sm font-sans text-slate-400 mt-0.5">
                     This will permanently delete <span className="text-slate-300 font-medium">{org.name}</span> and all its data.
                   </div>
                 </div>
                 <button onClick={() => setShowDeleteModal(false)}
-                  className="ml-auto w-7 h-7 rounded-lg flex items-center justify-center text-slate-600 hover:text-slate-300 shrink-0"
+                  className="ml-auto w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-300 shrink-0"
                   style={{ background: 'rgba(255,255,255,0.04)' }}>
                   <X size={13} />
                 </button>
@@ -803,9 +803,9 @@ export function SettingsPage() {
       <div className="min-h-screen flex items-center justify-center"
         style={{ background: 'radial-gradient(ellipse at 20% 50%, #0a1628 0%, #080c14 60%)' }}>
         <div className="text-center space-y-3">
-          <ShieldAlert size={32} className="text-slate-700 mx-auto" />
+          <ShieldAlert size={32} className="text-slate-400 mx-auto" />
           <div className="text-base font-sans font-semibold text-slate-400">Admin access required</div>
-          <div className="text-sm font-sans text-slate-600">Only organization admins can access settings.</div>
+          <div className="text-sm font-sans text-slate-400">Only organization admins can access settings.</div>
           <button
             onClick={() => navigate('/overview')}
             className="mt-2 text-sm font-sans text-cyan-500 hover:text-cyan-400 transition-colors"
@@ -847,7 +847,7 @@ export function SettingsPage() {
         <OrgSwitcher />
         <div className="h-5 w-px bg-white/8 shrink-0" />
 
-        <div className="flex items-center gap-2 text-slate-600">
+        <div className="flex items-center gap-2 text-slate-400">
           <button onClick={() => navigate('/overview')} className="text-[12px] font-sans hover:text-slate-300 transition-colors">Dashboard</button>
           <ChevronRight size={11} />
           <span className="text-[12px] font-sans font-medium text-slate-300 flex items-center gap-1.5">
@@ -873,7 +873,7 @@ export function SettingsPage() {
         {/* Page title */}
         <div className="mb-6">
           <h1 className="text-xl font-sans font-bold text-slate-100">Organization settings</h1>
-          <p className="text-sm font-sans text-slate-500 mt-1">
+          <p className="text-sm font-sans text-slate-400 mt-1">
             Manage members, invitations, and configuration for <span className="text-slate-300">{activeOrg?.organization_name}</span>
           </p>
         </div>

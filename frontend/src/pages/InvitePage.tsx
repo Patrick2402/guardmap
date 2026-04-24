@@ -153,7 +153,7 @@ export function InvitePage() {
           </div>
           <div>
             <div className="text-lg font-sans font-bold text-slate-100">Invitation not found</div>
-            <div className="text-sm font-sans text-slate-500 mt-1">{inviteError}</div>
+            <div className="text-sm font-sans text-slate-400 mt-1">{inviteError}</div>
           </div>
           <button onClick={() => navigate('/login')}
             className="text-sm font-sans text-cyan-500 hover:text-cyan-400 transition-colors">
@@ -177,10 +177,10 @@ export function InvitePage() {
           </div>
           <div>
             <div className="text-lg font-sans font-bold text-slate-100">Welcome to {invite.organization_name}!</div>
-            <div className="text-sm font-sans text-slate-500 mt-1">Redirecting to dashboard…</div>
+            <div className="text-sm font-sans text-slate-400 mt-1">Redirecting to dashboard…</div>
           </div>
           <div className="flex justify-center">
-            <Loader2 size={16} className="text-slate-600 animate-spin" />
+            <Loader2 size={16} className="text-slate-400 animate-spin" />
           </div>
         </motion.div>
       </div>
@@ -221,13 +221,13 @@ export function InvitePage() {
             </div>
             <div>
               <div className="text-base font-sans font-semibold text-slate-100">Check your email</div>
-              <div className="text-sm font-sans text-slate-500 mt-1">
+              <div className="text-sm font-sans text-slate-400 mt-1">
                 We sent a confirmation link to <span className="text-slate-300">{email}</span>.
                 After confirming, open this invite link again to join.
               </div>
             </div>
             <button onClick={() => setConfirmPending(false)}
-              className="text-xs font-sans text-slate-600 hover:text-slate-400 transition-colors">
+              className="text-xs font-sans text-slate-400 hover:text-slate-400 transition-colors">
               ← Back
             </button>
           </motion.div>
@@ -252,7 +252,7 @@ export function InvitePage() {
                 {roleMeta.label}
               </span>
             </div>
-            <div className="text-xs font-sans text-slate-500 mt-0.5 flex items-center gap-1.5">
+            <div className="text-xs font-sans text-slate-400 mt-0.5 flex items-center gap-1.5">
               <UserPlus size={10} />
               You've been invited to join this organization
             </div>
@@ -270,7 +270,7 @@ export function InvitePage() {
             }}>
             <div className="text-center">
               <div className="text-base font-sans font-semibold text-slate-100">Accept invitation</div>
-              <div className="text-sm font-sans text-slate-500 mt-1">
+              <div className="text-sm font-sans text-slate-400 mt-1">
                 Signed in as <span className="text-slate-300">{user.email}</span>
               </div>
               {user.email !== invite.email && (
@@ -332,7 +332,7 @@ export function InvitePage() {
               <div>
                 <label className="text-xs font-sans text-slate-400 mb-1.5 block">Email</label>
                 <div className="relative">
-                  <Mail size={13} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-600" />
+                  <Mail size={13} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
                   <input
                     type="email" value={email}
                     onChange={e => setEmail(e.target.value)}
@@ -348,7 +348,7 @@ export function InvitePage() {
               <div>
                 <label className="text-xs font-sans text-slate-400 mb-1.5 block">Password</label>
                 <div className="relative">
-                  <Lock size={13} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-600" />
+                  <Lock size={13} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
                   <input
                     type={showPw ? 'text' : 'password'}
                     value={password} onChange={e => setPassword(e.target.value)}
@@ -359,7 +359,7 @@ export function InvitePage() {
                     onBlur={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'}
                   />
                   <button type="button" onClick={() => setShowPw(v => !v)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-600 hover:text-slate-400 transition-colors">
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-400 transition-colors">
                     {showPw ? <EyeOff size={13} /> : <Eye size={13} />}
                   </button>
                 </div>
@@ -394,7 +394,7 @@ export function InvitePage() {
           </div>
         )}
 
-        <p className="text-center text-xs font-sans text-slate-700">
+        <p className="text-center text-xs font-sans text-slate-400">
           By joining you agree to GuardMap's terms of service
         </p>
         </>}

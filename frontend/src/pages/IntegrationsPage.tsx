@@ -277,7 +277,7 @@ function AddClusterModal({ orgId, onClose, onCreated }: {
             {/* Step pills */}
             {(['form','key','install'] as const).map((s, i) => (
               <div key={s} className="flex items-center gap-2">
-                {i > 0 && <ChevronRight size={12} className="text-slate-700" />}
+                {i > 0 && <ChevronRight size={12} className="text-slate-400" />}
                 <div className="flex items-center gap-1.5">
                   <div className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-mono font-bold"
                     style={step === s
@@ -296,7 +296,7 @@ function AddClusterModal({ orgId, onClose, onCreated }: {
               </div>
             ))}
           </div>
-          <button onClick={onClose} className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-600 hover:text-slate-300 transition-colors"
+          <button onClick={onClose} className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-300 transition-colors"
             style={{ background: 'rgba(255,255,255,0.04)' }}>
             <X size={14} />
           </button>
@@ -311,7 +311,7 @@ function AddClusterModal({ orgId, onClose, onCreated }: {
               <motion.div key="form" initial={{ opacity: 0, x: 12 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -12 }} className="space-y-5">
                 <div>
                   <div className="text-lg font-sans font-bold text-slate-100 mb-1">Connect a cluster</div>
-                  <div className="text-sm font-sans text-slate-500">Name your cluster and we'll generate an install manifest with a pre-configured API key.</div>
+                  <div className="text-sm font-sans text-slate-400">Name your cluster and we'll generate an install manifest with a pre-configured API key.</div>
                 </div>
 
                 <div className="space-y-4">
@@ -379,7 +379,7 @@ function AddClusterModal({ orgId, onClose, onCreated }: {
                   <div className="flex items-center gap-2 p-3 rounded-xl font-mono text-sm text-cyan-300 break-all"
                     style={{ background: 'rgba(0,212,255,0.05)', border: '1px solid rgba(0,212,255,0.15)' }}>
                     <span className="flex-1">{plainKey}</span>
-                    <CopyButton text={plainKey} className="text-slate-500 hover:text-cyan-400 shrink-0" />
+                    <CopyButton text={plainKey} className="text-slate-400 hover:text-cyan-400 shrink-0" />
                   </div>
                 </div>
 
@@ -400,19 +400,19 @@ function AddClusterModal({ orgId, onClose, onCreated }: {
               <motion.div key="install" initial={{ opacity: 0, x: 12 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -12 }} className="space-y-5">
                 <div>
                   <div className="text-lg font-sans font-bold text-slate-100 mb-1">Install the agent</div>
-                  <div className="text-sm font-sans text-slate-500">Run this command on any machine with <span className="font-mono text-slate-400">kubectl</span> access to your cluster.</div>
+                  <div className="text-sm font-sans text-slate-400">Run this command on any machine with <span className="font-mono text-slate-400">kubectl</span> access to your cluster.</div>
                 </div>
 
                 <div className="rounded-xl overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.07)' }}>
                   <div className="flex items-center justify-between px-4 py-2.5"
                     style={{ background: 'rgba(255,255,255,0.04)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
                     <div className="flex items-center gap-2">
-                      <Terminal size={12} className="text-slate-500" />
-                      <span className="text-xs font-mono text-slate-500">kubectl apply</span>
+                      <Terminal size={12} className="text-slate-400" />
+                      <span className="text-xs font-mono text-slate-400">kubectl apply</span>
                     </div>
                     <CopyButton
                       text={`kubectl apply -f - <<'EOF'\n${manifest}\nEOF`}
-                      className="text-slate-500 hover:text-slate-200"
+                      className="text-slate-400 hover:text-slate-200"
                     />
                   </div>
                   <pre className="px-4 py-3 text-xs font-mono text-slate-300 overflow-x-auto leading-relaxed max-h-72 overflow-y-auto"
@@ -539,7 +539,7 @@ function NewKeyModal({ cluster, orgId, onClose }: {
             <span className="text-sm font-sans font-semibold text-slate-100">New API Key — {cluster.name}</span>
           </div>
           <button onClick={onClose}
-            className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-600 hover:text-slate-300 transition-colors"
+            className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-300 transition-colors"
             style={{ background: 'rgba(255,255,255,0.04)' }}>
             <X size={14} />
           </button>
@@ -547,7 +547,7 @@ function NewKeyModal({ cluster, orgId, onClose }: {
 
         <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
           {step === 'generating' && !error && (
-            <div className="flex items-center justify-center py-10 gap-3 text-slate-500">
+            <div className="flex items-center justify-center py-10 gap-3 text-slate-400">
               <Loader2 size={16} className="animate-spin" />
               <span className="text-sm font-sans">Generating key…</span>
             </div>
@@ -573,7 +573,7 @@ function NewKeyModal({ cluster, orgId, onClose }: {
                 <div className="flex items-center gap-2 p-3 rounded-xl font-mono text-sm text-cyan-300 break-all"
                   style={{ background: 'rgba(0,212,255,0.05)', border: '1px solid rgba(0,212,255,0.15)' }}>
                   <span className="flex-1">{plainKey}</span>
-                  <CopyButton text={plainKey} className="text-slate-500 hover:text-cyan-400 shrink-0" />
+                  <CopyButton text={plainKey} className="text-slate-400 hover:text-cyan-400 shrink-0" />
                 </div>
               </div>
               <div>
@@ -581,10 +581,10 @@ function NewKeyModal({ cluster, orgId, onClose }: {
                 <div className="rounded-xl overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.07)' }}>
                   <div className="flex items-center justify-between px-4 py-2.5"
                     style={{ background: 'rgba(255,255,255,0.04)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-                    <span className="text-xs font-mono text-slate-500">kubectl apply</span>
+                    <span className="text-xs font-mono text-slate-400">kubectl apply</span>
                     <CopyButton
                       text={`kubectl apply -f - <<'EOF'\n${manifest}\nEOF`}
-                      className="text-slate-500 hover:text-slate-200"
+                      className="text-slate-400 hover:text-slate-200"
                     />
                   </div>
                   <pre className="px-4 py-3 text-xs font-mono text-slate-300 overflow-x-auto leading-relaxed max-h-64 overflow-y-auto"
@@ -640,7 +640,7 @@ function ClusterCard({ cluster, orgId, onDelete, onNewKey }: { cluster: Cluster;
           <div>
             <div className="text-sm font-sans font-semibold text-slate-100">{cluster.name}</div>
             <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-              <span className="text-xs font-mono text-slate-500 whitespace-nowrap">{cluster.region ?? '—'}</span>
+              <span className="text-xs font-mono text-slate-400 whitespace-nowrap">{cluster.region ?? '—'}</span>
               {cluster.k8s_version && (
                 <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-md text-cyan-400 whitespace-nowrap"
                   style={{ background: 'rgba(34,211,238,0.08)', border: '1px solid rgba(34,211,238,0.15)' }}>
@@ -648,7 +648,7 @@ function ClusterCard({ cluster, orgId, onDelete, onNewKey }: { cluster: Cluster;
                 </span>
               )}
               {cluster.node_count != null && (
-                <span className="text-[10px] font-mono text-slate-600 whitespace-nowrap">
+                <span className="text-[10px] font-mono text-slate-400 whitespace-nowrap">
                   {cluster.node_count} {cluster.node_count === 1 ? 'node' : 'nodes'}
                 </span>
               )}
@@ -663,12 +663,12 @@ function ClusterCard({ cluster, orgId, onDelete, onNewKey }: { cluster: Cluster;
           </div>
           <button onClick={onNewKey}
             title="Generate new API key"
-            className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-700 hover:text-cyan-400 transition-colors"
+            className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-cyan-400 transition-colors"
             style={{ background: 'rgba(255,255,255,0.04)' }}>
             <Key size={12} />
           </button>
           <button onClick={onDelete}
-            className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-700 hover:text-red-400 transition-colors"
+            className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-red-400 transition-colors"
             style={{ background: 'rgba(255,255,255,0.04)' }}>
             <Trash2 size={12} />
           </button>
@@ -682,28 +682,28 @@ function ClusterCard({ cluster, orgId, onDelete, onNewKey }: { cluster: Cluster;
           <div className="text-lg font-mono font-bold leading-none" style={{ color: sColor }}>
             {score ?? '—'}
           </div>
-          <div className="text-[9px] font-sans text-slate-600 mt-1">Score</div>
+          <div className="text-[9px] font-sans text-slate-400 mt-1">Score</div>
         </div>
         <div className="flex flex-col items-center py-2.5 rounded-xl"
           style={{ background: 'rgba(255,255,255,0.03)' }}>
           {cluster.last_scan_critical != null && cluster.last_scan_critical > 0
             ? <div className="text-lg font-mono font-bold leading-none text-red-400">{cluster.last_scan_critical}</div>
-            : <div className="text-lg font-mono font-bold leading-none text-slate-600">0</div>
+            : <div className="text-lg font-mono font-bold leading-none text-slate-400">0</div>
           }
-          <div className="text-[9px] font-sans text-slate-600 mt-1">Critical</div>
+          <div className="text-[9px] font-sans text-slate-400 mt-1">Critical</div>
         </div>
         <div className="flex flex-col items-center py-2.5 rounded-xl"
           style={{ background: 'rgba(255,255,255,0.03)' }}>
           <div className="text-xs font-sans text-slate-400 text-center leading-tight">
             {timeAgo(cluster.last_scan_at)}
           </div>
-          <div className="text-[9px] font-sans text-slate-600 mt-1">Last scan</div>
+          <div className="text-[9px] font-sans text-slate-400 mt-1">Last scan</div>
         </div>
       </div>
 
       {/* Status hints */}
       {status === 'pending' && (
-        <div className="mt-3 flex items-center gap-2 p-2.5 rounded-xl text-xs font-sans text-slate-500"
+        <div className="mt-3 flex items-center gap-2 p-2.5 rounded-xl text-xs font-sans text-slate-400"
           style={{ background: 'rgba(100,116,139,0.06)', border: '1px solid rgba(100,116,139,0.12)' }}>
           <Clock size={11} className="shrink-0" />
           Waiting for first agent heartbeat — apply the manifest to your cluster
@@ -742,9 +742,9 @@ function ApiKeyRow({ apiKey, onRevoke }: { apiKey: ApiKey; onRevoke: () => void 
         <div className="text-sm font-sans font-medium" style={{ color: isRevoked ? '#475569' : '#cbd5e1' }}>
           {apiKey.name}
         </div>
-        <div className="text-xs font-mono text-slate-600 mt-0.5">{apiKey.key_prefix}</div>
+        <div className="text-xs font-mono text-slate-400 mt-0.5">{apiKey.key_prefix}</div>
       </div>
-      <div className="text-xs font-sans text-slate-600 shrink-0">
+      <div className="text-xs font-sans text-slate-400 shrink-0">
         {isRevoked ? (
           <span className="text-red-500/60">Revoked</span>
         ) : apiKey.last_used_at ? (
@@ -755,7 +755,7 @@ function ApiKeyRow({ apiKey, onRevoke }: { apiKey: ApiKey; onRevoke: () => void 
       </div>
       {!isRevoked && (
         <button onClick={onRevoke}
-          className="text-xs font-sans text-slate-700 hover:text-red-400 transition-colors px-2 py-1 rounded-lg"
+          className="text-xs font-sans text-slate-400 hover:text-red-400 transition-colors px-2 py-1 rounded-lg"
           style={{ background: 'rgba(255,255,255,0.04)' }}>
           Revoke
         </button>
@@ -864,13 +864,13 @@ function SlackConfigModal({ orgId, existing, onClose, onSaved }: {
               <div className="text-sm font-sans font-semibold text-slate-100">
                 {existing ? 'Edit Slack Integration' : 'Connect Slack'}
               </div>
-              <div className="text-xs font-sans text-slate-500 mt-0.5">
+              <div className="text-xs font-sans text-slate-400 mt-0.5">
                 Get alerts when new findings are detected
               </div>
             </div>
           </div>
           <button onClick={onClose}
-            className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-600 hover:text-slate-300 transition-colors"
+            className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-300 transition-colors"
             style={{ background: 'rgba(255,255,255,0.04)' }}>
             <X size={14} />
           </button>
@@ -909,7 +909,7 @@ function SlackConfigModal({ orgId, existing, onClose, onSaved }: {
           {/* Channel name (label only) */}
           <div>
             <label className="text-xs font-sans text-slate-400 mb-1.5 block">
-              Channel label <span className="text-slate-600">(optional — for your reference)</span>
+              Channel label <span className="text-slate-400">(optional — for your reference)</span>
             </label>
             <input
               type="text"
@@ -1072,7 +1072,7 @@ export function IntegrationsPage() {
         <div className="h-5 w-px bg-white/8 shrink-0" />
 
         {/* Breadcrumb */}
-        <div className="flex items-center gap-2 text-slate-600">
+        <div className="flex items-center gap-2 text-slate-400">
           <button onClick={() => navigate('/overview')} className="text-[12px] font-sans hover:text-slate-300 transition-colors">Dashboard</button>
           <ChevronRight size={11} />
           <span className="text-[12px] font-sans font-medium text-slate-300 flex items-center gap-1.5">
@@ -1101,7 +1101,7 @@ export function IntegrationsPage() {
         <div className="flex items-start justify-between">
           <div>
             <h1 className="text-xl font-sans font-bold text-slate-100 mb-1">Agent Integrations</h1>
-            <p className="text-sm font-sans text-slate-500">
+            <p className="text-sm font-sans text-slate-400">
               Connect your Kubernetes clusters with a single <span className="font-mono text-slate-400">kubectl apply</span>. The agent scans automatically every 6 hours.
             </p>
           </div>
@@ -1121,19 +1121,19 @@ export function IntegrationsPage() {
             <div className="flex items-center gap-2">
               <Cloud size={14} className="text-orange-400" />
               <span className="text-sm font-sans font-semibold text-slate-300">Clusters</span>
-              <span className="text-xs font-mono text-slate-600 px-1.5 py-0.5 rounded-lg"
+              <span className="text-xs font-mono text-slate-400 px-1.5 py-0.5 rounded-lg"
                 style={{ background: 'rgba(255,255,255,0.04)' }}>
                 {clusters.length} / {activeOrg?.plan === 'free' ? 3 : '∞'}
               </span>
             </div>
-            <button onClick={load} className="text-slate-600 hover:text-slate-400 transition-colors">
+            <button onClick={load} className="text-slate-400 hover:text-slate-400 transition-colors">
               <RefreshCw size={13} />
             </button>
           </div>
 
           {loading ? (
             <div className="flex items-center justify-center py-16">
-              <Loader2 size={20} className="text-slate-700 animate-spin" />
+              <Loader2 size={20} className="text-slate-400 animate-spin" />
             </div>
           ) : clusters.length === 0 ? (
             <div
@@ -1142,11 +1142,11 @@ export function IntegrationsPage() {
             >
               <div className="w-12 h-12 rounded-2xl flex items-center justify-center"
                 style={{ background: 'rgba(255,255,255,0.04)' }}>
-                <Cloud size={20} className="text-slate-700" />
+                <Cloud size={20} className="text-slate-400" />
               </div>
               <div className="text-center">
-                <div className="text-sm font-sans font-medium text-slate-500">No clusters connected</div>
-                <div className="text-xs font-sans text-slate-700 mt-1">Click "Add cluster" to get started</div>
+                <div className="text-sm font-sans font-medium text-slate-400">No clusters connected</div>
+                <div className="text-xs font-sans text-slate-400 mt-1">Click "Add cluster" to get started</div>
               </div>
               <button
                 onClick={() => setShowAdd(true)}
@@ -1171,7 +1171,7 @@ export function IntegrationsPage() {
           <div className="flex items-center gap-2 mb-4">
             <Key size={14} className="text-cyan-400" />
             <span className="text-sm font-sans font-semibold text-slate-300">API Keys</span>
-            <span className="text-xs font-sans text-slate-600">— used by agents to authenticate scans</span>
+            <span className="text-xs font-sans text-slate-400">— used by agents to authenticate scans</span>
           </div>
 
           <div
@@ -1182,7 +1182,7 @@ export function IntegrationsPage() {
             }}
           >
             {apiKeys.length === 0 ? (
-              <div className="text-center py-8 text-sm font-sans text-slate-600">
+              <div className="text-center py-8 text-sm font-sans text-slate-400">
                 No API keys yet — they're created automatically when you add a cluster
               </div>
             ) : (
@@ -1222,7 +1222,7 @@ export function IntegrationsPage() {
                         {notificationChannel.enabled ? 'Active' : 'Disabled'}
                       </div>
                     </div>
-                    <div className="text-xs font-mono text-slate-500 mt-0.5">
+                    <div className="text-xs font-mono text-slate-400 mt-0.5">
                       {notificationChannel.channel_name || 'hooks.slack.com/…'}
                     </div>
                   </div>
@@ -1235,7 +1235,7 @@ export function IntegrationsPage() {
                   Edit
                 </button>
               </div>
-              <div className="mt-3 flex items-center gap-2 p-2.5 rounded-xl text-xs font-sans text-slate-500"
+              <div className="mt-3 flex items-center gap-2 p-2.5 rounded-xl text-xs font-sans text-slate-400"
                 style={{ background: 'rgba(16,185,129,0.05)', border: '1px solid rgba(16,185,129,0.1)' }}>
                 <CheckCircle2 size={11} className="text-emerald-400 shrink-0" />
                 New findings detected after each scan will be sent to this channel
@@ -1252,7 +1252,7 @@ export function IntegrationsPage() {
               </div>
               <div className="text-center">
                 <div className="text-sm font-sans font-medium text-slate-400">No notifications configured</div>
-                <div className="text-xs font-sans text-slate-600 mt-1">Connect Slack to get alerted when new findings appear after a scan</div>
+                <div className="text-xs font-sans text-slate-400 mt-1">Connect Slack to get alerted when new findings appear after a scan</div>
               </div>
               <button
                 onClick={() => setShowSlackModal(true)}
@@ -1283,7 +1283,7 @@ export function IntegrationsPage() {
                 style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.04)' }}>
                 <div className="text-2xl font-mono font-bold mb-2" style={{ color: `${step.color}40` }}>{step.n}</div>
                 <div className="text-sm font-sans font-semibold text-slate-200 mb-1">{step.title}</div>
-                <div className="text-xs font-sans text-slate-500 leading-relaxed">{step.desc}</div>
+                <div className="text-xs font-sans text-slate-400 leading-relaxed">{step.desc}</div>
               </div>
             ))}
           </div>

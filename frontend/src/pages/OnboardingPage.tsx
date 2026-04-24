@@ -107,7 +107,7 @@ export function OnboardingPage() {
             </div>
             <div>
               <div className="text-lg font-sans font-bold text-slate-100">Create your organization</div>
-              <div className="text-sm font-sans text-slate-500 mt-0.5">
+              <div className="text-sm font-sans text-slate-400 mt-0.5">
                 Your organization groups clusters and team members together.
               </div>
             </div>
@@ -133,8 +133,8 @@ export function OnboardingPage() {
               />
               {slug && (
                 <div className="flex items-center gap-1.5 mt-1.5">
-                  <span className="text-xs font-sans text-slate-600">URL slug:</span>
-                  <span className="text-xs font-mono text-slate-500">{slug}</span>
+                  <span className="text-xs font-sans text-slate-400">URL slug:</span>
+                  <span className="text-xs font-mono text-slate-400">{slug}</span>
                 </div>
               )}
             </div>
@@ -181,11 +181,11 @@ export function OnboardingPage() {
         </div>
 
         <div className="flex items-center justify-center mt-5">
-          <span className="text-xs font-sans text-slate-700">
-            Signed in as <span className="text-slate-500">{user?.email}</span>
+          <span className="text-xs font-sans text-slate-400">
+            Signed in as <span className="text-slate-400">{user?.email}</span>
           </span>
           <span className="mx-2 text-slate-800">·</span>
-          <button onClick={signOut} className="text-xs font-sans text-slate-700 hover:text-slate-400 transition-colors">
+          <button onClick={signOut} className="text-xs font-sans text-slate-400 hover:text-slate-400 transition-colors">
             Sign out
           </button>
         </div>

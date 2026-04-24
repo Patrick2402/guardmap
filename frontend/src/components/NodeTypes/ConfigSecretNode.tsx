@@ -70,7 +70,7 @@ export const ConfigSecretNode = memo(({ data }: NodeProps<ConfigSecretData>) => 
           {cfg.kind}
         </span>
         {subLabel && (
-          <span className="ml-auto text-[8px] font-mono text-slate-600 truncate max-w-[80px]">
+          <span className="ml-auto text-[8px] font-mono text-slate-400 truncate max-w-[80px]">
             {subLabel}
           </span>
         )}
@@ -85,9 +85,9 @@ export const ConfigSecretNode = memo(({ data }: NodeProps<ConfigSecretData>) => 
           {label}
         </div>
         <div className="flex items-center gap-2 mt-0.5">
-          {namespace && <span className="text-[9px] font-mono text-slate-500">{namespace}</span>}
+          {namespace && <span className="text-[9px] font-mono text-slate-400">{namespace}</span>}
           {keyCount && keyCount !== '0' && (
-            <span className="text-[8px] font-mono text-slate-600">{keyCount} key{keyCount !== '1' ? 's' : ''}</span>
+            <span className="text-[8px] font-mono text-slate-400">{keyCount} key{keyCount !== '1' ? 's' : ''}</span>
           )}
         </div>
       </div>

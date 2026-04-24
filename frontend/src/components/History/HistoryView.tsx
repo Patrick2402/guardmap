@@ -56,7 +56,7 @@ function CustomTooltip({ active, payload, label }: any) {
       <div className="font-mono text-slate-400 mb-1.5">{fmtDateFull(d.scannedAt)}</div>
       <div className="flex items-center gap-2 mb-1">
         <span className="text-lg font-bold font-mono" style={{ color }}>{d.securityScore}</span>
-        <span className="text-slate-500">{scoreLabel(d.securityScore)}</span>
+        <span className="text-slate-400">{scoreLabel(d.securityScore)}</span>
       </div>
       <div className="flex items-center gap-3 text-[11px]">
         {d.criticalCount > 0 && <span style={{ color: '#d13212' }}>{d.criticalCount} critical</span>}
@@ -71,7 +71,7 @@ function CustomTooltip({ active, payload, label }: any) {
 function Trend({ current, previous }: { current: number; previous: number | undefined }) {
   if (previous === undefined) return null
   const diff = current - previous
-  if (Math.abs(diff) < 2) return <Minus size={12} className="text-slate-600" />
+  if (Math.abs(diff) < 2) return <Minus size={12} className="text-slate-400" />
   if (diff > 0) return (
     <span className="flex items-center gap-0.5 text-emerald-400 text-[11px] font-mono">
       <TrendingUp size={11} />+{diff}
@@ -90,13 +90,13 @@ function EmptyState({ isMock }: { isMock: boolean }) {
     <div className="absolute inset-0 flex flex-col items-center justify-center gap-4">
       <div className="w-14 h-14 rounded-2xl flex items-center justify-center"
         style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
-        <Activity size={24} className="text-slate-700" />
+        <Activity size={24} className="text-slate-400" />
       </div>
       <div className="text-center">
         <div className="text-sm font-sans font-semibold text-slate-400">
           {isMock ? 'History not available for demo' : 'No scan history yet'}
         </div>
-        <div className="text-xs font-sans text-slate-600 mt-1 max-w-xs leading-relaxed">
+        <div className="text-xs font-sans text-slate-400 mt-1 max-w-xs leading-relaxed">
           {isMock
             ? 'Connect a live cluster to see scan trends and historical data.'
             : 'Run your first scan by triggering the agent CronJob or waiting for the scheduled run.'}
@@ -179,12 +179,12 @@ export function HistoryView({ source }: HistoryViewProps) {
               className="rounded-2xl p-4"
               style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}
             >
-              <div className="flex items-center gap-1.5 text-[11px] text-slate-500 mb-2" style={{ color: card.color }}>
+              <div className="flex items-center gap-1.5 text-[11px] text-slate-400 mb-2" style={{ color: card.color }}>
                 {card.icon}
-                <span className="text-slate-500">{card.label}</span>
+                <span className="text-slate-400">{card.label}</span>
               </div>
               <div className="text-2xl font-bold font-mono" style={{ color: card.color }}>{card.value}</div>
-              <div className="text-[11px] text-slate-600 mt-0.5">{card.sub}</div>
+              <div className="text-[11px] text-slate-400 mt-0.5">{card.sub}</div>
             </motion.div>
           ))}
         </div>
@@ -203,7 +203,7 @@ export function HistoryView({ source }: HistoryViewProps) {
                 <TrendingUp size={13} className="text-cyan-400" />
                 Security score trend
               </div>
-              <div className="text-[11px] font-mono text-slate-600">{scans.length} scans</div>
+              <div className="text-[11px] font-mono text-slate-400">{scans.length} scans</div>
             </div>
             <ResponsiveContainer width="100%" height={180}>
               <AreaChart data={chartData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
@@ -240,7 +240,7 @@ export function HistoryView({ source }: HistoryViewProps) {
           style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}
         >
           <div className="px-4 py-3 border-b border-white/5 flex items-center gap-2">
-            <Clock size={12} className="text-slate-500" />
+            <Clock size={12} className="text-slate-400" />
             <span className="text-[12px] font-semibold text-slate-400">Scan history</span>
           </div>
 
@@ -276,9 +276,9 @@ export function HistoryView({ source }: HistoryViewProps) {
                     </div>
                     <div className="flex items-center gap-3 mt-0.5">
                       <span className="text-[11px]" style={{ color }}>{scoreLabel(scan.securityScore)}</span>
-                      <span className="text-[11px] text-slate-600">{timeAgo(scan.scannedAt)}</span>
+                      <span className="text-[11px] text-slate-400">{timeAgo(scan.scannedAt)}</span>
                       {scan.durationMs && (
-                        <span className="text-[11px] text-slate-700">{scan.durationMs}ms</span>
+                        <span className="text-[11px] text-slate-400">{scan.durationMs}ms</span>
                       )}
                     </div>
                   </div>

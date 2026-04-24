@@ -65,7 +65,7 @@ export const K8sNetworkNode = memo(({ data }: NodeProps<K8sNetworkData>) => {
         </div>
         <div className="px-2.5 py-1.5">
           <div className={`text-[12px] font-mono font-semibold leading-tight truncate ${isDeny ? 'text-red-200' : 'text-emerald-200'}`}>{label}</div>
-          {namespace && <div className="text-[9px] font-mono text-slate-500 mt-0.5">{namespace}</div>}
+          {namespace && <div className="text-[9px] font-mono text-slate-400 mt-0.5">{namespace}</div>}
         </div>
         <Handle type="target" position={Position.Left}  className={`!w-2 !h-2 !border-cyber-bg ${isDeny ? '!bg-red-500' : '!bg-emerald-500'}`} />
         <Handle type="source" position={Position.Right} className={`!w-2 !h-2 !border-cyber-bg ${isDeny ? '!bg-red-500' : '!bg-emerald-500'}`} />
@@ -87,11 +87,11 @@ export const K8sNetworkNode = memo(({ data }: NodeProps<K8sNetworkData>) => {
         style={{ background: cfg.headerBg, borderColor: cfg.headerBorder }}>
         <Icon size={9} className={cfg.text} />
         <span className={`text-[9px] font-mono font-bold tracking-widest uppercase ${cfg.text}`}>{cfg.kind}</span>
-        {meta && <span className="ml-auto text-[8px] font-mono text-slate-600 truncate max-w-[80px]">{meta}</span>}
+        {meta && <span className="ml-auto text-[8px] font-mono text-slate-400 truncate max-w-[80px]">{meta}</span>}
       </div>
       <div className="px-2.5 py-1.5">
         <div className={`text-[12px] font-mono font-semibold leading-tight truncate ${cfg.name}`}>{label}</div>
-        {namespace && <div className="text-[9px] font-mono text-slate-500 mt-0.5">{namespace}</div>}
+        {namespace && <div className="text-[9px] font-mono text-slate-400 mt-0.5">{namespace}</div>}
       </div>
       <Handle type="target" position={Position.Left}  className={`!w-2 !h-2 !border-cyber-bg ${cfg.handle}`} />
       <Handle type="source" position={Position.Right} className={`!w-2 !h-2 !border-cyber-bg ${cfg.handle}`} />

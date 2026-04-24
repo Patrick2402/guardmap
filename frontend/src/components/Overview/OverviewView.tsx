@@ -69,7 +69,7 @@ function ScoreRing({ score, color, trackColor }: { score: number; color: string;
         >
           {score}
         </motion.span>
-        <span className="text-[11px] font-sans text-slate-500 mt-1 tracking-wider">/100</span>
+        <span className="text-[11px] font-sans text-slate-400 mt-1 tracking-wider">/100</span>
       </div>
     </div>
   )
@@ -164,7 +164,7 @@ function SevStrip({ counts }: { counts: { critical: number; high: number; medium
     <div className="space-y-2">
       {items.map(({ label, color, count }) => (
         <div key={label} className="flex items-center gap-3">
-          <span className="text-xs font-sans text-slate-500 w-14">{label}</span>
+          <span className="text-xs font-sans text-slate-400 w-14">{label}</span>
           <div className="flex-1 h-1 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.06)' }}>
             <motion.div
               initial={{ width: 0 }}
@@ -225,7 +225,7 @@ function NsTile({ ns, wls, ps, svcs, ings, hasNetpol, danger, issues, onNavigate
             style={{ background: `${cfg.color}18`, color: cfg.color }}>
             {cfg.label}
           </span>
-          <ArrowRight size={12} className="text-slate-700 group-hover:text-slate-400 transition-colors" />
+          <ArrowRight size={12} className="text-slate-400 group-hover:text-slate-400 transition-colors" />
         </div>
       </div>
 
@@ -241,7 +241,7 @@ function NsTile({ ns, wls, ps, svcs, ings, hasNetpol, danger, issues, onNavigate
             style={{ background: 'rgba(255,255,255,0.04)' }}>
             <span style={{ color: c }}>{icon}</span>
             <span className="text-sm font-mono font-bold mt-0.5" style={{ color: c }}>{v}</span>
-            <span className="text-[9px] font-sans text-slate-600 leading-none mt-0.5">{l}</span>
+            <span className="text-[9px] font-sans text-slate-400 leading-none mt-0.5">{l}</span>
           </div>
         ))}
       </div>
@@ -256,7 +256,7 @@ function NsTile({ ns, wls, ps, svcs, ings, hasNetpol, danger, issues, onNavigate
             </div>
           ))}
           {issues.length > 2 && (
-            <span className="text-xs font-sans text-slate-600">+{issues.length - 2} more</span>
+            <span className="text-xs font-sans text-slate-400">+{issues.length - 2} more</span>
           )}
         </div>
       ) : (
@@ -332,16 +332,16 @@ function RiskyWorkloadRow({ w, onNavigate, index }: {
       style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.04)' }}
     >
       {/* Rank */}
-      <span className="text-[11px] font-mono text-slate-600 w-4 shrink-0">#{index + 1}</span>
+      <span className="text-[11px] font-mono text-slate-400 w-4 shrink-0">#{index + 1}</span>
 
       {/* Name + namespace */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
           <span className="text-[13px] font-semibold text-slate-200 truncate">{w.name}</span>
-          <span className="text-[10px] font-mono text-slate-600 shrink-0">{w.type}</span>
+          <span className="text-[10px] font-mono text-slate-400 shrink-0">{w.type}</span>
         </div>
         <div className="flex items-center gap-2 mt-0.5">
-          <span className="text-[11px] text-slate-500">{w.namespace}</span>
+          <span className="text-[11px] text-slate-400">{w.namespace}</span>
           {w.flags.map(f => (
             <span key={f} className="text-[10px] px-1.5 py-0.5 rounded-md font-mono"
               style={{ background: 'rgba(239,68,68,0.1)', color: '#fca5a5' }}>{f}</span>
@@ -361,12 +361,12 @@ function RiskyWorkloadRow({ w, onNavigate, index }: {
             </span>
           )
         })}
-        <span className="text-[11px] text-slate-600 ml-1">
+        <span className="text-[11px] text-slate-400 ml-1">
           {totalFindings} finding{totalFindings !== 1 ? 's' : ''}
         </span>
       </div>
 
-      <ArrowRight size={12} className="text-slate-700 group-hover:text-slate-400 transition-colors shrink-0" />
+      <ArrowRight size={12} className="text-slate-400 group-hover:text-slate-400 transition-colors shrink-0" />
     </motion.button>
   )
 }
@@ -431,7 +431,7 @@ export function OverviewView({ data, onNavigate, onNavigateToExplorer, scanMeta 
 
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2.5 mb-1">
-                <span className="text-xs font-sans font-semibold uppercase tracking-widest text-slate-500">Security Score</span>
+                <span className="text-xs font-sans font-semibold uppercase tracking-widest text-slate-400">Security Score</span>
                 <span className="text-xs font-sans font-bold px-2.5 py-0.5 rounded-full"
                   style={{ background: `${grade.color}18`, color: grade.color, border: `1px solid ${grade.color}35` }}>
                   {grade.label}
@@ -455,14 +455,14 @@ export function OverviewView({ data, onNavigate, onNavigateToExplorer, scanMeta 
                 </div>
               )}
               {scanMeta && (
-                <div className="mt-2 flex items-center gap-3 text-[11px] text-slate-600 font-mono">
+                <div className="mt-2 flex items-center gap-3 text-[11px] text-slate-400 font-mono">
                   <span>Scanned {fmtScanTime(scanMeta.scannedAt)}</span>
                   {scanMeta.durationMs && <span>{scanMeta.durationMs}ms</span>}
                 </div>
               )}
               <button
                 onClick={() => onNavigate('graph')}
-                className="mt-3 flex items-center gap-1.5 text-[11px] text-slate-600 hover:text-cyan-400 transition-colors"
+                className="mt-3 flex items-center gap-1.5 text-[11px] text-slate-400 hover:text-cyan-400 transition-colors"
               >
                 <GitGraph size={11} />
                 Open IRSA graph → click any workload to inspect its IAM permissions
@@ -513,7 +513,7 @@ export function OverviewView({ data, onNavigate, onNavigateToExplorer, scanMeta 
                 <span style={{ color }}>{icon}</span>
                 <div className="text-2xl font-mono font-bold leading-none" style={{ color }}>{value}</div>
               </div>
-              <div className="text-xs font-sans text-slate-500 whitespace-nowrap group-hover:text-slate-400 transition-colors">{label}</div>
+              <div className="text-xs font-sans text-slate-400 whitespace-nowrap group-hover:text-slate-400 transition-colors">{label}</div>
             </motion.div>
           ))}
         </div>
@@ -539,11 +539,11 @@ export function OverviewView({ data, onNavigate, onNavigateToExplorer, scanMeta 
                   <Flame size={15} className="text-orange-400" />
                   <span className="text-base font-sans font-bold text-slate-100">Top Risky Workloads</span>
                 </div>
-                <div className="text-xs font-sans text-slate-600 mt-0.5">Click any workload to explore its IAM permissions in the graph</div>
+                <div className="text-xs font-sans text-slate-400 mt-0.5">Click any workload to explore its IAM permissions in the graph</div>
               </div>
               <button
                 onClick={() => onNavigate('findings')}
-                className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-300 transition-colors"
+                className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-slate-300 transition-colors"
               >
                 View all findings <ArrowRight size={11} />
               </button>
@@ -574,7 +574,7 @@ export function OverviewView({ data, onNavigate, onNavigateToExplorer, scanMeta 
                 <Boxes size={15} className="text-violet-400" />
                 <span className="text-base font-sans font-bold text-slate-100">Namespace Health</span>
               </div>
-              <div className="text-xs font-sans text-slate-600 mt-0.5">Click any namespace to explore its topology</div>
+              <div className="text-xs font-sans text-slate-400 mt-0.5">Click any namespace to explore its topology</div>
             </div>
             {needsAttention > 0 && (
               <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl"
@@ -590,8 +590,8 @@ export function OverviewView({ data, onNavigate, onNavigateToExplorer, scanMeta 
           <div className="p-4">
             {stats.nsHealth.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 gap-3">
-                <Server size={28} className="text-slate-700" />
-                <p className="text-sm font-sans text-slate-600">No namespace data — switch to Live mode</p>
+                <Server size={28} className="text-slate-400" />
+                <p className="text-sm font-sans text-slate-400">No namespace data — switch to Live mode</p>
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
@@ -647,9 +647,9 @@ export function OverviewView({ data, onNavigate, onNavigateToExplorer, scanMeta 
                     </span>
                   )}
                 </div>
-                <div className="text-xs font-sans text-slate-500 mt-1 leading-relaxed">{desc}</div>
+                <div className="text-xs font-sans text-slate-400 mt-1 leading-relaxed">{desc}</div>
               </div>
-              <ArrowRight size={14} className="text-slate-700 group-hover:text-slate-400 transition-colors mt-1.5 shrink-0" />
+              <ArrowRight size={14} className="text-slate-400 group-hover:text-slate-400 transition-colors mt-1.5 shrink-0" />
             </motion.button>
           ))}
         </div>

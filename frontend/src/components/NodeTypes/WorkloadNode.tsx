@@ -107,7 +107,7 @@ export const WorkloadNode = memo(({ data }: NodeProps<WorkloadData>) => {
 
       <div className="px-2.5 py-1.5">
         <div className={`text-[12px] font-mono font-semibold leading-tight truncate ${cfg.nameText}`}>{label}</div>
-        <div className="text-[9px] font-mono text-slate-500 mt-0.5">
+        <div className="text-[9px] font-mono text-slate-400 mt-0.5">
           {namespace}{subLabel ? <span className="ml-2 text-teal-600">{subLabel}</span> : null}
         </div>
       </div>

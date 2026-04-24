@@ -420,7 +420,7 @@ function StepCard({ step }: { step: ChainNode }) {
             {n.label}
           </div>
           {'namespace' in n && n.namespace && (
-            <div className="text-[9px] font-mono text-slate-600">{n.namespace}</div>
+            <div className="text-[9px] font-mono text-slate-400">{n.namespace}</div>
           )}
         </div>
         {step.extraCount && (
@@ -440,7 +440,7 @@ function MetaRow({ k, v, color }: { k: string; v?: string; color?: string }) {
   if (!v) return null
   return (
     <div className="flex gap-3 py-0.5">
-      <span className="text-[10px] font-mono text-slate-600 shrink-0 w-24">{k}</span>
+      <span className="text-[10px] font-mono text-slate-400 shrink-0 w-24">{k}</span>
       <span className={`text-[10px] font-mono break-all ${color ?? 'text-slate-300'}`}>{v}</span>
     </div>
   )
@@ -486,24 +486,24 @@ function NodeMeta({ node }: { node: GraphNode }) {
         {rows.map(r => <MetaRow key={r.k} k={r.k} v={r.v} color={r.color} />)}
         {images.map(img => (
           <div key={img} className="flex gap-3 py-0.5">
-            <span className="text-[10px] font-mono text-slate-600 shrink-0 w-24">image</span>
+            <span className="text-[10px] font-mono text-slate-400 shrink-0 w-24">image</span>
             <span className="text-[10px] font-mono text-slate-400 break-all">{img}</span>
           </div>
         ))}
         {paths.map(p => (
           <div key={p} className="flex gap-3 py-0.5">
-            <span className="text-[10px] font-mono text-slate-600 shrink-0 w-24">route</span>
+            <span className="text-[10px] font-mono text-slate-400 shrink-0 w-24">route</span>
             <span className="text-[10px] font-mono text-green-400 break-all">{p}</span>
           </div>
         ))}
         {labels.length > 0 && (
           <div className="flex gap-3 py-0.5">
-            <span className="text-[10px] font-mono text-slate-600 shrink-0 w-24 mt-0.5">labels</span>
+            <span className="text-[10px] font-mono text-slate-400 shrink-0 w-24 mt-0.5">labels</span>
             <div className="flex flex-wrap gap-1">
               {labels.map(({ k, v }) => (
                 <span key={k} className="text-[9px] font-mono px-1.5 py-0.5 rounded border border-slate-700/60 bg-slate-800/50 text-slate-400">
-                  <span className="text-slate-500">{k}</span>
-                  {v && <><span className="text-slate-600">=</span><span className="text-slate-300">{v}</span></>}
+                  <span className="text-slate-400">{k}</span>
+                  {v && <><span className="text-slate-400">=</span><span className="text-slate-300">{v}</span></>}
                 </span>
               ))}
             </div>
@@ -528,7 +528,7 @@ function ConnSection({ node, data }: { node: GraphNode; data: GraphData }) {
   return (
     <div className="mx-6 mt-3 mb-2 rounded-xl border border-slate-800/60 bg-white/[0.02] overflow-hidden">
       <div className="px-4 py-2 border-b border-slate-800/60 bg-white/[0.02]">
-        <span className="text-[9px] font-mono font-bold uppercase tracking-widest text-slate-600">Connections</span>
+        <span className="text-[9px] font-mono font-bold uppercase tracking-widest text-slate-400">Connections</span>
       </div>
       <div className="px-4 py-2 space-y-1.5">
         {[...incoming.map(x => ({ ...x, dir: 'in' as const })), ...outgoing.map(x => ({ ...x, dir: 'out' as const }))]
@@ -632,14 +632,14 @@ export function TopologyChainModal({ node, data, onClose }: TopologyChainModalPr
                 <div className="text-[16px] font-mono font-bold text-slate-100 truncate">{node.label}</div>
                 {node.namespace && (
                   <div className="flex items-center gap-1.5 mt-0.5">
-                    <Hash size={9} className="text-slate-600" />
-                    <span className="text-[10px] font-mono text-slate-500">{node.namespace}</span>
+                    <Hash size={9} className="text-slate-400" />
+                    <span className="text-[10px] font-mono text-slate-400">{node.namespace}</span>
                   </div>
                 )}
               </div>
               <button
                 onClick={onClose}
-                className="w-8 h-8 rounded-xl flex items-center justify-center text-slate-500 hover:text-slate-200 transition-colors shrink-0"
+                className="w-8 h-8 rounded-xl flex items-center justify-center text-slate-400 hover:text-slate-200 transition-colors shrink-0"
                 style={{ background: 'rgba(255,255,255,0.05)' }}
               >
                 <X size={15} />
@@ -652,7 +652,7 @@ export function TopologyChainModal({ node, data, onClose }: TopologyChainModalPr
               {/* Chain visualization */}
               {showChain && chain && (
                 <div className="px-6 pt-5 pb-4">
-                  <div className="text-[9px] font-mono font-bold uppercase tracking-widest text-slate-600 mb-3">
+                  <div className="text-[9px] font-mono font-bold uppercase tracking-widest text-slate-400 mb-3">
                     {CHAIN_TITLE[chain.kind]}
                   </div>
 
@@ -690,7 +690,7 @@ export function TopologyChainModal({ node, data, onClose }: TopologyChainModalPr
                             {/* Branch separator */}
                             <div className="flex items-center gap-2 my-1.5 pl-2">
                               <div className="h-px flex-1 max-w-[120px]" style={{ background: 'rgba(255,255,255,0.07)' }} />
-                              <span className="text-[9px] font-mono text-slate-600 shrink-0">
+                              <span className="text-[9px] font-mono text-slate-400 shrink-0">
                                 {tails.length} branch{tails.length !== 1 ? 'es' : ''}
                               </span>
                               <div className="h-px flex-1 max-w-[120px]" style={{ background: 'rgba(255,255,255,0.07)' }} />
@@ -698,7 +698,7 @@ export function TopologyChainModal({ node, data, onClose }: TopologyChainModalPr
                             {/* Branch tails with ├/└ connectors */}
                             {tails.map((tail, bi) => (
                               <div key={bi} className="flex items-center gap-0 mt-1">
-                                <span className="text-[11px] font-mono text-slate-600 mr-2 shrink-0 select-none" style={{ fontFamily: 'monospace' }}>
+                                <span className="text-[11px] font-mono text-slate-400 mr-2 shrink-0 select-none" style={{ fontFamily: 'monospace' }}>
                                   {bi === tails.length - 1 ? '└' : '├'}
                                 </span>
                                 {tail.map((step, i) => (
@@ -707,7 +707,7 @@ export function TopologyChainModal({ node, data, onClose }: TopologyChainModalPr
                               </div>
                             ))}
                             {chain.extraBranchCount && chain.extraBranchCount > 0 ? (
-                              <div className="text-[9px] font-mono text-slate-600 pl-6 mt-1.5">
+                              <div className="text-[9px] font-mono text-slate-400 pl-6 mt-1.5">
                                 +{chain.extraBranchCount} more not shown
                               </div>
                             ) : null}
@@ -728,7 +728,7 @@ export function TopologyChainModal({ node, data, onClose }: TopologyChainModalPr
                             </div>
                           ))}
                           {chain.extraBranchCount && chain.extraBranchCount > 0 ? (
-                            <div className="text-[9px] font-mono text-slate-600 pl-7">
+                            <div className="text-[9px] font-mono text-slate-400 pl-7">
                               +{chain.extraBranchCount} more workloads not shown
                             </div>
                           ) : null}
@@ -775,14 +775,14 @@ export function TopologyChainModal({ node, data, onClose }: TopologyChainModalPr
             {/* Footer */}
             <div className="flex items-center justify-between px-6 py-3 shrink-0"
               style={{ borderTop: '1px solid rgba(255,255,255,0.05)', background: 'rgba(255,255,255,0.015)' }}>
-              <p className="text-[10px] font-mono text-slate-600">
+              <p className="text-[10px] font-mono text-slate-400">
                 {showChain
                   ? 'Path reconstructed from live graph · scroll right for full chain'
                   : 'Click any node in the topology to inspect it'}
               </p>
               <button
                 onClick={onClose}
-                className="text-xs font-sans text-slate-500 hover:text-slate-300 transition-colors px-3 py-1.5 rounded-lg"
+                className="text-xs font-sans text-slate-400 hover:text-slate-300 transition-colors px-3 py-1.5 rounded-lg"
                 style={{ background: 'rgba(255,255,255,0.04)' }}
               >
                 Close

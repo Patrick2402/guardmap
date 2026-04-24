@@ -92,11 +92,11 @@ function ClusterSelector({ source, onSelect }: {
         <span className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-lg ${
           source !== 'mock'
             ? 'bg-emerald-900/40 text-emerald-400 border border-emerald-500/30'
-            : 'bg-slate-800/60 text-slate-500 border border-slate-700/40'
+            : 'bg-slate-800/60 text-slate-400 border border-slate-700/40'
         }`}>
           {source === 'mock' ? 'MOCK' : 'LIVE'}
         </span>
-        <ChevronDown size={11} className="text-slate-600" style={{ transform: open ? 'rotate(180deg)' : undefined, transition: 'transform 0.2s' }} />
+        <ChevronDown size={11} className="text-slate-400" style={{ transform: open ? 'rotate(180deg)' : undefined, transition: 'transform 0.2s' }} />
       </button>
 
       <AnimatePresence>
@@ -118,7 +118,7 @@ function ClusterSelector({ source, onSelect }: {
             >
               {/* Mock option */}
               <div className="px-3 py-2 border-b border-white/5">
-                <div className="text-[10px] font-sans font-semibold text-slate-600 uppercase tracking-wider">Demo</div>
+                <div className="text-[10px] font-sans font-semibold text-slate-400 uppercase tracking-wider">Demo</div>
               </div>
               <button
                 onClick={() => { onSelect('mock'); setOpen(false) }}
@@ -126,11 +126,11 @@ function ClusterSelector({ source, onSelect }: {
               >
                 <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
                   style={{ background: 'rgba(255,255,255,0.04)' }}>
-                  <BookOpen size={12} className="text-slate-500" />
+                  <BookOpen size={12} className="text-slate-400" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="text-sm font-sans font-medium text-slate-400">mock-cluster</div>
-                  <div className="text-xs font-mono text-slate-600">Sample data</div>
+                  <div className="text-xs font-mono text-slate-400">Sample data</div>
                 </div>
                 {source === 'mock' && <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 shrink-0" />}
               </button>
@@ -139,7 +139,7 @@ function ClusterSelector({ source, onSelect }: {
               {clusters.length > 0 && (
                 <>
                   <div className="px-3 py-2 border-t border-b border-white/5">
-                    <div className="text-[10px] font-sans font-semibold text-slate-600 uppercase tracking-wider">Live clusters</div>
+                    <div className="text-[10px] font-sans font-semibold text-slate-400 uppercase tracking-wider">Live clusters</div>
                   </div>
                   {clusters.map(c => (
                     <button
@@ -153,7 +153,7 @@ function ClusterSelector({ source, onSelect }: {
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="text-sm font-sans font-medium text-slate-200 truncate">{c.name}</div>
-                        <div className="text-xs font-mono text-slate-600">{c.region ?? 'unknown region'}</div>
+                        <div className="text-xs font-mono text-slate-400">{c.region ?? 'unknown region'}</div>
                       </div>
                       <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${c.status === 'active' ? 'bg-emerald-400' : 'bg-yellow-500'}`} />
                     </button>
@@ -163,7 +163,7 @@ function ClusterSelector({ source, onSelect }: {
 
               {clusters.length === 0 && (
                 <div className="px-3 py-3 border-t border-white/5">
-                  <div className="text-xs font-sans text-slate-600 mb-2">No clusters connected yet</div>
+                  <div className="text-xs font-sans text-slate-400 mb-2">No clusters connected yet</div>
                   <button
                     onClick={() => { window.location.href = '/integrations'; setOpen(false) }}
                     className="text-xs font-sans text-cyan-500 hover:text-cyan-400 transition-colors flex items-center gap-1"
@@ -187,11 +187,11 @@ function NoClustersState() {
     <div className="absolute inset-0 flex flex-col items-center justify-center gap-5">
       <div className="w-16 h-16 rounded-2xl flex items-center justify-center"
         style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
-        <Cloud size={28} className="text-slate-700" />
+        <Cloud size={28} className="text-slate-400" />
       </div>
       <div className="text-center">
         <div className="text-base font-sans font-semibold text-slate-400">No cluster connected</div>
-        <div className="text-sm font-sans text-slate-600 mt-1.5 max-w-xs leading-relaxed">
+        <div className="text-sm font-sans text-slate-400 mt-1.5 max-w-xs leading-relaxed">
           Connect your first Kubernetes cluster to start seeing live security data.
         </div>
       </div>
@@ -203,10 +203,10 @@ function NoClustersState() {
         <Activity size={14} />
         Go to Integrations
       </a>
-      <div className="text-xs font-sans text-slate-600">
+      <div className="text-xs font-sans text-slate-400">
         Or switch to <button
           onClick={() => window.location.href = '/?demo=1'}
-          className="text-slate-500 hover:text-slate-300 underline transition-colors"
+          className="text-slate-400 hover:text-slate-300 underline transition-colors"
         >
           demo mode
         </button> to explore with sample data
@@ -355,7 +355,7 @@ function ClusterView() {
 
           <button
             onClick={() => navigate('/integrations')}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-slate-500 hover:text-cyan-400 transition-all text-xs font-sans"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-slate-400 hover:text-cyan-400 transition-all text-xs font-sans"
             style={{ background: 'rgba(255,255,255,0.04)' }}
             title="Agent Integrations"
           >
@@ -365,7 +365,7 @@ function ClusterView() {
 
           <button
             onClick={() => window.location.reload()}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-slate-500 hover:text-slate-200 transition-all text-xs font-sans"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-slate-400 hover:text-slate-200 transition-all text-xs font-sans"
             style={{ background: 'rgba(255,255,255,0.04)' }}
           >
             <RefreshCw size={12} />
@@ -386,7 +386,7 @@ function ClusterView() {
               className="absolute inset-0 flex flex-col items-center justify-center gap-4 z-20"
             >
               <GuardMapSymbol size={36} />
-              <p className="text-[11px] font-mono text-slate-500 animate-pulse">Scanning cluster security graph...</p>
+              <p className="text-[11px] font-mono text-slate-400 animate-pulse">Scanning cluster security graph...</p>
             </motion.div>
           )}
 
@@ -419,7 +419,7 @@ function ClusterView() {
                 <>
                   <div className="absolute top-0 left-0 right-0 z-10 border-b border-cyber-border/30 bg-cyber-panel/20 backdrop-blur-sm">
                     {blastRadius ? (
-                      <p className="px-5 py-1.5 text-[10px] font-mono text-slate-700 pointer-events-none">
+                      <p className="px-5 py-1.5 text-[10px] font-mono text-slate-400 pointer-events-none">
                         Blast radius active — {blastRadius.fullTargets.length} full-access + {blastRadius.writeTargets.length} write targets exposed
                       </p>
                     ) : !graphHintDismissed ? (
@@ -429,12 +429,12 @@ function ClusterView() {
                           <span className="font-semibold text-cyan-400">Tip:</span> Click any workload node to inspect its IAM permissions and blast radius · Scroll to zoom · Drag to pan
                         </p>
                         <button onClick={dismissGraphHint}
-                          className="text-slate-600 hover:text-slate-400 transition-colors shrink-0 text-[11px] font-mono">
+                          className="text-slate-400 hover:text-slate-400 transition-colors shrink-0 text-[11px] font-mono">
                           Got it ✕
                         </button>
                       </div>
                     ) : (
-                      <p className="px-5 py-1.5 text-[10px] font-mono text-slate-700 pointer-events-none">
+                      <p className="px-5 py-1.5 text-[10px] font-mono text-slate-400 pointer-events-none">
                         Click a Workload to see Blast Radius & IAM permissions · Scroll to zoom · Drag to pan
                       </p>
                     )}

@@ -85,7 +85,7 @@ export function RBACDetails({ node, data, onClose }: Props) {
               <span className="text-[10px] font-mono font-bold tracking-[0.15em] uppercase flex-1" style={{ color: meta.accent }}>
                 {meta.label}
               </span>
-              <button onClick={onClose} className="text-slate-600 hover:text-slate-200 transition-colors p-0.5">
+              <button onClick={onClose} className="text-slate-400 hover:text-slate-200 transition-colors p-0.5">
                 <X size={13} />
               </button>
             </div>
@@ -97,8 +97,8 @@ export function RBACDetails({ node, data, onClose }: Props) {
                 </div>
                 {node.namespace && (
                   <div className="flex items-center gap-1.5 mt-1.5">
-                    <Hash size={9} className="text-slate-600" />
-                    <span className="text-[10px] font-mono text-slate-500">{node.namespace}</span>
+                    <Hash size={9} className="text-slate-400" />
+                    <span className="text-[10px] font-mono text-slate-400">{node.namespace}</span>
                   </div>
                 )}
                 {(node.type === 'k8s_role' || node.type === 'k8s_clusterrole') && (
@@ -111,7 +111,7 @@ export function RBACDetails({ node, data, onClose }: Props) {
               {/* Rules for Role/ClusterRole */}
               {rules.length > 0 && (
                 <div className="px-4 py-3 border-b border-slate-800/60">
-                  <div className="text-[9px] font-mono font-bold text-slate-600 uppercase tracking-[0.15em] mb-2">Rules</div>
+                  <div className="text-[9px] font-mono font-bold text-slate-400 uppercase tracking-[0.15em] mb-2">Rules</div>
                   {rules.map((r, i) => <RuleRow key={i} rule={r} />)}
                 </div>
               )}
@@ -119,11 +119,11 @@ export function RBACDetails({ node, data, onClose }: Props) {
               {/* RoleRef for Bindings */}
               {node.metadata?.roleRef && (
                 <div className="px-4 py-3 border-b border-slate-800/60">
-                  <div className="text-[9px] font-mono font-bold text-slate-600 uppercase tracking-[0.15em] mb-2">Grants</div>
+                  <div className="text-[9px] font-mono font-bold text-slate-400 uppercase tracking-[0.15em] mb-2">Grants</div>
                   <div className="flex items-center gap-2">
                     <Globe size={10} className="text-orange-400 shrink-0" />
                     <span className="text-[11px] font-mono text-orange-300">{node.metadata.roleRef}</span>
-                    <span className="text-[9px] font-mono text-slate-600 ml-auto">{node.metadata.roleKind}</span>
+                    <span className="text-[9px] font-mono text-slate-400 ml-auto">{node.metadata.roleKind}</span>
                   </div>
                 </div>
               )}
@@ -131,7 +131,7 @@ export function RBACDetails({ node, data, onClose }: Props) {
               {/* Connections */}
               {outgoing.length > 0 && (
                 <div className="px-4 py-3 border-b border-slate-800/60">
-                  <div className="text-[9px] font-mono font-bold text-slate-600 uppercase tracking-[0.15em] mb-2">Outgoing · {outgoing.length}</div>
+                  <div className="text-[9px] font-mono font-bold text-slate-400 uppercase tracking-[0.15em] mb-2">Outgoing · {outgoing.length}</div>
                   {outgoing.map(({ edge, peer }) => (
                     <div key={edge.id} className="flex items-center gap-2 py-1.5 border-b border-slate-800/30 last:border-b-0">
                       <span className="text-[10px] font-mono text-slate-300 flex-1 truncate">{peer.label}</span>
@@ -143,7 +143,7 @@ export function RBACDetails({ node, data, onClose }: Props) {
 
               {incoming.length > 0 && (
                 <div className="px-4 py-3">
-                  <div className="text-[9px] font-mono font-bold text-slate-600 uppercase tracking-[0.15em] mb-2">Incoming · {incoming.length}</div>
+                  <div className="text-[9px] font-mono font-bold text-slate-400 uppercase tracking-[0.15em] mb-2">Incoming · {incoming.length}</div>
                   {incoming.map(({ edge, peer }) => (
                     <div key={edge.id} className="flex items-center gap-2 py-1.5 border-b border-slate-800/30 last:border-b-0">
                       <span className="text-[10px] font-mono text-slate-300 flex-1 truncate">{peer.label}</span>

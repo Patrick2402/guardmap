@@ -110,7 +110,7 @@ function Input({
           boxShadow: focused ? '0 0 0 3px rgba(34,211,238,0.06)' : 'none',
         }}
       >
-        <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-600 pointer-events-none">
+        <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
           {icon}
         </div>
         <input
@@ -248,7 +248,7 @@ export function LoginPage() {
                 WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
               }}>attack surface</span>
             </h2>
-            <p className="text-[14px] text-slate-500 leading-relaxed">
+            <p className="text-[14px] text-slate-400 leading-relaxed">
               Map every IAM permission, detect misconfigurations and understand blast radius — automatically.
             </p>
           </div>
@@ -291,14 +291,14 @@ export function LoginPage() {
             </div>
             <div>
               <div className="text-[13px] font-semibold text-slate-200">Example cluster scan</div>
-              <div className="text-[12px] text-slate-500 mt-0.5">2 critical · 4 high · 6 medium</div>
+              <div className="text-[12px] text-slate-400 mt-0.5">2 critical · 4 high · 6 medium</div>
               <div className="text-[11px] text-orange-400 mt-1">Needs attention</div>
             </div>
           </div>
         </div>
 
         {/* Bottom */}
-        <div className="relative text-[12px] text-slate-700">
+        <div className="relative text-[12px] text-slate-400">
           Free plan includes 3 clusters · No credit card required
         </div>
       </div>
@@ -312,7 +312,7 @@ export function LoginPage() {
         {/* Back to home */}
         <button
           onClick={() => navigate('/')}
-          className="absolute top-6 left-6 flex items-center gap-1.5 text-[12px] text-slate-600 hover:text-slate-300 transition-colors"
+          className="absolute top-6 left-6 flex items-center gap-1.5 text-[12px] text-slate-400 hover:text-slate-300 transition-colors"
         >
           <ArrowLeft size={13} />
           Back to home
@@ -387,7 +387,7 @@ export function LoginPage() {
                   <h1 className="text-[18px] font-bold text-slate-100">
                     {mode === 'login' ? 'Welcome back' : mode === 'signup' ? 'Create your account' : 'Reset password'}
                   </h1>
-                  <p className="text-[13px] text-slate-500 mt-1">
+                  <p className="text-[13px] text-slate-400 mt-1">
                     {mode === 'login'
                       ? 'Sign in to your GuardMap dashboard'
                       : mode === 'signup'
@@ -422,7 +422,7 @@ export function LoginPage() {
 
                     <div className="flex items-center gap-3 my-1">
                       <div className="flex-1 h-px" style={{ background: 'rgba(255,255,255,0.07)' }} />
-                      <span className="text-[11px] text-slate-600">or</span>
+                      <span className="text-[11px] text-slate-400">or</span>
                       <div className="flex-1 h-px" style={{ background: 'rgba(255,255,255,0.07)' }} />
                     </div>
                   </>
@@ -469,7 +469,7 @@ export function LoginPage() {
                       icon={<Lock size={14} />}
                       rightEl={
                         <button type="button" onClick={() => setShowPw(v => !v)}
-                          className="text-slate-600 hover:text-slate-400 transition-colors">
+                          className="text-slate-400 hover:text-slate-400 transition-colors">
                           {showPw ? <EyeOff size={14} /> : <Eye size={14} />}
                         </button>
                       }
@@ -492,7 +492,7 @@ export function LoginPage() {
                     {mode === 'login' && (
                       <div className="flex justify-end">
                         <button type="button" onClick={() => switchMode('reset')}
-                          className="text-[12px] text-slate-600 hover:text-cyan-400 transition-colors">
+                          className="text-[12px] text-slate-400 hover:text-cyan-400 transition-colors">
                           Forgot password?
                         </button>
                       </div>
@@ -549,7 +549,7 @@ export function LoginPage() {
                 {/* Back to sign in (reset mode) */}
                 {mode === 'reset' && (
                   <button type="button" onClick={() => switchMode('login')}
-                    className="w-full text-center text-[13px] text-slate-600 hover:text-slate-300 transition-colors flex items-center justify-center gap-1.5">
+                    className="w-full text-center text-[13px] text-slate-400 hover:text-slate-300 transition-colors flex items-center justify-center gap-1.5">
                     <ArrowLeft size={12} />
                     Back to sign in
                   </button>
@@ -559,7 +559,7 @@ export function LoginPage() {
           </div>
 
           {/* Footer note */}
-          <p className="text-center text-[12px] text-slate-700 mt-5">
+          <p className="text-center text-[12px] text-slate-400 mt-5">
             {mode === 'signup'
               ? 'Free forever · 3 clusters · No credit card'
               : 'Kubernetes security visibility for your entire organization'}

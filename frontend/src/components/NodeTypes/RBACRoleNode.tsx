@@ -38,7 +38,7 @@ export const RBACRoleNode = memo(({ data }: NodeProps<RBACRoleData>) => {
       </div>
       <div className="px-2.5 py-1.5">
         <div className={`text-[12px] font-mono font-semibold leading-tight truncate ${s.text}`}>{label}</div>
-        {namespace && <div className="text-[9px] font-mono text-slate-500 mt-0.5">{namespace}</div>}
+        {namespace && <div className="text-[9px] font-mono text-slate-400 mt-0.5">{namespace}</div>}
       </div>
       <Handle type="target" position={Position.Left} className="!w-2 !h-2 !border-cyber-bg" style={{ background: s.badgeBg.split(' ')[1] ?? '#475569' }} />
     </div>

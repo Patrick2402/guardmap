@@ -225,11 +225,11 @@ function ControlSheet({ control, fw, findings, onClose, onNavigate }: {
               </span>
             </div>
             <h2 className="text-lg font-sans font-bold text-slate-100 mt-1.5 leading-snug">{control.name}</h2>
-            <p className="text-xs font-mono text-slate-600 mt-0.5">{control.category}</p>
+            <p className="text-xs font-mono text-slate-400 mt-0.5">{control.category}</p>
           </div>
 
           <button onClick={onClose}
-            className="shrink-0 w-8 h-8 rounded-xl flex items-center justify-center text-slate-500 hover:text-slate-200 transition-colors"
+            className="shrink-0 w-8 h-8 rounded-xl flex items-center justify-center text-slate-400 hover:text-slate-200 transition-colors"
             style={{ background: 'rgba(255,255,255,0.04)' }}>
             <X size={15} />
           </button>
@@ -243,8 +243,8 @@ function ControlSheet({ control, fw, findings, onClose, onNavigate }: {
               {/* About */}
               <section>
                 <div className="flex items-center gap-2 mb-2">
-                  <BookOpen size={13} className="text-slate-500" />
-                  <span className="text-xs font-sans uppercase tracking-wider text-slate-500">About this control</span>
+                  <BookOpen size={13} className="text-slate-400" />
+                  <span className="text-xs font-sans uppercase tracking-wider text-slate-400">About this control</span>
                 </div>
                 <p className="text-sm font-sans text-slate-300 leading-relaxed">{info.description}</p>
               </section>
@@ -287,7 +287,7 @@ function ControlSheet({ control, fw, findings, onClose, onNavigate }: {
               </section>
             </>
           ) : (
-            <div className="flex items-center gap-2 text-slate-600">
+            <div className="flex items-center gap-2 text-slate-400">
               <Info size={14} />
               <span className="text-sm font-sans">No additional details available for this control.</span>
             </div>
@@ -296,8 +296,8 @@ function ControlSheet({ control, fw, findings, onClose, onNavigate }: {
           {/* Detection rules */}
           <section>
             <div className="flex items-center gap-2 mb-3">
-              <ShieldCheck size={13} className="text-slate-500" />
-              <span className="text-xs font-sans uppercase tracking-wider text-slate-500">GuardMap detection rules</span>
+              <ShieldCheck size={13} className="text-slate-400" />
+              <span className="text-xs font-sans uppercase tracking-wider text-slate-400">GuardMap detection rules</span>
             </div>
             {covered ? (
               <div className="flex flex-wrap gap-2">
@@ -323,10 +323,10 @@ function ControlSheet({ control, fw, findings, onClose, onNavigate }: {
             ) : (
               <div className="flex items-start gap-3 p-3.5 rounded-xl"
                 style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)' }}>
-                <MinusCircle size={15} className="text-slate-600 shrink-0 mt-0.5" />
+                <MinusCircle size={15} className="text-slate-400 shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-sm font-sans text-slate-500">No detection rule implemented for this control.</p>
-                  <p className="text-xs font-mono text-slate-700 mt-1">This is a coverage gap — typically requires runtime monitoring or admission controller inspection.</p>
+                  <p className="text-sm font-sans text-slate-400">No detection rule implemented for this control.</p>
+                  <p className="text-xs font-mono text-slate-400 mt-1">This is a coverage gap — typically requires runtime monitoring or admission controller inspection.</p>
                 </div>
               </div>
             )}
@@ -351,9 +351,9 @@ function ControlSheet({ control, fw, findings, onClose, onNavigate }: {
                     <div className="flex-1 min-w-0">
                       <div className="text-sm font-sans font-medium text-slate-200">{f.title}</div>
                       <div className="flex items-center gap-1.5 mt-0.5">
-                        {f.namespace && <span className="text-xs font-mono text-slate-600">{f.namespace}</span>}
-                        {f.namespace && <ChevronRight size={10} className="text-slate-700" />}
-                        <span className="text-xs font-mono text-slate-500 truncate max-w-[240px]">{f.nodeLabel}</span>
+                        {f.namespace && <span className="text-xs font-mono text-slate-400">{f.namespace}</span>}
+                        {f.namespace && <ChevronRight size={10} className="text-slate-400" />}
+                        <span className="text-xs font-mono text-slate-400 truncate max-w-[240px]">{f.nodeLabel}</span>
                       </div>
                     </div>
                     {onNavigate && (
@@ -409,11 +409,11 @@ function FrameworkCard({ fw, findings, isActive, onClick }: {
       <div className="text-[11px] font-mono font-bold mb-1 truncate" style={{ color: fw.color }}>{fw.shortName}</div>
       <div className="flex items-baseline gap-1 mb-2">
         <span className="text-2xl font-mono font-bold text-slate-100">{pct}</span>
-        <span className="text-sm font-mono text-slate-500">%</span>
+        <span className="text-sm font-mono text-slate-400">%</span>
       </div>
       <ProgressBar value={covered} max={total} color={fw.color} />
       <div className="flex items-center justify-between mt-2">
-        <span className="text-[10px] font-mono text-slate-500">{covered}/{total} controls</span>
+        <span className="text-[10px] font-mono text-slate-400">{covered}/{total} controls</span>
         {active > 0 && (
           <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-md"
             style={{ background: 'rgba(239,68,68,0.12)', color: '#f87171', border: '1px solid rgba(239,68,68,0.2)' }}>
@@ -469,7 +469,7 @@ export function BenchmarksView({ data, dbFindings, onNavigate }: BenchmarksViewP
           </div>
           <div className="flex items-center gap-1.5">
             <span className="text-lg font-mono font-bold text-emerald-400">{coveredControls}</span>
-            <span className="text-xs font-mono text-slate-500">/ {totalControls} controls covered across {FRAMEWORKS.length} frameworks</span>
+            <span className="text-xs font-mono text-slate-400">/ {totalControls} controls covered across {FRAMEWORKS.length} frameworks</span>
           </div>
         </div>
       </div>
@@ -488,13 +488,13 @@ export function BenchmarksView({ data, dbFindings, onNavigate }: BenchmarksViewP
         <div>
           <div className="mb-4">
             <div className="text-base font-sans font-bold text-slate-100">{fw.name}</div>
-            <div className="text-xs font-sans text-slate-500 mt-1">{fw.description}</div>
+            <div className="text-xs font-sans text-slate-400 mt-1">{fw.description}</div>
           </div>
 
           <div className="space-y-4">
             {[...byCategory.entries()].map(([cat, controls]) => (
               <div key={cat}>
-                <div className="text-[10px] font-mono font-bold uppercase tracking-[0.15em] text-slate-600 mb-2 px-1">{cat}</div>
+                <div className="text-[10px] font-mono font-bold uppercase tracking-[0.15em] text-slate-400 mb-2 px-1">{cat}</div>
                 <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.05)', background: 'rgba(255,255,255,0.015)' }}>
                   {controls.map((c, i) => {
                     const covered = isCovered(c)
@@ -507,7 +507,7 @@ export function BenchmarksView({ data, dbFindings, onNavigate }: BenchmarksViewP
 
                         <div className="shrink-0">
                           {!covered
-                            ? <MinusCircle size={14} className="text-slate-700" />
+                            ? <MinusCircle size={14} className="text-slate-400" />
                             : active.length > 0
                               ? <AlertTriangle size={14} style={{ color: '#f87171' }} />
                               : <CheckCircle2 size={14} style={{ color: '#34d399' }} />
@@ -522,7 +522,7 @@ export function BenchmarksView({ data, dbFindings, onNavigate }: BenchmarksViewP
                         </div>
 
                         <div className="flex-1 min-w-0">
-                          <span className={`text-sm font-sans ${covered ? 'text-slate-300' : 'text-slate-600'}`}>
+                          <span className={`text-sm font-sans ${covered ? 'text-slate-300' : 'text-slate-400'}`}>
                             {c.name}
                           </span>
                           {covered && c.coveredBy.length > 0 && (
@@ -534,7 +534,7 @@ export function BenchmarksView({ data, dbFindings, onNavigate }: BenchmarksViewP
                                 </span>
                               ))}
                               {c.coveredBy.length > 4 && (
-                                <span className="text-[9px] font-mono text-slate-600">+{c.coveredBy.length - 4} more</span>
+                                <span className="text-[9px] font-mono text-slate-400">+{c.coveredBy.length - 4} more</span>
                               )}
                             </div>
                           )}
@@ -547,11 +547,11 @@ export function BenchmarksView({ data, dbFindings, onNavigate }: BenchmarksViewP
                               {active.length} finding{active.length > 1 ? 's' : ''}
                             </span>
                           ) : covered ? (
-                            <span className="text-[10px] font-mono text-slate-700">clean</span>
+                            <span className="text-[10px] font-mono text-slate-400">clean</span>
                           ) : (
-                            <span className="text-[10px] font-mono text-slate-700">no rule</span>
+                            <span className="text-[10px] font-mono text-slate-400">no rule</span>
                           )}
-                          <ChevronRight size={13} className="text-slate-700" />
+                          <ChevronRight size={13} className="text-slate-400" />
                         </div>
                       </motion.div>
                     )
@@ -566,17 +566,17 @@ export function BenchmarksView({ data, dbFindings, onNavigate }: BenchmarksViewP
             style={{ borderTop: '1px solid rgba(255,255,255,0.04)' }}>
             <div className="flex items-center gap-2">
               <CheckCircle2 size={12} style={{ color: '#34d399' }} />
-              <span className="text-xs font-sans text-slate-600">Covered, clean</span>
+              <span className="text-xs font-sans text-slate-400">Covered, clean</span>
             </div>
             <div className="flex items-center gap-2">
               <AlertTriangle size={12} style={{ color: '#f87171' }} />
-              <span className="text-xs font-sans text-slate-600">Covered, active findings</span>
+              <span className="text-xs font-sans text-slate-400">Covered, active findings</span>
             </div>
             <div className="flex items-center gap-2">
-              <MinusCircle size={12} className="text-slate-700" />
-              <span className="text-xs font-sans text-slate-600">No detection rule — coverage gap</span>
+              <MinusCircle size={12} className="text-slate-400" />
+              <span className="text-xs font-sans text-slate-400">No detection rule — coverage gap</span>
             </div>
-            <span className="ml-auto text-[10px] font-mono text-slate-700">click any row for full details</span>
+            <span className="ml-auto text-[10px] font-mono text-slate-400">click any row for full details</span>
           </div>
         </div>
       </div>

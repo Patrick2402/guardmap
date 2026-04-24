@@ -180,7 +180,7 @@ function StepCard({ step, isLast }: { step: PathStep; isLast: boolean }) {
             <div className="w-8 h-px" style={{ background: `${cfg.color}40` }} />
             <ChevronRight size={10} style={{ color: cfg.color }} />
           </div>
-          <span className="text-[9px] font-mono text-slate-600 whitespace-nowrap">{step.edgeLabel}</span>
+          <span className="text-[9px] font-mono text-slate-400 whitespace-nowrap">{step.edgeLabel}</span>
         </div>
       )}
 
@@ -212,7 +212,7 @@ function StepCard({ step, isLast }: { step: PathStep; isLast: boolean }) {
 
         {/* Namespace */}
         {n.namespace && (
-          <div className="text-[10px] font-mono text-slate-600">{n.namespace}</div>
+          <div className="text-[10px] font-mono text-slate-400">{n.namespace}</div>
         )}
 
         {/* Access level badge on AWS resource */}
@@ -294,7 +294,7 @@ export function AttackPathModal({ finding, data, onClose }: AttackPathModalProps
           </div>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-xl flex items-center justify-center text-slate-500 hover:text-slate-200 transition-colors shrink-0"
+            className="w-8 h-8 rounded-xl flex items-center justify-center text-slate-400 hover:text-slate-200 transition-colors shrink-0"
             style={{ background: 'rgba(255,255,255,0.05)' }}
           >
             <X size={15} />
@@ -316,7 +316,7 @@ export function AttackPathModal({ finding, data, onClose }: AttackPathModalProps
               <KeyRound size={10} /> IAM access exposed
             </span>
           )}
-          <span className="text-[11px] font-mono text-slate-600 ml-auto">
+          <span className="text-[11px] font-mono text-slate-400 ml-auto">
             {path.length} steps in attack chain
           </span>
         </div>
@@ -324,7 +324,7 @@ export function AttackPathModal({ finding, data, onClose }: AttackPathModalProps
         {/* Path visualization */}
         <div className="flex-1 overflow-auto flex items-center px-6 py-8">
           {path.length === 0 ? (
-            <div className="flex flex-col items-center justify-center w-full gap-3 text-slate-600">
+            <div className="flex flex-col items-center justify-center w-full gap-3 text-slate-400">
               <AlertTriangle size={28} />
               <p className="text-sm font-sans">Could not resolve attack path — workload not found in graph data</p>
             </div>
@@ -340,12 +340,12 @@ export function AttackPathModal({ finding, data, onClose }: AttackPathModalProps
         {/* Footer */}
         <div className="flex items-center justify-between px-6 py-3 shrink-0"
           style={{ borderTop: '1px solid rgba(255,255,255,0.05)', background: 'rgba(255,255,255,0.015)' }}>
-          <p className="text-[11px] font-mono text-slate-600">
+          <p className="text-[11px] font-mono text-slate-400">
             Path reconstructed from live graph data · Scroll horizontally to see full chain
           </p>
           <button
             onClick={onClose}
-            className="text-xs font-sans text-slate-500 hover:text-slate-300 transition-colors px-3 py-1.5 rounded-lg"
+            className="text-xs font-sans text-slate-400 hover:text-slate-300 transition-colors px-3 py-1.5 rounded-lg"
             style={{ background: 'rgba(255,255,255,0.04)' }}
           >
             Close

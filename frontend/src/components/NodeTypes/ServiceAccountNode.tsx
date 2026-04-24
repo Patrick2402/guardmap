@@ -29,7 +29,7 @@ export const ServiceAccountNode = memo(({ data }: NodeProps<SAData>) => {
 
       <div className="px-2.5 py-1.5">
         <div className="text-[12px] font-mono font-semibold text-violet-200 leading-tight truncate">{label}</div>
-        <div className="text-[9px] font-mono text-slate-500 mt-0.5">{namespace}</div>
+        <div className="text-[9px] font-mono text-slate-400 mt-0.5">{namespace}</div>
       </div>
 
       <Handle type="target" position={Position.Left}  className="!w-2 !h-2 !bg-violet-500 !border-cyber-bg" />

@@ -272,7 +272,7 @@ function TerminalBlock() {
           <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/40" />
           <div className="w-2.5 h-2.5 rounded-full bg-green-500/40" />
         </div>
-        <span className="text-slate-600 text-[11px] ml-1">bash — guardmap setup</span>
+        <span className="text-slate-400 text-[11px] ml-1">bash — guardmap setup</span>
       </div>
       {/* body */}
       <div className="p-5 space-y-1.5 min-h-[200px]">
@@ -289,7 +289,7 @@ function TerminalBlock() {
                   <span className="text-cyan-600 shrink-0 select-none">$</span>
                 )}
                 {!line.prompt && (
-                  <span className="text-slate-700 shrink-0 select-none w-3" />
+                  <span className="text-slate-400 shrink-0 select-none w-3" />
                 )}
                 <span style={{ color: line.color }}>{line.text}</span>
               </motion.div>
@@ -408,7 +408,7 @@ export function LandingPage() {
           </span>
         </div>
 
-        <div className="hidden md:flex items-center gap-6 text-[13px] text-slate-500">
+        <div className="hidden md:flex items-center gap-6 text-[13px] text-slate-400">
           {[
             { label: 'Features',         href: '#features' },
             { label: 'How it works',     href: '#how-it-works' },
@@ -515,7 +515,7 @@ export function LandingPage() {
               className="flex items-center gap-4 mt-8 flex-wrap"
             >
               {['No credit card', 'Free forever plan', 'Deploy in 2 min'].map(t => (
-                <div key={t} className="flex items-center gap-1.5 text-[12px] text-slate-600">
+                <div key={t} className="flex items-center gap-1.5 text-[12px] text-slate-400">
                   <Check size={11} className="text-emerald-500" />
                   {t}
                 </div>
@@ -541,7 +541,7 @@ export function LandingPage() {
               <div className="w-2.5 h-2.5 rounded-full bg-red-500/50" />
               <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/50" />
               <div className="w-2.5 h-2.5 rounded-full bg-green-500/50" />
-              <span className="text-[11px] font-mono text-slate-600 ml-2">IRSA Graph — payments cluster</span>
+              <span className="text-[11px] font-mono text-slate-400 ml-2">IRSA Graph — payments cluster</span>
               <div className="ml-auto flex items-center gap-1.5">
                 <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                 <span className="text-[10px] font-mono text-emerald-500">LIVE</span>
@@ -554,7 +554,7 @@ export function LandingPage() {
             <div className="flex items-center justify-between px-4 py-2.5 border-t border-white/5"
               style={{ background: 'rgba(0,0,0,0.2)' }}>
               <div className="flex items-center gap-4">
-                <span className="text-[11px] font-mono text-slate-600">9 nodes · 9 edges</span>
+                <span className="text-[11px] font-mono text-slate-400">9 nodes · 9 edges</span>
                 <span className="text-[10px] font-mono text-red-400 flex items-center gap-1">
                   <AlertCircle size={9} /> 1 critical finding
                 </span>
@@ -569,7 +569,7 @@ export function LandingPage() {
       <FadeIn>
         <section className="py-6 px-8 max-w-7xl mx-auto">
           <div className="flex items-center justify-center gap-3 flex-wrap">
-            <span className="text-[11px] text-slate-700 uppercase tracking-widest mr-2">Works with</span>
+            <span className="text-[11px] text-slate-400 uppercase tracking-widest mr-2">Works with</span>
             {[
               { label: 'Amazon EKS',   color: '#f59e0b' },
               { label: 'AWS IAM',      color: '#f59e0b' },
@@ -603,7 +603,7 @@ export function LandingPage() {
                 <div className="text-3xl font-bold font-mono mb-1" style={{ color }}>
                   <Counter to={n} suffix={s} />
                 </div>
-                <div className="text-[12px] text-slate-500">{label}</div>
+                <div className="text-[12px] text-slate-400">{label}</div>
               </div>
             ))}
           </div>
@@ -617,7 +617,7 @@ export function LandingPage() {
           <h2 className="text-3xl font-bold mb-4" style={{ letterSpacing: '-0.02em' }}>
             Everything you need to secure your Kubernetes clusters
           </h2>
-          <p className="text-slate-500 text-[15px] max-w-xl mx-auto">
+          <p className="text-slate-400 text-[15px] max-w-xl mx-auto">
             From IRSA chain visualization to real-time blast radius analysis — all in one dashboard.
           </p>
         </FadeIn>
@@ -645,7 +645,7 @@ export function LandingPage() {
                   {f.icon}
                 </div>
                 <div className="text-[14px] font-semibold text-slate-100 mb-2">{f.title}</div>
-                <div className="text-[13px] text-slate-500 leading-relaxed">{f.desc}</div>
+                <div className="text-[13px] text-slate-400 leading-relaxed">{f.desc}</div>
               </div>
             </FadeIn>
           ))}
@@ -678,10 +678,10 @@ export function LandingPage() {
                   {step.icon}
                 </div>
                 <div className="text-[14px] font-semibold text-slate-100 mb-1.5">{step.title}</div>
-                <div className="text-[13px] text-slate-500 leading-relaxed">{step.desc}</div>
+                <div className="text-[13px] text-slate-400 leading-relaxed">{step.desc}</div>
                 {i < 3 && (
                   <div className="hidden md:block absolute top-8 -right-3 z-10">
-                    <ChevronRight size={16} className="text-slate-700" />
+                    <ChevronRight size={16} className="text-slate-400" />
                   </div>
                 )}
               </div>
@@ -700,7 +700,7 @@ export function LandingPage() {
                   No complex config.
                 </span>
               </h3>
-              <p className="text-slate-500 text-[14px] leading-relaxed mb-5">
+              <p className="text-slate-400 text-[14px] leading-relaxed mb-5">
                 A single <code className="text-violet-400 bg-violet-400/10 px-1.5 py-0.5 rounded-md text-[13px]">kubectl apply</code> deploys the agent as a CronJob. It uses your cluster's IRSA identity to authenticate — no API keys to manage.
               </p>
               <div className="space-y-2.5">
@@ -716,7 +716,7 @@ export function LandingPage() {
                     </div>
                     <div>
                       <span className="text-[13px] font-semibold text-slate-200">{t} </span>
-                      <span className="text-[13px] text-slate-600">{d}</span>
+                      <span className="text-[13px] text-slate-400">{d}</span>
                     </div>
                   </div>
                 ))}
@@ -738,7 +738,7 @@ export function LandingPage() {
                 K8s, RBAC and IAM
               </span>
             </h2>
-            <p className="text-slate-500 text-[14px] leading-relaxed mb-6">
+            <p className="text-slate-400 text-[14px] leading-relaxed mb-6">
               Every scan runs a comprehensive audit — from privileged containers and missing network policies to wildcard IAM roles and unpinned images.
             </p>
 
@@ -809,10 +809,10 @@ export function LandingPage() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-0.5">
                         <span className="text-[10px] font-bold uppercase" style={{ color: f.color }}>{f.sev}</span>
-                        <span className="text-[10px] font-mono text-slate-600">{f.type}</span>
+                        <span className="text-[10px] font-mono text-slate-400">{f.type}</span>
                       </div>
                       <div className="text-[12px] text-slate-300 truncate">{f.desc}</div>
-                      <div className="text-[11px] font-mono text-slate-600 truncate mt-0.5">{f.resource}</div>
+                      <div className="text-[11px] font-mono text-slate-400 truncate mt-0.5">{f.resource}</div>
                     </div>
                   </motion.div>
                 ))}
@@ -820,7 +820,7 @@ export function LandingPage() {
 
               <div className="flex items-center justify-between px-4 py-2.5 border-t border-white/5"
                 style={{ background: 'rgba(0,0,0,0.2)' }}>
-                <span className="text-[11px] font-mono text-slate-600">Scanned 44ms ago · 170 nodes</span>
+                <span className="text-[11px] font-mono text-slate-400">Scanned 44ms ago · 170 nodes</span>
                 <div className="flex items-center gap-1.5">
                   <ScoreRing score={34} size={36} />
                   <span className="text-[10px] font-mono text-red-400">needs attention</span>
@@ -838,7 +838,7 @@ export function LandingPage() {
           <h2 className="text-3xl font-bold mb-4" style={{ letterSpacing: '-0.02em' }}>
             Simple, transparent pricing
           </h2>
-          <p className="text-slate-500 text-[15px] max-w-md mx-auto">
+          <p className="text-slate-400 text-[15px] max-w-md mx-auto">
             Start free. Upgrade when your team needs more clusters or advanced features.
           </p>
         </FadeIn>
@@ -869,10 +869,10 @@ export function LandingPage() {
                   <div className="flex items-end gap-1.5 mb-1">
                     <span className="text-3xl font-bold text-slate-100">{plan.price}</span>
                     {plan.period && (
-                      <span className="text-[13px] text-slate-500 mb-0.5">/ {plan.period}</span>
+                      <span className="text-[13px] text-slate-400 mb-0.5">/ {plan.period}</span>
                     )}
                   </div>
-                  <div className="text-[11px] text-slate-600">{plan.sub}</div>
+                  <div className="text-[11px] text-slate-400">{plan.sub}</div>
                 </div>
 
                 <div className="space-y-2 flex-1 mb-6">
@@ -911,7 +911,7 @@ export function LandingPage() {
         </div>
 
         <FadeIn delay={0.2}>
-          <p className="text-center text-[12px] text-slate-700 mt-8">
+          <p className="text-center text-[12px] text-slate-400 mt-8">
             All plans include SSO, audit log, and 99.9% uptime SLA.
             Need more? <button onClick={() => navigate('/login')} className="text-cyan-600 hover:text-cyan-400 transition-colors">Contact us.</button>
           </p>
@@ -981,7 +981,7 @@ export function LandingPage() {
                   <span className="text-slate-100">Map</span>
                 </span>
               </div>
-              <p className="text-[12px] text-slate-600 max-w-[200px] leading-relaxed">
+              <p className="text-[12px] text-slate-400 max-w-[200px] leading-relaxed">
                 IRSA security visualization for Kubernetes engineers.
               </p>
             </div>
@@ -989,21 +989,21 @@ export function LandingPage() {
             {/* Links */}
             <div className="flex gap-12">
               <div>
-                <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-widest mb-3">Product</div>
+                <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-widest mb-3">Product</div>
                 <div className="space-y-2">
                   {['Features', 'Pricing', 'Live demo', 'Changelog'].map(l => (
                     <div key={l}>
-                      <a href="#" className="text-[13px] text-slate-600 hover:text-slate-300 transition-colors">{l}</a>
+                      <a href="#" className="text-[13px] text-slate-400 hover:text-slate-300 transition-colors">{l}</a>
                     </div>
                   ))}
                 </div>
               </div>
               <div>
-                <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-widest mb-3">Company</div>
+                <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-widest mb-3">Company</div>
                 <div className="space-y-2">
                   {['About', 'Blog', 'Security', 'Contact'].map(l => (
                     <div key={l}>
-                      <a href="#" className="text-[13px] text-slate-600 hover:text-slate-300 transition-colors">{l}</a>
+                      <a href="#" className="text-[13px] text-slate-400 hover:text-slate-300 transition-colors">{l}</a>
                     </div>
                   ))}
                 </div>
@@ -1012,12 +1012,12 @@ export function LandingPage() {
           </div>
 
           <div className="border-t border-white/5 pt-6 flex flex-col md:flex-row items-center justify-between gap-3">
-            <div className="text-[12px] text-slate-700">
+            <div className="text-[12px] text-slate-400">
               © 2025 GuardMap. Built for Kubernetes security engineers.
             </div>
             <div className="flex items-center gap-4">
               {['Privacy', 'Terms', 'Security'].map(l => (
-                <a key={l} href="#" className="text-[12px] text-slate-700 hover:text-slate-400 transition-colors">{l}</a>
+                <a key={l} href="#" className="text-[12px] text-slate-400 hover:text-slate-400 transition-colors">{l}</a>
               ))}
             </div>
           </div>

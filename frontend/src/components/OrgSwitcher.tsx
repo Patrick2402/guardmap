@@ -23,7 +23,7 @@ export function OrgSwitcher() {
         <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-lg bg-violet-900/40 text-violet-400 border border-violet-500/30">
           {activeOrg?.role?.toUpperCase() ?? '—'}
         </span>
-        <ChevronDown size={11} className="text-slate-600" style={{ transform: open ? 'rotate(180deg)' : undefined, transition: 'transform 0.2s' }} />
+        <ChevronDown size={11} className="text-slate-400" style={{ transform: open ? 'rotate(180deg)' : undefined, transition: 'transform 0.2s' }} />
       </button>
 
       <AnimatePresence>
@@ -44,7 +44,7 @@ export function OrgSwitcher() {
               }}
             >
               <div className="px-3 py-2 border-b border-white/5">
-                <div className="text-[10px] font-sans font-semibold text-slate-600 uppercase tracking-wider">Organizations</div>
+                <div className="text-[10px] font-sans font-semibold text-slate-400 uppercase tracking-wider">Organizations</div>
               </div>
 
               {orgs.map(org => (
@@ -59,7 +59,7 @@ export function OrgSwitcher() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="text-sm font-sans font-medium text-slate-200 truncate">{org.organization_name}</div>
-                    <div className="text-xs font-mono text-slate-600">{org.role}</div>
+                    <div className="text-xs font-mono text-slate-400">{org.role}</div>
                   </div>
                   {org.organization_id === activeOrg?.organization_id && (
                     <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 shrink-0" />
@@ -94,9 +94,9 @@ export function OrgSwitcher() {
                 >
                   <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
                     style={{ background: 'rgba(255,255,255,0.04)' }}>
-                    <Plus size={12} className="text-slate-500" />
+                    <Plus size={12} className="text-slate-400" />
                   </div>
-                  <span className="text-sm font-sans text-slate-500">New organization</span>
+                  <span className="text-sm font-sans text-slate-400">New organization</span>
                 </button>
                 <button
                   onClick={signOut}

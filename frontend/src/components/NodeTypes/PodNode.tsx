@@ -23,7 +23,7 @@ const PHASE_STYLE: Record<string, string> = {
   Succeeded: 'text-slate-400   bg-slate-800/40   border-slate-600/30',
   Pending:   'text-yellow-400  bg-yellow-900/40  border-yellow-600/30',
   Failed:    'text-red-400     bg-red-900/40     border-red-600/30',
-  Unknown:   'text-slate-500   bg-slate-800/30   border-slate-600/20',
+  Unknown:   'text-slate-400   bg-slate-800/30   border-slate-600/20',
 }
 
 export const PodNode = memo(({ data }: NodeProps<PodData>) => {
@@ -85,7 +85,7 @@ export const PodNode = memo(({ data }: NodeProps<PodData>) => {
 
       <div className="px-2.5 py-1.5">
         <div className="text-[12px] font-mono font-semibold text-cyan-200 leading-tight truncate">{label}</div>
-        <div className="text-[9px] font-mono text-slate-500 mt-0.5">{namespace}</div>
+        <div className="text-[9px] font-mono text-slate-400 mt-0.5">{namespace}</div>
       </div>
 
       <Handle type="source" position={Position.Right} className="!w-2 !h-2 !bg-cyan-500 !border-cyber-bg" />

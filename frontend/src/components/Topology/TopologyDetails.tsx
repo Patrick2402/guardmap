@@ -33,7 +33,7 @@ const EDGE_PILL: Record<string, string> = {
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="px-4 py-3 border-b border-slate-800/60 last:border-b-0">
-      <div className="text-[9px] font-mono font-bold text-slate-600 uppercase tracking-[0.15em] mb-2.5">{title}</div>
+      <div className="text-[9px] font-mono font-bold text-slate-400 uppercase tracking-[0.15em] mb-2.5">{title}</div>
       {children}
     </div>
   )
@@ -43,7 +43,7 @@ function KVRow({ k, v, valueColor }: { k: string; v: string; valueColor?: string
   if (!v) return null
   return (
     <div className="flex gap-2 py-0.5">
-      <span className="text-[10px] font-mono text-slate-600 shrink-0 w-24">{k}</span>
+      <span className="text-[10px] font-mono text-slate-400 shrink-0 w-24">{k}</span>
       <span className={`text-[10px] font-mono break-all leading-relaxed ${valueColor ?? 'text-slate-300'}`}>{v}</span>
     </div>
   )
@@ -59,8 +59,8 @@ function LabelTags({ raw }: { raw: string }) {
     <div className="flex flex-wrap gap-1 mt-1">
       {tags.map(({ k, v }) => (
         <span key={k} className="text-[9px] font-mono px-1.5 py-0.5 rounded border border-slate-700/60 bg-slate-800/50 text-slate-400">
-          <span className="text-slate-500">{k}</span>
-          {v && <><span className="text-slate-600">=</span><span className="text-slate-300">{v}</span></>}
+          <span className="text-slate-400">{k}</span>
+          {v && <><span className="text-slate-400">=</span><span className="text-slate-300">{v}</span></>}
         </span>
       ))}
     </div>
@@ -76,11 +76,11 @@ function ConnRow({ node, edgeLabel, dir }: { node: GraphNode; edgeLabel: string;
       <div className="flex-1 min-w-0">
         <div className="text-[11px] font-mono text-slate-200 break-all leading-snug">{node.label}</div>
         {node.namespace && (
-          <div className="text-[9px] font-mono text-slate-600 mt-0.5">{node.namespace}</div>
+          <div className="text-[9px] font-mono text-slate-400 mt-0.5">{node.namespace}</div>
         )}
       </div>
       <div className="flex items-center gap-1 shrink-0 mt-0.5">
-        {dir === 'out' ? <ArrowRight size={8} className="text-slate-600" /> : <ArrowLeft size={8} className="text-slate-600" />}
+        {dir === 'out' ? <ArrowRight size={8} className="text-slate-400" /> : <ArrowLeft size={8} className="text-slate-400" />}
         <span className={`text-[8px] font-mono px-1.5 py-0.5 rounded border font-semibold ${pill}`}>
           {edgeLabel}
         </span>
@@ -129,7 +129,7 @@ export function TopologyDetails({ node, data, onClose }: TopologyDetailsProps) {
               <span className="text-[10px] font-mono font-bold tracking-[0.15em] uppercase flex-1" style={{ color: meta.accent }}>
                 {meta.label}
               </span>
-              <button onClick={onClose} className="text-slate-600 hover:text-slate-200 transition-colors p-0.5">
+              <button onClick={onClose} className="text-slate-400 hover:text-slate-200 transition-colors p-0.5">
                 <X size={13} />
               </button>
             </div>
@@ -143,8 +143,8 @@ export function TopologyDetails({ node, data, onClose }: TopologyDetailsProps) {
                 </div>
                 {node.namespace && (
                   <div className="flex items-center gap-1.5 mt-1.5">
-                    <Hash size={9} className="text-slate-600" />
-                    <span className="text-[10px] font-mono text-slate-500">{node.namespace}</span>
+                    <Hash size={9} className="text-slate-400" />
+                    <span className="text-[10px] font-mono text-slate-400">{node.namespace}</span>
                   </div>
                 )}
               </div>
@@ -157,7 +157,7 @@ export function TopologyDetails({ node, data, onClose }: TopologyDetailsProps) {
                   {m.nodeName      && <KVRow k="node"         v={m.nodeName} />}
                   {m.phase && m.phase !== '' && (
                     <div className="flex gap-2 py-0.5">
-                      <span className="text-[10px] font-mono text-slate-600 w-24 shrink-0">phase</span>
+                      <span className="text-[10px] font-mono text-slate-400 w-24 shrink-0">phase</span>
                       <span className={`text-[10px] font-mono font-semibold flex items-center gap-1 ${
                         m.phase === 'Running'   ? 'text-emerald-400' :
                         m.phase === 'Pending'   ? 'text-yellow-400'  :
@@ -177,7 +177,7 @@ export function TopologyDetails({ node, data, onClose }: TopologyDetailsProps) {
                   {m.tlsSecrets && m.tlsSecrets !== '' && <KVRow k="tls secret"  v={m.tlsSecrets} />}
                   {m.effect    && (
                     <div className="flex gap-2 py-0.5">
-                      <span className="text-[10px] font-mono text-slate-600 w-24 shrink-0">effect</span>
+                      <span className="text-[10px] font-mono text-slate-400 w-24 shrink-0">effect</span>
                       <span className={`text-[10px] font-mono font-bold ${m.effect === 'deny' ? 'text-red-400' : 'text-emerald-400'}`}>
                         {m.effect.toUpperCase()}
                       </span>
@@ -207,7 +207,7 @@ export function TopologyDetails({ node, data, onClose }: TopologyDetailsProps) {
                   <div className="space-y-1">
                     {m.images.split(', ').filter(Boolean).map(img => (
                       <div key={img} className="flex items-start gap-1.5 px-2 py-1.5 rounded-lg bg-slate-900/60 border border-slate-800/60">
-                        <Cpu size={9} className="text-slate-600 mt-0.5 shrink-0" />
+                        <Cpu size={9} className="text-slate-400 mt-0.5 shrink-0" />
                         <span className="text-[10px] font-mono text-slate-300 break-all leading-relaxed">{img}</span>
                       </div>
                     ))}
@@ -219,7 +219,7 @@ export function TopologyDetails({ node, data, onClose }: TopologyDetailsProps) {
               {m.labels && m.labels !== '' && (
                 <Section title="Labels">
                   <div className="flex items-center gap-1.5 mb-1.5">
-                    <Tag size={9} className="text-slate-600" />
+                    <Tag size={9} className="text-slate-400" />
                   </div>
                   <LabelTags raw={m.labels} />
                 </Section>
@@ -245,7 +245,7 @@ export function TopologyDetails({ node, data, onClose }: TopologyDetailsProps) {
               {outgoing.length === 0 && incoming.length === 0 && (
                 <div className="px-4 py-8 text-center">
                   <Cpu size={22} className="text-slate-800 mx-auto mb-2" />
-                  <p className="text-[10px] font-mono text-slate-700">No connections found</p>
+                  <p className="text-[10px] font-mono text-slate-400">No connections found</p>
                 </div>
               )}
             </div>

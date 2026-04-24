@@ -129,7 +129,7 @@ function awsServiceIcon(label: string) {
 }
 
 function SortIcon({ active, dir }: { active: boolean; dir: SortDir }) {
-  if (!active) return <ChevronUp size={10} className="text-slate-700" />
+  if (!active) return <ChevronUp size={10} className="text-slate-400" />
   return dir === 'asc' ? <ChevronUp size={10} className="text-cyan-400" /> : <ChevronDown size={10} className="text-cyan-400" />
 }
 
@@ -139,7 +139,7 @@ function Field({ label, value, mono = true, wide = false }: { label: string; val
   if (!value) return null
   return (
     <div className={wide ? 'col-span-2' : ''}>
-      <div className="text-[9px] font-mono text-slate-600 uppercase tracking-wider mb-0.5">{label}</div>
+      <div className="text-[9px] font-mono text-slate-400 uppercase tracking-wider mb-0.5">{label}</div>
       <div className={`text-[11px] ${mono ? 'font-mono' : ''} text-slate-300 break-all leading-snug`}>{value}</div>
     </div>
   )
@@ -149,10 +149,10 @@ function ResourceBar({ label, req, lim, color }: { label: string; req?: string; 
   if (!req && !lim) return null
   return (
     <div className="flex items-center gap-2">
-      <span className="text-[9px] font-mono text-slate-600 w-8 uppercase">{label}</span>
+      <span className="text-[9px] font-mono text-slate-400 w-8 uppercase">{label}</span>
       <div className="flex items-center gap-1">
         <span className={`text-[10px] font-mono font-semibold ${color}`}>{req}</span>
-        <span className="text-[9px] text-slate-700">→</span>
+        <span className="text-[9px] text-slate-400">→</span>
         <span className="text-[10px] font-mono text-slate-400">{lim}</span>
       </div>
     </div>
@@ -168,7 +168,7 @@ function LabelChips({ raw }: { raw?: string }) {
         const [k, v] = pair.split('=')
         return (
           <span key={i} className="inline-flex items-center text-[9px] font-mono rounded-md border border-slate-700/60 bg-slate-800/50 overflow-hidden">
-            <span className="px-1.5 py-0.5 text-slate-500 border-r border-slate-700/60">{k}</span>
+            <span className="px-1.5 py-0.5 text-slate-400 border-r border-slate-700/60">{k}</span>
             <span className="px-1.5 py-0.5 text-slate-300">{v}</span>
           </span>
         )
@@ -184,7 +184,7 @@ function ImageTag({ image }: { image?: string }) {
     <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-slate-700/50 bg-slate-800/40 font-mono text-[10px] w-fit max-w-full overflow-hidden">
       <Container size={10} className="text-slate-400 shrink-0" />
       <span className="text-slate-300 truncate">{name}</span>
-      {tag && <><span className="text-slate-700">:</span><span className="text-cyan-400 shrink-0">{tag}</span></>}
+      {tag && <><span className="text-slate-400">:</span><span className="text-cyan-400 shrink-0">{tag}</span></>}
     </div>
   )
 }
@@ -206,7 +206,7 @@ function PhaseChip({ phase, condition }: { phase?: string; condition?: string })
 function IrsaChain({ node, data }: { node: GraphNode; data: GraphData }) {
   const { sa, role, svcs } = podIAMChain(node, data)
   if (!sa && !role && !svcs.length) {
-    return <span className="text-[10px] font-mono text-slate-700">no IRSA binding</span>
+    return <span className="text-[10px] font-mono text-slate-400">no IRSA binding</span>
   }
   return (
     <div className="flex items-center gap-1.5 flex-wrap">
@@ -216,7 +216,7 @@ function IrsaChain({ node, data }: { node: GraphNode; data: GraphData }) {
       </div>
       {sa && (
         <>
-          <ChevronRight size={10} className="text-slate-700" />
+          <ChevronRight size={10} className="text-slate-400" />
           <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-violet-950/30 border border-violet-500/20">
             <KeyRound size={9} className="text-violet-400" />
             <span className="text-[10px] font-mono text-violet-300">{sa.label}</span>
@@ -225,7 +225,7 @@ function IrsaChain({ node, data }: { node: GraphNode; data: GraphData }) {
       )}
       {role && (
         <>
-          <ChevronRight size={10} className="text-slate-700" />
+          <ChevronRight size={10} className="text-slate-400" />
           <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-amber-950/30 border border-amber-500/20">
             <ShieldCheck size={9} className="text-amber-400" />
             <span className="text-[10px] font-mono text-amber-300">{role.label}</span>
@@ -234,7 +234,7 @@ function IrsaChain({ node, data }: { node: GraphNode; data: GraphData }) {
       )}
       {svcs.length > 0 && (
         <>
-          <ChevronRight size={10} className="text-slate-700" />
+          <ChevronRight size={10} className="text-slate-400" />
           <div className="flex flex-wrap gap-1">
             {svcs.map(({ node: svc, access }) => (
               <div key={svc.id} className={`flex items-center gap-1 px-2 py-1 rounded-lg border text-[9px] font-mono ${ACCESS_BADGE[access]}`}>
@@ -255,7 +255,7 @@ function IrsaChain({ node, data }: { node: GraphNode; data: GraphData }) {
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div>
-      <div className="text-[9px] font-mono text-slate-600 uppercase tracking-widest mb-2 flex items-center gap-2">
+      <div className="text-[9px] font-mono text-slate-400 uppercase tracking-widest mb-2 flex items-center gap-2">
         <span>{title}</span>
         <div className="flex-1 h-px bg-slate-800" />
       </div>
@@ -402,7 +402,7 @@ function ExpandedRow({ node, data }: { node: GraphNode; data: GraphData }) {
       <div className="space-y-3">
         <Section title="Resource">
           <div className="px-3 py-2 rounded-xl border border-slate-600/40 bg-slate-800/30 font-mono text-[10px] text-slate-300 break-all flex items-start gap-1.5">
-            <ExternalLink size={9} className="text-slate-600 shrink-0 mt-0.5" />
+            <ExternalLink size={9} className="text-slate-400 shrink-0 mt-0.5" />
             {m.arn}
           </div>
         </Section>
@@ -457,7 +457,7 @@ function ExpandedRow({ node, data }: { node: GraphNode; data: GraphData }) {
       <div className="space-y-3">
         <div className="grid grid-cols-3 gap-4">
           <div>
-            <div className="text-[9px] font-mono text-slate-600 uppercase tracking-wider mb-0.5">Effect</div>
+            <div className="text-[9px] font-mono text-slate-400 uppercase tracking-wider mb-0.5">Effect</div>
             <span className={`inline-flex items-center px-2 py-0.5 rounded-full border text-[9px] font-mono font-bold ${
               isDeny ? 'text-red-400 border-red-500/30 bg-red-950/30' : 'text-emerald-400 border-emerald-500/30 bg-emerald-950/30'
             }`}>{isDeny ? 'DENY' : 'ALLOW'}</span>
@@ -477,7 +477,7 @@ function ExpandedRow({ node, data }: { node: GraphNode; data: GraphData }) {
         <div className="grid grid-cols-2 gap-4">
           {m.rules && (
             <div>
-              <div className="text-[9px] font-mono text-slate-600 uppercase tracking-wider mb-1">Rules</div>
+              <div className="text-[9px] font-mono text-slate-400 uppercase tracking-wider mb-1">Rules</div>
               <div className={`px-2.5 py-1.5 rounded-lg border font-mono text-[10px] ${
                 isDanger ? 'border-red-500/25 bg-red-950/20 text-red-300' : 'border-slate-700/50 bg-slate-800/30 text-slate-300'
               }`}>{m.rules}</div>
@@ -485,7 +485,7 @@ function ExpandedRow({ node, data }: { node: GraphNode; data: GraphData }) {
           )}
           {m.danger && (
             <div>
-              <div className="text-[9px] font-mono text-slate-600 uppercase tracking-wider mb-1">Risk level</div>
+              <div className="text-[9px] font-mono text-slate-400 uppercase tracking-wider mb-1">Risk level</div>
               <span className={`inline-flex items-center px-2 py-0.5 rounded-full border text-[9px] font-mono font-bold uppercase ${
                 m.danger === 'critical' ? 'text-red-400 border-red-500/40 bg-red-950/40'
                 : m.danger === 'high' ? 'text-orange-400 border-orange-500/35 bg-orange-950/30'
@@ -589,12 +589,12 @@ export function ExplorerView({ data, clusterName = 'mock-cluster', initialTypeFi
       <div className="shrink-0 px-5 pt-4 pb-3 border-b border-cyber-border/50">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <span className="text-[10px] font-mono text-slate-500">cluster</span>
+            <span className="text-[10px] font-mono text-slate-400">cluster</span>
             <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-cyan-500/25 bg-cyan-950/20">
               <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
               <span className="text-[11px] font-mono text-cyan-300 font-semibold">{clusterName}</span>
             </div>
-            <span className="text-[10px] font-mono text-slate-700">
+            <span className="text-[10px] font-mono text-slate-400">
               {data.nodes.length} resources · {new Set(data.nodes.filter(n=>n.namespace).map(n=>n.namespace!)).size} namespaces
             </span>
           </div>
@@ -603,7 +603,7 @@ export function ExplorerView({ data, clusterName = 'mock-cluster', initialTypeFi
             className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-mono border transition-all ${
               showFilters || typeFilter !== 'all' || nsFilter !== 'all' || search
                 ? 'border-cyan-500/40 bg-cyan-950/25 text-cyan-300'
-                : 'border-cyber-border/60 text-slate-500 hover:text-slate-300'
+                : 'border-cyber-border/60 text-slate-400 hover:text-slate-300'
             }`}
           >
             <Filter size={10} />
@@ -620,12 +620,12 @@ export function ExplorerView({ data, clusterName = 'mock-cluster', initialTypeFi
               className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border text-[10px] font-mono transition-all ${
                 isGroupActive(g)
                   ? `border-white/15 bg-white/8 ${g.color}`
-                  : 'border-cyber-border/50 bg-cyber-panel/40 text-slate-500 hover:text-slate-300 hover:border-slate-600/60'
+                  : 'border-cyber-border/50 bg-cyber-panel/40 text-slate-400 hover:text-slate-300 hover:border-slate-600/60'
               }`}
             >
-              <span className={isGroupActive(g) ? g.color : 'text-slate-600'}>{g.icon}</span>
+              <span className={isGroupActive(g) ? g.color : 'text-slate-400'}>{g.icon}</span>
               <span>{g.label}</span>
-              <span className={`px-1.5 py-px rounded-full text-[9px] ${isGroupActive(g) ? 'bg-white/12 text-slate-200' : 'bg-white/5 text-slate-600'}`}>
+              <span className={`px-1.5 py-px rounded-full text-[9px] ${isGroupActive(g) ? 'bg-white/12 text-slate-200' : 'bg-white/5 text-slate-400'}`}>
                 {g.count}
               </span>
             </button>
@@ -645,14 +645,14 @@ export function ExplorerView({ data, clusterName = 'mock-cluster', initialTypeFi
             <div className="flex items-center gap-3 px-5 py-2.5">
               {/* Namespace filter */}
               <div className="flex items-center gap-2">
-                <span className="text-[10px] font-mono text-slate-600">Namespace</span>
+                <span className="text-[10px] font-mono text-slate-400">Namespace</span>
                 <div className="flex items-center gap-1 p-0.5 rounded-lg border border-cyber-border bg-cyber-panel/60">
                   {namespaces.map(ns => (
                     <button
                       key={ns}
                       onClick={() => setNsFilter(ns)}
                       className={`px-2 py-1 rounded-md text-[10px] font-mono transition-all ${
-                        nsFilter === ns ? 'bg-white/8 text-slate-200 border border-white/10' : 'text-slate-500 hover:text-slate-300'
+                        nsFilter === ns ? 'bg-white/8 text-slate-200 border border-white/10' : 'text-slate-400 hover:text-slate-300'
                       }`}
                     >
                       {ns === 'all' ? 'All' : ns}
@@ -663,14 +663,14 @@ export function ExplorerView({ data, clusterName = 'mock-cluster', initialTypeFi
 
               {/* Search */}
               <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-cyber-border bg-cyber-panel/60 ml-auto">
-                <Search size={11} className="text-slate-500" />
+                <Search size={11} className="text-slate-400" />
                 <input
                   value={search}
                   onChange={e => setSearch(e.target.value)}
                   placeholder="search name, namespace, ARN..."
                   className="bg-transparent text-[11px] font-mono text-slate-300 placeholder-slate-600 outline-none w-52"
                 />
-                {search && <button onClick={() => setSearch('')} className="text-slate-600 hover:text-slate-300"><X size={11} /></button>}
+                {search && <button onClick={() => setSearch('')} className="text-slate-400 hover:text-slate-300"><X size={11} /></button>}
               </div>
             </div>
           </motion.div>
@@ -689,14 +689,14 @@ export function ExplorerView({ data, clusterName = 'mock-cluster', initialTypeFi
                 { key: 'access',    label: 'Max Access' },
               ] as { key: SortKey; label: string }[]).map(col => (
                 <th key={col.key} onClick={() => toggleSort(col.key)}
-                  className="text-left px-5 py-2.5 text-[10px] font-mono font-semibold text-slate-500 uppercase tracking-widest cursor-pointer hover:text-slate-300 transition-colors select-none">
+                  className="text-left px-5 py-2.5 text-[10px] font-mono font-semibold text-slate-400 uppercase tracking-widest cursor-pointer hover:text-slate-300 transition-colors select-none">
                   <div className="flex items-center gap-1.5">
                     {col.label}
                     <SortIcon active={sortKey === col.key} dir={sortDir} />
                   </div>
                 </th>
               ))}
-              <th className="text-left px-5 py-2.5 text-[10px] font-mono font-semibold text-slate-500 uppercase tracking-widest">Connections</th>
+              <th className="text-left px-5 py-2.5 text-[10px] font-mono font-semibold text-slate-400 uppercase tracking-widest">Connections</th>
               <th className="w-10" />
             </tr>
           </thead>
@@ -735,7 +735,7 @@ export function ExplorerView({ data, clusterName = 'mock-cluster', initialTypeFi
                         </div>
                       </td>
                       <td className="px-5 py-2.5">
-                        <span className="text-[11px] font-mono text-slate-500">{node.namespace ?? <span className="text-slate-700">—</span>}</span>
+                        <span className="text-[11px] font-mono text-slate-400">{node.namespace ?? <span className="text-slate-400">—</span>}</span>
                       </td>
                       <td className="px-5 py-2.5">
                         <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md border text-[10px] font-mono ${TYPE_COLOR[node.type]}`}>
@@ -746,13 +746,13 @@ export function ExplorerView({ data, clusterName = 'mock-cluster', initialTypeFi
                       <td className="px-5 py-2.5">
                         {access
                           ? <span className={`inline-block px-2 py-0.5 rounded-md border text-[10px] font-mono font-semibold ${ACCESS_BADGE[access]}`}>{access.toUpperCase()}</span>
-                          : <span className="text-[11px] font-mono text-slate-700">—</span>
+                          : <span className="text-[11px] font-mono text-slate-400">—</span>
                         }
                       </td>
                       <td className="px-5 py-2.5">
-                        <span className="text-[11px] font-mono text-slate-500">{links}</span>
+                        <span className="text-[11px] font-mono text-slate-400">{links}</span>
                       </td>
-                      <td className="pr-5 py-2.5 text-right text-slate-600">
+                      <td className="pr-5 py-2.5 text-right text-slate-400">
                         {isExpanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
                       </td>
                     </motion.tr>
@@ -771,20 +771,20 @@ export function ExplorerView({ data, clusterName = 'mock-cluster', initialTypeFi
           </tbody>
         </table>
         {rows.length === 0 && (
-          <div className="flex items-center justify-center h-32 text-[11px] font-mono text-slate-600">no results</div>
+          <div className="flex items-center justify-center h-32 text-[11px] font-mono text-slate-400">no results</div>
         )}
       </div>
 
       {/* ── Footer ── */}
       <div className="shrink-0 px-6 py-2 border-t border-cyber-border/40 flex items-center justify-between">
-        <span className="text-[10px] font-mono text-slate-600">
+        <span className="text-[10px] font-mono text-slate-400">
           {rows.length} of {data.nodes.length} resources
           {(typeFilter !== 'all' || nsFilter !== 'all' || search) && ' · filtered'}
         </span>
         {(typeFilter !== 'all' || nsFilter !== 'all' || search) && (
           <button
             onClick={() => { setTypeFilter('all'); setNsFilter('all'); setSearch('') }}
-            className="text-[10px] font-mono text-slate-600 hover:text-slate-300 transition-colors flex items-center gap-1"
+            className="text-[10px] font-mono text-slate-400 hover:text-slate-300 transition-colors flex items-center gap-1"
           >
             <X size={9} /> clear filters
           </button>

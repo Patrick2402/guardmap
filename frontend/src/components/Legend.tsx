@@ -1,7 +1,7 @@
 export function Legend() {
   return (
     <div className="absolute left-4 bottom-4 z-10 rounded-xl border border-cyber-border bg-cyber-panel/80 backdrop-blur-sm px-4 py-3 space-y-3">
-      <div className="text-[9px] font-mono font-semibold text-slate-500 uppercase tracking-widest">IRSA Chain</div>
+      <div className="text-[9px] font-mono font-semibold text-slate-400 uppercase tracking-widest">IRSA Chain</div>
 
       <div className="space-y-1.5">
         {[
@@ -18,7 +18,7 @@ export function Legend() {
       </div>
 
       <div className="space-y-1.5">
-        <div className="text-[9px] font-mono text-slate-500 uppercase tracking-wider">Access level</div>
+        <div className="text-[9px] font-mono text-slate-400 uppercase tracking-wider">Access level</div>
         {[
           { hex: '#ef4444', label: 'Full (*)'  },
           { hex: '#f59e0b', label: 'Write'     },

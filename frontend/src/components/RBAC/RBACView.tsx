@@ -14,7 +14,7 @@ import { RBACDetails }        from './RBACDetails'
 import { applyRBACLayout }    from '../../utils/rbacLayout'
 
 const ColumnHeader = ({ data }: { data: { label: string } }) => (
-  <div className="text-[9px] font-mono font-bold text-slate-600 uppercase tracking-[0.2em] pointer-events-none select-none whitespace-nowrap">
+  <div className="text-[9px] font-mono font-bold text-slate-400 uppercase tracking-[0.2em] pointer-events-none select-none whitespace-nowrap">
     {data.label}
   </div>
 )
@@ -223,10 +223,10 @@ export function RBACView({ data, focusNodeId }: RBACViewProps) {
         ].map(({ label, value, color }) => (
           <div key={label} className="flex items-center gap-1.5">
             <span className={`text-sm font-mono font-bold ${color}`}>{value}</span>
-            <span className="text-[10px] font-mono text-slate-600">{label}</span>
+            <span className="text-[10px] font-mono text-slate-400">{label}</span>
           </div>
         ))}
-        <span className="ml-auto text-[9px] font-mono text-slate-700 hidden md:block">
+        <span className="ml-auto text-[9px] font-mono text-slate-400 hidden md:block">
           hover to trace · click for details
         </span>
       </div>

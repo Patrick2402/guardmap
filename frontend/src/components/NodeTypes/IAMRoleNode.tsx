@@ -39,7 +39,7 @@ export const IAMRoleNode = memo(({ data }: NodeProps<RoleData>) => {
       <div className="px-2.5 py-1.5">
         <div className="text-[12px] font-mono font-semibold text-amber-200 leading-tight truncate">{label}</div>
         {roleShortName && (
-          <div className="text-[9px] font-mono text-slate-500 mt-0.5 truncate max-w-[160px]">{roleShortName}</div>
+          <div className="text-[9px] font-mono text-slate-400 mt-0.5 truncate max-w-[160px]">{roleShortName}</div>
         )}
       </div>
 
