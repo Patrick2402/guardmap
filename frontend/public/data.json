@@ -3913,13 +3913,13 @@
     },
     {
       "id": "e153",
-      "source": "sa:production/payments-api",
+      "source": "sa:production/payments-api-sa",
       "target": "k8s-crb:payments-admin-binding",
       "label": "bound \u2192"
     },
     {
       "id": "e154",
-      "source": "sa:production/payments-api",
+      "source": "sa:production/payments-api-sa",
       "target": "k8s-rb:production/payments-secrets-binding",
       "label": "bound \u2192"
     },

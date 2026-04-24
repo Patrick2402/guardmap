@@ -25,7 +25,7 @@ const NS_PRIORITY: Record<string, number>  = { production: 0, prod: 0, staging: 
 function RoleCard({ node, onClick, selected }: { node: GraphNode; onClick: () => void; selected: boolean }) {
   const d    = DANGER[node.metadata?.danger ?? 'low'] ?? DANGER.low
   const isCluster = node.type === 'k8s_clusterrole'
-  const rules = node.metadata?.rules ? parseInt(node.metadata.rules) : null
+  const rulesRaw = node.metadata?.rules as string | undefined
 
   return (
     <motion.button
@@ -52,8 +52,10 @@ function RoleCard({ node, onClick, selected }: { node: GraphNode; onClick: () =>
             </span>
           )}
         </div>
-        {rules !== null && (
-          <span className="text-[10px] font-mono text-slate-500 shrink-0">{rules} rules</span>
+        {rulesRaw && (
+          <span className="text-[9px] font-mono text-slate-500 shrink-0 truncate max-w-[110px]" title={rulesRaw}>
+            {rulesRaw.split(';')[0].trim()}
+          </span>
         )}
       </div>
       <div className="font-sans font-semibold text-sm text-slate-200 truncate" title={node.label}>
